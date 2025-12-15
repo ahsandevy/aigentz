@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  Meta Ads Analytics Dashboard - Dark Theme
+  Custom styling matching the original dashboard design
+*/
+
+/* Theme Variables */
+:root {
+  /* Background Colors */
+  --bg-primary: #0f0f23;
+  --bg-secondary: #1a1a2e;
+  --bg-card: rgba(26, 26, 46, 0.8);
+
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: #b4b4c9;
+  --text-muted: #8888a4;
+
+  /* Brand Colors */
+  --color-blue: #4f7cff;
+  --color-green: #00d47e;
+  --color-purple: #9b59f5;
+  --color-orange: #ff8c42;
+  --color-pink: #ff5e7d;
+  --color-teal: #00bcd4;
+  --color-yellow: #ffc107;
+  --color-red: #ef5350;
+
+  /* Light Variants */
+  --color-light-blue: #6e95ff;
+  --color-light-green: #00f5a0;
+  --color-light-purple: #b87aff;
+  --color-light-orange: #ffaa6c;
+
+  /* Gradients */
+  --gradient-blue: linear-gradient(135deg, #4f7cff 0%, #6e95ff 100%);
+  --gradient-green: linear-gradient(135deg, #00d47e 0%, #00f5a0 100%);
+  --gradient-purple: linear-gradient(135deg, #9b59f5 0%, #b87aff 100%);
+  --gradient-orange: linear-gradient(135deg, #ff8c42 0%, #ffaa6c 100%);
+  --gradient-pink: linear-gradient(135deg, #ff5e7d 0%, #ff8fab 100%);
+  --gradient-teal: linear-gradient(135deg, #00bcd4 0%, #4dd0e1 100%);
+}
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-blue);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-light-blue);
+}
+
+/* Utility Classes */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  min-height: fit-content;
+  display: flex;
+  flex-direction: column;
+}
+
+.gradient-blue {
+  background: var(--gradient-blue);
+}
+
+.gradient-green {
+  background: var(--gradient-green);
+}
+
+.gradient-purple {
+  background: var(--gradient-purple);
+}
+
+.gradient-orange {
+  background: var(--gradient-orange);
+}
+
+.gradient-pink {
+  background: var(--gradient-pink);
+}
+
+.gradient-teal {
+  background: var(--gradient-teal);
+}
+
+/* Animations */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Chart Container Styling */
+.chart-container {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
+.chart-container.tall {
+  height: 350px;
+}
+
+/* Consistent Card Sizing */
+.glass-card .chart-container {
+  flex: 1;
+}
+
+/* KPI Card Consistency */
+.kpi-card-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 70px;
+}
+
+/* Ensure consistent chart card header */
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+/* Table Styling */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead {
+  background: rgba(79, 124, 255, 0.1);
+}
+
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.data-table tbody tr:hover {
+  background: rgba(79, 124, 255, 0.05);
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, rgba(79, 124, 255, 0.1) 50%, var(--bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
