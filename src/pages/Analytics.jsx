@@ -21,20 +21,14 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import { FaUsers, FaChartBar, FaBirthdayCake, FaVenusMars, FaMobileAlt, FaGlobe, FaLaptop, FaChartLine, FaBullseye, FaCalendarAlt, FaSync } from 'react-icons/fa';
+import { FaUsers, FaChartBar, FaBirthdayCake, FaVenusMars, FaMobileAlt, FaGlobe, FaLaptop, FaChartLine, FaBullseye, FaSync } from 'react-icons/fa';
 import KPICard from '../components/cards/KPICard';
 import ChartCard from '../components/cards/ChartCard';
 import analyticsAPI from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, PointElement, LineElement, Title, Tooltip, Legend);
 
-const DATE_RANGE_OPTIONS = [
-    { value: 1, label: '1 Day' },
-    { value: 5, label: '5 Days' },
-    { value: 7, label: '7 Days' },
-    { value: 14, label: '14 Days' },
-    { value: 30, label: '30 Days' },
-];
+// Fixed to 1 day - no date range selection
 
 const colors = {
     blue: '#4f7cff',
@@ -95,7 +89,7 @@ export default function Analytics() {
     const [message, setMessage] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [selectedDays, setSelectedDays] = useState(5);
+    const selectedDays = 1; // Fixed to 1 day
 
     const [summary, setSummary] = useState(null);
     const [ageData, setAgeData] = useState([]);
@@ -157,28 +151,7 @@ export default function Analytics() {
         }
     };
 
-    const handleDateRangeChange = async (e) => {
-        const newDays = parseInt(e.target.value);
-        setSelectedDays(newDays);
-        // Check if data exists for this range, auto-fetch if missing
-        try {
-            const status = await analyticsAPI.checkDataStatus(newDays);
-            if (!status.has_data) {
-                setMessage({ type: 'info', text: `Fetching data for last ${newDays} days...` });
-                setRefreshing(true);
-                try {
-                    const result = await analyticsAPI.refreshData(newDays, false);
-                    setMessage({ type: 'success', text: `Loaded ${result.records_updated} records for last ${newDays} days` });
-                } catch (err) {
-                    setMessage({ type: 'error', text: 'Failed to fetch data. Check your Meta API credentials.' });
-                } finally {
-                    setRefreshing(false);
-                }
-            }
-        } catch (error) {
-            console.error('Error checking data status:', error);
-        }
-    };
+    // Date range fixed to 1 day - no handleDateRangeChange needed
 
     // Age chart - impressions + clicks
     const ageChartData = {
@@ -269,20 +242,6 @@ export default function Analytics() {
                                 <Link to="/analytics" className="px-3 xl:px-4 py-2 rounded-lg bg-[#4f7cff] text-white font-medium text-sm xl:text-base">Analytics</Link>
                             </nav>
 
-                            {/* Date Range Dropdown */}
-                            <div className="relative">
-                                <select
-                                    value={selectedDays}
-                                    onChange={handleDateRangeChange}
-                                    className="appearance-none px-3 xl:px-4 py-2 pr-8 rounded-lg bg-white/5 border border-white/10 text-white text-sm xl:text-base cursor-pointer hover:bg-white/10 transition-colors focus:outline-none focus:border-[#4f7cff]"
-                                >
-                                    {DATE_RANGE_OPTIONS.map(opt => (
-                                        <option key={opt.value} value={opt.value} className="bg-[#1a1a2e] text-white">{opt.label}</option>
-                                    ))}
-                                </select>
-                                <FaCalendarAlt className="absolute right-3 top-1/2 -translate-y-1/2 text-[#b4b4c9] pointer-events-none w-3 h-3" />
-                            </div>
-
                             <button onClick={() => handleRefresh(false)} disabled={refreshing} className={`px-3 xl:px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${refreshing ? 'bg-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-[#00d47e] to-[#00f5a0] hover:shadow-lg'} text-white font-medium text-sm xl:text-base`}>
                                 <FaSync className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
                                 <span className="hidden xl:inline">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
@@ -306,18 +265,7 @@ export default function Analytics() {
                                 <Link to="/analytics" onClick={() => setMobileMenuOpen(false)} className="px-4 py-2 rounded-lg bg-[#4f7cff] text-white font-medium">Analytics</Link>
                             </nav>
                             <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-2">
-                                    <FaCalendarAlt className="text-[#b4b4c9]" />
-                                    <select
-                                        value={selectedDays}
-                                        onChange={handleDateRangeChange}
-                                        className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white cursor-pointer"
-                                    >
-                                        {DATE_RANGE_OPTIONS.map(opt => (
-                                            <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">{opt.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
+
                                 <button onClick={() => { handleRefresh(false); setMobileMenuOpen(false); }} disabled={refreshing} className={`w-full px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all ${refreshing ? 'bg-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-[#00d47e] to-[#00f5a0] hover:shadow-lg'} text-white font-medium`}>
                                     <FaSync className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                                     {refreshing ? 'Refreshing...' : 'Refresh'}
