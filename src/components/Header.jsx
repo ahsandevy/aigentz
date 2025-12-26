@@ -8,14 +8,9 @@ function Header() {
         <div className="flex justify-between items-center mb-8">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <svg className="w-8 h-8 text-[#0066CC]" viewBox="0 0 40 40" fill="none">
-              <path d="M20 0L35 30H28L20 14L12 30H5L20 0Z" fill="currentColor" />
-              <path d="M20 14L28 30H12L20 14Z" fill="white" />
-              <path d="M0 40H10L20 20L30 40H40L20 0L0 40Z" fill="currentColor" fillOpacity="0.2" />
-            </svg>
+            <img src="/Final logo-01 1.png" alt="Ascend Analytics" className="h-10 w-auto" />
             <div className="flex flex-col leading-none">
-              <span className="text-[#1e4a79] font-bold text-lg tracking-wide">ASCEND</span>
-              <span className="text-[#1e4a79] text-[10px] tracking-[0.2em] uppercase">Analytics</span>
+
             </div>
           </div>
 
