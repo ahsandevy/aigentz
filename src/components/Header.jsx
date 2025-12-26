@@ -1,6 +1,37 @@
+import { useState } from 'react'
 import MetricsGrid from './MetricsGrid'
+import { analyticsAPI } from '../services/api'
 
 function Header() {
+  const [days, setDays] = useState(1)
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  const handleSync = async () => {
+    setIsSyncing(true)
+    try {
+      await analyticsAPI.refreshData(days)
+      // Ideally trigger a re-fetch in MetricsGrid, maybe via a context or a refresh trigger prop
+      // For now, let's just reload window or use a simple hack if we don't have global state management
+      window.location.reload()
+    } catch (error) {
+      console.error("Sync failed", error)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const handleDateChange = (e) => {
+    const value = e.target.value
+    // Parse "Last X days" to integer
+    const daysMap = {
+      "Today": 1,
+      "Last 7 days": 7,
+      "Last 30 days": 30,
+      "Last 90 days": 90
+    }
+    setDays(daysMap[value] || 1)
+  }
+
   return (
     <header className="bg-[#f4f8fe] pb-6">
       <div className="w-[85%] mx-auto px-8 pt-6">
@@ -45,7 +76,12 @@ function Header() {
           {/* Controls */}
           <div className="flex items-center gap-3">
             <div className="relative">
-              <select className="appearance-none bg-[#EDF0A8] border-none rounded-full px-6 py-2.5 pr-10 text-sm font-medium text-[#374151] shadow-sm focus:outline-none cursor-pointer">
+              <select
+                onChange={handleDateChange}
+                defaultValue="Today"
+                className="appearance-none bg-[#EDF0A8] border-none rounded-full px-6 py-2.5 pr-10 text-sm font-medium text-[#374151] shadow-sm focus:outline-none cursor-pointer"
+              >
+                <option>Today</option>
                 <option>Last 7 days</option>
                 <option>Last 30 days</option>
                 <option>Last 90 days</option>
@@ -54,19 +90,23 @@ function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
-            <button className="flex items-center gap-2 bg-[#EDF0A8] text-[#374151] px-6 py-2.5 rounded-full text-sm font-medium shadow-sm hover:opacity-90 transition-opacity">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button
+              onClick={handleSync}
+              disabled={isSyncing}
+              className={`flex items-center gap-2 bg-[#EDF0A8] text-[#374151] px-6 py-2.5 rounded-full text-sm font-medium shadow-sm hover:opacity-90 transition-opacity ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <svg className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Sync Meta Data
+              {isSyncing ? 'Syncing...' : 'Sync Meta Data'}
             </button>
           </div>
         </div>
 
         {/* Metric Cards Grid */}
-        <MetricsGrid />
+        <MetricsGrid days={days} />
       </div>
-    </header>
+    </header >
   )
 }
 
