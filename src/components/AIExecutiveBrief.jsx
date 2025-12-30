@@ -9,7 +9,7 @@ function AIExecutiveBrief() {
       </div>
 
       <div className="bg-[#fafafa] rounded-lg border border-[#bfdbfe] p-8 shadow-[0px_0.871px_1.742px_0px_rgba(0,0,0,0.05)]">
-        <div className="grid grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           {/* What Changed */}
           <div>
             <div className="flex items-center gap-2 mb-4">

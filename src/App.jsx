@@ -11,7 +11,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-[#f4f8fe] to-white">
       <Header />
 
-      <main className="w-[85%] mx-auto px-8 py-8">
+      <main className="w-full md:w-[85%] mx-auto px-4 md:px-8 py-8">
         <AIExecutiveBrief />
         <PerformanceExplorer />
         <AIRecommendations />

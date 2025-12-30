@@ -8,7 +8,7 @@ function EfficiencyDrivers() {
         <h2 className="text-2xl font-bold text-[#1e4a79]">Efficiency Drivers</h2>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Funnel Mix */}
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
           <h3 className="text-sm font-semibold text-[#374151] mb-4">Funnel Mix</h3>

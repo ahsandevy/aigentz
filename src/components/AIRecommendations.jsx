@@ -64,7 +64,7 @@ function AIRecommendations() {
         <h2 className="text-2xl font-bold text-[#1e4a79]">AI Recommendations</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {recommendations.map((rec, idx) => (
           <RecommendationCard key={idx} {...rec} />
         ))}

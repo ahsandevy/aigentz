@@ -1,8 +1,8 @@
 function MetricCard({ title, value, change, changeType, subtitle, target }) {
   return (
-    <div className="bg-white rounded-lg border-t-4 border-[#1e4a79] border-r-0 border-b-0 border-l-0 p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
-      <p className="text-sm text-[#374151] mb-2">{title}</p>
-      <p className="text-3xl font-bold text-[#1e4a79] mb-2">{value}</p>
+    <div className="bg-white rounded-lg border-t-4 border-[#1e4a79] border-r-0 border-b-0 border-l-0 p-4 md:p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)] h-full overflow-hidden">
+      <p className="text-xs md:text-sm text-[#374151] mb-2 truncate">{title}</p>
+      <p className="text-xl md:text-3xl font-bold text-[#1e4a79] mb-2 break-words leading-tight">{value}</p>
       {change && (
         <div className="flex items-center gap-2">
           <svg
