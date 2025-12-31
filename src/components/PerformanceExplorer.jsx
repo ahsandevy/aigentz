@@ -59,8 +59,8 @@ function PerformanceExplorer() {
   }
 
   return (
-    <section className="mb-8">
-      <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 md:gap-0">
+    <section className="mb-8 min-h-screen bg-[#f0f4f8] p-8">
+      <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 md:gap-0">
         <div className="flex items-center gap-3">
           <svg className="w-8 h-8 text-[#1e4a79]" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.12 14.12l-6.06 2.02c-.52.17-1.03-.34-.86-.86l2.02-6.06c.14-.42.48-.76.9-.9l6.06-2.02c.52-.17 1.03.34.86.86l-2.02 6.06c-.14.42-.48.76-.9.9z" />
@@ -73,7 +73,7 @@ function PerformanceExplorer() {
             placeholder="Search campaigns..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 bg-[rgba(250,250,250,0.55)] border border-[#c8c8a1] rounded-[30px] text-sm text-[#374151] shadow-[2px_2px_4px_0px_#cfcfcf] focus:outline-none w-full md:w-64 focus:ring-1 focus:ring-[#1e4a79] focus:border-[#1e4a79] transition-all"
+            className="pl-10 pr-4 py-2 bg-white border border-[#c8c8a1] rounded-[30px] text-sm text-[#374151] shadow-sm focus:outline-none w-full md:w-64 focus:ring-1 focus:ring-[#1e4a79] focus:border-[#1e4a79] transition-all"
           />
           <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#374151]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -81,16 +81,16 @@ function PerformanceExplorer() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-[#fafafa] border border-[#c8c8a1] rounded-t-[30px] border-b-0 p-4 shadow-[2px_2px_4px_0px_#cfcfcf] overflow-x-auto">
-        <div className="flex justify-start md:justify-center gap-4 md:gap-16 min-w-max">
+      {/* Tabs - Floating Pill Style */}
+      <div className="flex justify-center mb-10">
+        <div className="bg-white border border-[#e2e8f0] rounded-full p-1.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] inline-flex gap-2 overflow-x-auto max-w-full">
           {['Campaigns', 'Ad Sets', 'Ads', 'Audiences'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 md:px-8 py-2 rounded-[30px] font-bold transition-all duration-200 whitespace-nowrap ${activeTab === tab
-                ? 'bg-[#EDF0A8] text-[#374151] shadow-md transform scale-105'
-                : 'text-[#374151] hover:text-[#1e4a79] hover:bg-[#ebf1f8]'
+              className={`px-10 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap text-[14px] ${activeTab === tab
+                ? 'bg-[#f0f2b6] text-[#374151] shadow-sm'
+                : 'text-[#64748b] hover:text-[#1e4a79] hover:bg-gray-50'
                 }`}
             >
               {tab}
@@ -99,58 +99,357 @@ function PerformanceExplorer() {
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-[#ebf1f8] rounded-b-lg border border-[#c8c8a1] border-t-0 overflow-hidden min-h-[400px]">
+      {/* Data Table Area */}
+      <div className="overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex items-center justify-center h-64 bg-white/50 rounded-2xl shadow-sm border border-[#e2e8f0]">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e4a79]"></div>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#ebf1f8]">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-[#374151] uppercase tracking-wider">Campaign Name</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-[#374151] uppercase tracking-wider hidden lg:table-cell">Funnel</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-[#374151] uppercase tracking-wider hidden sm:table-cell">Spend (PKR)</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-[#374151] uppercase tracking-wider">Metics</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-[#374151] uppercase tracking-wider hidden md:table-cell">Assessment</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-[#374151] uppercase tracking-wider">Action</th>
+        ) : activeTab === 'Ad Sets' ? (
+          <div className="overflow-x-auto bg-white rounded-2xl border border-[#e2e8f0] shadow-sm">
+            <table className="w-full border-collapse bg-white">
+              <thead>
+                <tr className="text-[#334155] text-[13px] font-extrabold tracking-tight">
+                  <th className="px-6 py-6 text-left">Ad Set</th>
+                  <th className="px-6 py-6 text-left">Audience Type</th>
+                  <th className="px-6 py-6 text-center">Funnel Role</th>
+                  <th className="px-6 py-6 text-center">Budget</th>
+                  <th className="px-6 py-6 text-center">AI Detection Signal</th>
+                  <th className="px-6 py-6 text-center">Threshold Rationale</th>
+                  <th className="px-6 py-6 text-center whitespace-nowrap">Recommended action</th>
                 </tr>
               </thead>
-              <tbody className="bg-[#ebf1f8]">
+              <tbody>
+                {[
+                  {
+                    id: 1,
+                    name: 'AS_MOFU_Reels_Eid_Broad_25-45',
+                    audience: 'Reels Engagers · 25-45',
+                    role: 'Mid-Funnel',
+                    roleSub: 'Engagement to Purchase',
+                    budget: '22K PKR/d',
+                    signal: { roas: '9.93x', cpa: '1K' },
+                    rationale: 'Strong Above Threshold',
+                    rationaleSub: 'ROAS: Target ≥ 4.0x\nCPA: Target ≤ 2.5K',
+                    rationaleColor: 'bg-[#bef264]/90 text-[#3f6212]',
+                    action: 'Increase Budget',
+                    actionSub: '+20% over 48h'
+                  },
+                  {
+                    id: 2,
+                    name: 'AS_BOFU_ATC14_ExcludePurch30',
+                    audience: 'Add-to-Cart 14D (High Intent)',
+                    role: 'Lower-Funnel',
+                    roleSub: 'Cart Recovery',
+                    budget: '28K PKR/d',
+                    signal: { roas: '5.30x', cpa: '2K' },
+                    rationale: 'Meets Threshold',
+                    rationaleSub: 'ROAS: Target ≥ 5.0x\nCPA: Within Range',
+                    rationaleColor: 'bg-[#fef08a]/90 text-[#854d0e]',
+                    action: 'Hold Budget',
+                    actionSub: 'Test +10% Scale'
+                  },
+                  {
+                    id: 3,
+                    name: 'AS_TOFU_Lookalike_1pct_Purchasers_180D',
+                    audience: 'Lookalike 1% - Purchasers 180D',
+                    role: 'Prospecting',
+                    roleSub: 'Lookalike Expansion',
+                    budget: '20K PKR/d',
+                    signal: { roas: '2.40x', cpa: '4K' },
+                    rationale: 'Below Threshold',
+                    rationaleSub: 'ROAS: Target ≥ 3.5x\nCPA: Above Cap',
+                    rationaleColor: 'bg-[#fdba74]/90 text-[#9a3412]',
+                    action: 'Refresh Creative',
+                    actionSub: 'Tighten Exclusives'
+                  },
+                  {
+                    id: 4,
+                    name: 'AS_TOFU_Broad_PK_18-44_Auto',
+                    audience: 'Broad · Pakistan 18-44',
+                    role: 'Prospecting',
+                    roleSub: 'Broad Acquisition',
+                    budget: '25K PKR/d',
+                    signal: { roas: '2.40x', cpa: '4K' },
+                    rationale: 'Underperforming vs threshold',
+                    rationaleSub: 'ROAS: Target ≥ 3.0x\nCPA: +35% over limit',
+                    rationaleColor: 'bg-[#fca5a5]/90 text-[#991b1b]',
+                    action: 'Reduce Spend',
+                    actionSub: '-20%; Rebuild'
+                  }
+                ].map((as, index) => (
+                  <tr key={as.id} className="bg-white border-b border-[#cbd5e1]/40 last:border-0">
+                    <td className="px-6 py-8 text-[12px] text-[#334155] font-medium max-w-[220px] break-words">
+                      {as.name}
+                    </td>
+                    <td className="px-6 py-8 text-[12px] text-[#64748b] font-medium">
+                      {as.audience}
+                    </td>
+                    <td className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm">
+                          {as.role}
+                        </span>
+                        <span className="text-[11px] text-[#94a3b8] font-medium">
+                          {as.roleSub}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-bold tracking-tight">
+                      {as.budget}
+                    </td>
+                    <td className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center text-[12px] text-[#334155] leading-tight font-medium">
+                        <div><span className="font-extrabold text-[#1e293b]">ROAS:</span> {as.signal.roas}</div>
+                        <div><span className="font-extrabold text-[#1e293b]">CPA:</span> {as.signal.cpa}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-8 text-center whitespace-nowrap">
+                      <div className="flex flex-col items-center gap-2.5">
+                        <span className={`px-6 py-1 ${as.rationaleColor} text-[11px] font-bold rounded-[30px] shadow-sm min-w-[160px] text-center`}>
+                          {as.rationale}
+                        </span>
+                        <div className="text-[11px] text-[#475569] font-bold leading-tight whitespace-pre-line text-center">
+                          {as.rationaleSub}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <button className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm hover:bg-gray-50 transition-all active:scale-95 whitespace-nowrap">
+                          {as.action}
+                        </button>
+                        <span className="text-[11px] text-[#94a3b8] font-medium">
+                          {as.actionSub}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : activeTab === 'Ads' ? (
+          <div className="overflow-x-auto bg-white rounded-2xl border border-[#e2e8f0] shadow-sm">
+            <table className="w-full border-collapse bg-white">
+              <thead>
+                <tr className="text-[#334155] text-[13px] font-extrabold tracking-tight border-b border-[#cbd5e1]/40">
+                  <th className="px-6 py-6 text-left">Ad Name</th>
+                  <th className="px-6 py-6 text-center">Format</th>
+                  <th className="px-6 py-6 text-center">Fatigue</th>
+                  <th className="px-6 py-6 text-center">Spend</th>
+                  <th className="px-6 py-6 text-center">ROAS</th>
+                  <th className="px-6 py-6 text-center">CTR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    id: 1,
+                    name: 'Ad_Video_15s_SneakerDrop_UGC_V1',
+                    format: 'Video',
+                    fatigue: '72',
+                    spend: '385K PKR',
+                    roas: '2.40x',
+                    ctr: '1.82%'
+                  },
+                  {
+                    id: 2,
+                    name: 'AD_Carousel_ATR_Reminder_V3',
+                    format: 'Carousel',
+                    fatigue: '61',
+                    spend: '420K PKR',
+                    roas: '5.30x',
+                    ctr: '4.32%'
+                  },
+                  {
+                    id: 3,
+                    name: 'AD_Video_30s_Brand_Story_V1',
+                    format: 'Video',
+                    fatigue: '56',
+                    spend: '300K PKR',
+                    roas: '2.40x',
+                    ctr: '1.91%'
+                  },
+                  {
+                    id: 4,
+                    name: 'AD_Image_Discount_150ff_V1',
+                    format: 'Image',
+                    fatigue: '49',
+                    spend: '420K PKR',
+                    roas: '2.40x',
+                    ctr: '4.10%'
+                  }
+                ].map((ad) => (
+                  <tr key={ad.id} className="bg-white border-b border-[#cbd5e1]/40 last:border-0">
+                    <td className="px-6 py-8 text-[12px] text-[#334155] font-medium">
+                      {ad.name}
+                    </td>
+                    <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-medium">
+                      {ad.format}
+                    </td>
+                    <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-medium">
+                      {ad.fatigue}
+                    </td>
+                    <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-medium">
+                      {ad.spend}
+                    </td>
+                    <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-medium">
+                      {ad.roas}
+                    </td>
+                    <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-medium">
+                      {ad.ctr}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : activeTab === 'Audiences' ? (
+          <div className="overflow-x-auto bg-white rounded-2xl border border-[#e2e8f0] shadow-sm">
+            <table className="w-full border-collapse bg-white">
+              <thead>
+                <tr className="text-[#334155] text-[13px] font-extrabold tracking-tight border-b border-[#cbd5e1]/40">
+                  <th className="px-6 py-6 text-left">Audience</th>
+                  <th className="px-6 py-6 text-center">Funnel Role</th>
+                  <th className="px-6 py-6 text-center">Size</th>
+                  <th className="px-6 py-6 text-center">Spend Share</th>
+                  <th className="px-6 py-6 text-center">Performance Signal</th>
+                  <th className="px-6 py-6 text-left">AI Insight & Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    id: 1,
+                    name: 'Add To Cart 14D',
+                    role: 'Lower Funnel',
+                    roleSub: 'High Intent',
+                    size: '18.7K',
+                    share: '34% (↑ high)',
+                    signal: 'Elite Converter',
+                    signalColor: 'bg-[#bef264]/90 text-[#3f6212]',
+                    insight: 'Converting efficiently but nearing saturation',
+                    action: 'Cap Frequency, Scale via Lookalikes'
+                  },
+                  {
+                    id: 2,
+                    name: 'Website Purchasers 180D',
+                    role: 'Lower Funnel',
+                    roleSub: 'Loyalty',
+                    size: '42.3K',
+                    share: '18% (↓ low)',
+                    signal: 'Underutilized Asset',
+                    signalColor: 'bg-[#fef08a]/90 text-[#854d0e]',
+                    insight: 'High ROAS, limited scale',
+                    action: 'Increase Retention & Cross-Sell Campaigns'
+                  },
+                  {
+                    id: 3,
+                    name: 'Lookalike 1% Purchasers 180D',
+                    role: 'Prospecting',
+                    roleSub: 'Qualified Scale',
+                    size: '2.14M',
+                    share: '21% (↓ low)',
+                    signal: 'Scale Constrained',
+                    signalColor: 'bg-[#fdba74]/90 text-[#9a3412]',
+                    insight: 'Strong audience quality but creative fatigue',
+                    action: 'Refresh Creatives before Scaling'
+                  },
+                  {
+                    id: 4,
+                    name: 'Page Engagers 30D',
+                    role: 'Mid Funnel',
+                    roleSub: 'Warm',
+                    size: '156K',
+                    share: '27% (↑ high)',
+                    signal: 'Low Purchase Intent',
+                    signalColor: 'bg-[#fca5a5]/90 text-[#991b1b]',
+                    insight: 'Absorbing budget without conversion',
+                    action: 'Reduce Spend, Tighten Window or Exclude'
+                  }
+                ].map((aud) => (
+                  <tr key={aud.id} className="bg-white border-b border-[#cbd5e1]/40 last:border-0">
+                    <td className="px-6 py-8 text-[12px] text-[#334155] font-medium">
+                      {aud.name}
+                    </td>
+                    <td className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm">
+                          {aud.role}
+                        </span>
+                        <span className="text-[11px] text-[#94a3b8] font-medium">
+                          {aud.roleSub}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-medium">
+                      {aud.size}
+                    </td>
+                    <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-medium">
+                      {aud.share}
+                    </td>
+                    <td className="px-6 py-8 text-center">
+                      <span className={`px-6 py-1 ${aud.signalColor} text-[11px] font-bold rounded-[30px] shadow-sm inline-block min-w-[150px]`}>
+                        {aud.signal}
+                      </span>
+                    </td>
+                    <td className="px-6 py-8 text-left max-w-[300px]">
+                      <div className="text-[12px] text-[#64748b] leading-relaxed">
+                        {aud.insight} <span className="text-[#334155]">↗</span> <span className="font-bold text-[#334155]">{aud.action}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="overflow-x-auto bg-white rounded-2xl border border-[#e2e8f0] shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="px-6 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Campaign Name</th>
+                  <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Funnel</th>
+                  <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Spend (PKR)</th>
+                  <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Metics</th>
+                  <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Assessment</th>
+                  <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
                 {filteredCampaigns.map((cp) => (
-                  <tr key={cp.id} className="border-b border-[#c8c8a1] hover:bg-[#f0f4f8] transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#374151]">
+                  <tr key={cp.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-5 whitespace-nowrap text-sm font-semibold text-gray-700">
                       {cp.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                    <td className="px-6 py-5 whitespace-nowrap hidden lg:table-cell">
                       <div className="flex flex-col items-center gap-1">
-                        <span className="px-3 py-0.5 bg-white border border-gray-300 text-gray-600 text-[10px] rounded-full shadow-sm font-bold uppercase tracking-tight">{cp.funnel_stage}</span>
+                        <span className="px-3 py-1 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-full shadow-sm font-bold uppercase tracking-tight">{cp.funnel_stage}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#374151] text-center hidden sm:table-cell font-bold">
+                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-700 text-center hidden sm:table-cell font-bold">
                       {cp.spend.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#374151]">
-                      <div className="flex flex-col items-center text-xs">
-                        <div><span className="font-bold">ROAS:</span> {cp.roas}x</div>
-                        <div><span className="font-bold">CPA:</span> {cp.cpa.toLocaleString()}</div>
+                    <td className="px-6 py-5 whitespace-nowrap text-xs text-gray-600">
+                      <div className="flex flex-col items-center">
+                        <div><span className="font-bold text-gray-800">ROAS:</span> {cp.roas}x</div>
+                        <div><span className="font-bold text-gray-800">CPA:</span> {cp.cpa.toLocaleString()}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-[11px] text-[#374151] hidden md:table-cell max-w-xs overflow-hidden text-ellipsis">
-                      <div className="text-center italic text-gray-600">
+                    <td className="px-6 py-5 whitespace-nowrap text-[11px] text-gray-500 hidden md:table-cell max-w-xs overflow-hidden text-ellipsis">
+                      <div className="text-center italic leading-snug">
                         {cp.assessment}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-6 py-5 whitespace-nowrap text-center">
                       <div className="flex flex-col gap-2 items-center">
                         <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap ${getStatusClasses(cp.action)}`}>
                           {cp.action}
                         </span>
                         <button
                           onClick={() => handleAIRequest(cp.id)}
-                          className="text-[10px] text-[#1e4a79] underline hover:text-[#3b82f6] transition-colors"
+                          className="text-[10px] text-[#1e4a79] font-bold underline hover:text-blue-600 transition-colors"
                         >
                           Show AI Insight
                         </button>
