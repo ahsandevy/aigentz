@@ -52,6 +52,28 @@ export const analyticsAPI = {
             console.error("Error refreshing data:", error);
             throw error;
         }
+    },
+
+    // Performance Explorer
+    getPerformanceExplorer: async (days) => {
+        try {
+            const response = await api.get('/performance-explorer', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching performance explorer data:', error);
+            throw error;
+        }
+    },
+
+    // AI Recommendation
+    getAIRecommendation: async (campaignId, days) => {
+        try {
+            const response = await api.get(`/campaign/${campaignId}/ai-recommendation`, { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching AI recommendation:', error);
+            throw error;
+        }
     }
 };
 
