@@ -38,6 +38,38 @@ function PerformanceExplorer() {
     }
   }
 
+
+
+
+  // Fetch AdSets when tab changes
+  useEffect(() => {
+    if (activeTab === 'Ad Sets') {
+      fetchAdSets()
+    }
+  }, [activeTab])
+
+  const [adSets, setAdSets] = useState([])
+
+  const fetchAdSets = async () => {
+    try {
+      setLoading(true)
+      const response = await analyticsAPI.getPerformanceAdSets(7)
+      setAdSets(response.data)
+    } catch (error) {
+      console.error('Error fetching adsets:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Filter AdSets
+  const filteredAdSets = useMemo(() => {
+    return adSets.filter(a =>
+      a.name.toLowerCase().includes(search.toLowerCase()) ||
+      a.funnel_stage.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [adSets, search])
+
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(c =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -60,6 +92,7 @@ function PerformanceExplorer() {
 
   return (
     <section className="mb-8 min-h-screen bg-[#f0f4f8] p-8">
+      {/* ... Header and Search ... */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 md:gap-0">
         <div className="flex items-center gap-3">
           <svg className="w-8 h-8 text-[#1e4a79]" fill="currentColor" viewBox="0 0 24 24">
@@ -70,7 +103,7 @@ function PerformanceExplorer() {
         <div className="relative w-full md:w-auto">
           <input
             type="text"
-            placeholder="Search campaigns..."
+            placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 pr-4 py-2 bg-white border border-[#c8c8a1] rounded-[30px] text-sm text-[#374151] shadow-sm focus:outline-none w-full md:w-64 focus:ring-1 focus:ring-[#1e4a79] focus:border-[#1e4a79] transition-all"
@@ -111,116 +144,48 @@ function PerformanceExplorer() {
               <thead>
                 <tr className="text-[#334155] text-[13px] font-extrabold tracking-tight">
                   <th className="px-6 py-6 text-left">Ad Set</th>
-                  <th className="px-6 py-6 text-left">Audience Type</th>
+                  <th className="px-6 py-6 text-left">Audience Strategy</th>
                   <th className="px-6 py-6 text-center">Funnel Role</th>
                   <th className="px-6 py-6 text-center">Budget</th>
                   <th className="px-6 py-6 text-center">AI Detection Signal</th>
-                  <th className="px-6 py-6 text-center">Threshold Rationale</th>
-                  <th className="px-6 py-6 text-center whitespace-nowrap">Recommended action</th>
+                  <th className="px-6 py-6 text-center whitespace-nowrap">Assessment</th>
+                  <th className="px-6 py-6 text-center">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  {
-                    id: 1,
-                    name: 'AS_MOFU_Reels_Eid_Broad_25-45',
-                    audience: 'Reels Engagers · 25-45',
-                    role: 'Mid-Funnel',
-                    roleSub: 'Engagement to Purchase',
-                    budget: '22K PKR/d',
-                    signal: { roas: '9.93x', cpa: '1K' },
-                    rationale: 'Strong Above Threshold',
-                    rationaleSub: 'ROAS: Target ≥ 4.0x\nCPA: Target ≤ 2.5K',
-                    rationaleColor: 'bg-[#bef264]/90 text-[#3f6212]',
-                    action: 'Increase Budget',
-                    actionSub: '+20% over 48h'
-                  },
-                  {
-                    id: 2,
-                    name: 'AS_BOFU_ATC14_ExcludePurch30',
-                    audience: 'Add-to-Cart 14D (High Intent)',
-                    role: 'Lower-Funnel',
-                    roleSub: 'Cart Recovery',
-                    budget: '28K PKR/d',
-                    signal: { roas: '5.30x', cpa: '2K' },
-                    rationale: 'Meets Threshold',
-                    rationaleSub: 'ROAS: Target ≥ 5.0x\nCPA: Within Range',
-                    rationaleColor: 'bg-[#fef08a]/90 text-[#854d0e]',
-                    action: 'Hold Budget',
-                    actionSub: 'Test +10% Scale'
-                  },
-                  {
-                    id: 3,
-                    name: 'AS_TOFU_Lookalike_1pct_Purchasers_180D',
-                    audience: 'Lookalike 1% - Purchasers 180D',
-                    role: 'Prospecting',
-                    roleSub: 'Lookalike Expansion',
-                    budget: '20K PKR/d',
-                    signal: { roas: '2.40x', cpa: '4K' },
-                    rationale: 'Below Threshold',
-                    rationaleSub: 'ROAS: Target ≥ 3.5x\nCPA: Above Cap',
-                    rationaleColor: 'bg-[#fdba74]/90 text-[#9a3412]',
-                    action: 'Refresh Creative',
-                    actionSub: 'Tighten Exclusives'
-                  },
-                  {
-                    id: 4,
-                    name: 'AS_TOFU_Broad_PK_18-44_Auto',
-                    audience: 'Broad · Pakistan 18-44',
-                    role: 'Prospecting',
-                    roleSub: 'Broad Acquisition',
-                    budget: '25K PKR/d',
-                    signal: { roas: '2.40x', cpa: '4K' },
-                    rationale: 'Underperforming vs threshold',
-                    rationaleSub: 'ROAS: Target ≥ 3.0x\nCPA: +35% over limit',
-                    rationaleColor: 'bg-[#fca5a5]/90 text-[#991b1b]',
-                    action: 'Reduce Spend',
-                    actionSub: '-20%; Rebuild'
-                  }
-                ].map((as, index) => (
-                  <tr key={as.id} className="bg-white border-b border-[#cbd5e1]/40 last:border-0">
+                {filteredAdSets.map((as) => (
+                  <tr key={as.id} className="bg-white border-b border-[#cbd5e1]/40 last:border-0 hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-8 text-[12px] text-[#334155] font-medium max-w-[220px] break-words">
                       {as.name}
                     </td>
                     <td className="px-6 py-8 text-[12px] text-[#64748b] font-medium">
-                      {as.audience}
+                      {as.audience_type}
                     </td>
                     <td className="px-6 py-8 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <span className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm">
-                          {as.role}
-                        </span>
-                        <span className="text-[11px] text-[#94a3b8] font-medium">
-                          {as.roleSub}
+                        <span className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm uppercase">
+                          {as.funnel_stage}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-bold tracking-tight">
-                      {as.budget}
+                      {as.budget_readable}
                     </td>
                     <td className="px-6 py-8 text-center">
                       <div className="flex flex-col items-center text-[12px] text-[#334155] leading-tight font-medium">
-                        <div><span className="font-extrabold text-[#1e293b]">ROAS:</span> {as.signal.roas}</div>
-                        <div><span className="font-extrabold text-[#1e293b]">CPA:</span> {as.signal.cpa}</div>
+                        <div><span className="font-extrabold text-[#1e293b]">ROAS:</span> {as.roas}x</div>
+                        <div><span className="font-extrabold text-[#1e293b]">CPA:</span> {as.cpa}</div>
                       </div>
                     </td>
                     <td className="px-6 py-8 text-center whitespace-nowrap">
-                      <div className="flex flex-col items-center gap-2.5">
-                        <span className={`px-6 py-1 ${as.rationaleColor} text-[11px] font-bold rounded-[30px] shadow-sm min-w-[160px] text-center`}>
-                          {as.rationale}
-                        </span>
-                        <div className="text-[11px] text-[#475569] font-bold leading-tight whitespace-pre-line text-center">
-                          {as.rationaleSub}
-                        </div>
-                      </div>
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap ${getStatusClasses(as.action)}`}>
+                        {as.assessment}
+                      </span>
                     </td>
                     <td className="px-6 py-8 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <button className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm hover:bg-gray-50 transition-all active:scale-95 whitespace-nowrap">
+                        <span className={`px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap`}>
                           {as.action}
-                        </button>
-                        <span className="text-[11px] text-[#94a3b8] font-medium">
-                          {as.actionSub}
                         </span>
                       </div>
                     </td>
@@ -513,7 +478,6 @@ function PerformanceExplorer() {
       )}
     </section>
   )
+
 }
-
 export default PerformanceExplorer
-

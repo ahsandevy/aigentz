@@ -65,6 +65,16 @@ export const analyticsAPI = {
         }
     },
 
+    getPerformanceAdSets: async (days) => {
+        try {
+            const response = await api.get('/performance-explorer/adsets', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching performance explorer adsets:', error);
+            throw error;
+        }
+    },
+
     // AI Recommendation
     getAIRecommendation: async (campaignId, days) => {
         try {
