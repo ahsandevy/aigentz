@@ -114,6 +114,16 @@ export const analyticsAPI = {
             console.error('Error fetching audience AI recommendation:', error);
             throw error;
         }
+    },
+
+    getEfficiencyDrivers: async (days) => {
+        try {
+            const response = await api.get('/efficiency-drivers', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching efficiency drivers:', error);
+            throw error;
+        }
     }
 };
 

@@ -1,4 +1,38 @@
+import React, { useState, useEffect } from 'react';
+import { analyticsAPI } from '../services/api';
+
 function EfficiencyDrivers() {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState({
+    funnelMix: [],
+    newVsReturning: [],
+    creativeFatigue: [],
+    placementPerformance: []
+  });
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const result = await analyticsAPI.getEfficiencyDrivers(7);
+        setData(result);
+      } catch (error) {
+        console.error('Error fetching efficiency drivers:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e4a79]"></div>
+      </div>
+    );
+  }
+
   return (
     <section className="mb-8">
       <div className="flex items-center gap-3 mb-6">
@@ -13,11 +47,7 @@ function EfficiencyDrivers() {
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
           <h3 className="text-sm font-semibold text-[#374151] mb-4">Funnel Mix</h3>
           <div className="space-y-4">
-            {[
-              { label: 'TOFU', roas: '2.4x', spend: '1348K', width: '53%' },
-              { label: 'MOFU', roas: '9.9x', spend: '660K', width: '67%' },
-              { label: 'BOFU', roas: '5.3x', spend: '840K', width: '85%' }
-            ].map((item, idx) => (
+            {data.funnelMix.map((item, idx) => (
               <div key={idx}>
                 <div className="flex justify-between mb-1">
                   <span className="text-[15px] font-bold text-[#111827]">{item.label}</span>
@@ -27,7 +57,7 @@ function EfficiencyDrivers() {
                   </div>
                 </div>
                 <div className="w-full bg-[#e5e7eb] rounded-full h-[9px]">
-                  <div className="bg-[#78a3cd] h-[9px] rounded-full" style={{ width: item.width }}></div>
+                  <div className="bg-[#78a3cd] h-[9px] rounded-full transition-all duration-500" style={{ width: item.width }}></div>
                 </div>
               </div>
             ))}
@@ -38,17 +68,14 @@ function EfficiencyDrivers() {
         <div className="bg-[#fafafa] rounded-lg border border-[#e5e7eb] p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
           <h3 className="text-sm font-semibold text-[#374151] mb-4">New vs Returning</h3>
           <div className="space-y-4">
-            {[
-              { label: 'New Customers', percentage: '63.00%', width: '63%', color: '#78a3cd' },
-              { label: 'Returning', percentage: '37.00%', width: '37%', color: '#c8c8a1' }
-            ].map((item, idx) => (
+            {data.newVsReturning.map((item, idx) => (
               <div key={idx}>
                 <div className="flex justify-between mb-1">
                   <span className="text-[15px] font-bold text-[#111827]">{item.label}</span>
                   <span className="text-[12px] font-bold text-[#78a3cd]">{item.percentage}</span>
                 </div>
                 <div className="w-full bg-[#e5e7eb] rounded-full h-[9px]">
-                  <div className="h-[9px] rounded-full" style={{ width: item.width, backgroundColor: item.color }}></div>
+                  <div className="h-[9px] rounded-full transition-all duration-500" style={{ width: item.width, backgroundColor: item.color }}></div>
                 </div>
               </div>
             ))}
@@ -59,16 +86,10 @@ function EfficiencyDrivers() {
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
           <h3 className="text-sm font-semibold text-[#374151] mb-4">Creative Fatigue (Top 5)</h3>
           <div className="space-y-3">
-            {[
-              { name: 'Video 15s', score: 73, color: '#dc2628' },
-              { name: 'Carousel ATC', score: 61, color: '#ea580c' },
-              { name: 'Video 30s', score: 56, color: '#ea580c' },
-              { name: 'Image Discount', score: 49, color: '#c8c8a1' },
-              { name: 'Carousel Bestsellers', score: 45, color: '#c8c8a1' },
-            ].map((item, idx) => (
+            {data.creativeFatigue.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between">
-                <span className="text-[12px] font-bold text-[#6b7280]">{item.name}</span>
-                <span className="px-2 py-1 rounded-[4px] text-[12px] font-bold text-white" style={{ backgroundColor: item.color }}>
+                <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
+                <span className="px-2 py-1 rounded-[4px] text-[12px] font-bold text-white min-w-[30px] text-center" style={{ backgroundColor: item.color }}>
                   {item.score}
                 </span>
               </div>
@@ -80,15 +101,9 @@ function EfficiencyDrivers() {
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
           <h3 className="text-sm font-semibold text-[#374151] mb-4">Placement Performance</h3>
           <div className="space-y-3">
-            {[
-              { name: 'Instagram Reels', roas: '9.9x' },
-              { name: 'Facebook Reels', roas: '5.8x' },
-              { name: 'Instagram Stories', roas: '4.1x' },
-              { name: 'Instagram Feed', roas: '3.2x' },
-              { name: 'Facebook Feed', roas: '2.8x' },
-            ].map((item, idx) => (
+            {data.placementPerformance.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between">
-                <span className="text-[12px] font-bold text-[#6b7280]">{item.name}</span>
+                <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
                 <span className={`text-[12px] font-bold ${idx === 0 ? 'text-[#78a3cd]' : 'text-[#6b7280]'}`}>{item.roas}</span>
               </div>
             ))}
@@ -99,5 +114,5 @@ function EfficiencyDrivers() {
   )
 }
 
-export default EfficiencyDrivers
+export default EfficiencyDrivers;
 
