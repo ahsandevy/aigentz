@@ -75,6 +75,16 @@ export const analyticsAPI = {
         }
     },
 
+    getPerformanceAds: async (days) => {
+        try {
+            const response = await api.get('/performance-explorer/ads', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching performance ads:', error);
+            throw error;
+        }
+    },
+
     // AI Recommendation
     getAIRecommendation: async (campaignId, days) => {
         try {
@@ -82,6 +92,26 @@ export const analyticsAPI = {
             return response.data;
         } catch (error) {
             console.error('Error fetching AI recommendation:', error);
+            throw error;
+        }
+    },
+
+    getPerformanceAudiences: async (days) => {
+        try {
+            const response = await api.get('/performance-explorer/audiences', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching performance audiences:', error);
+            throw error;
+        }
+    },
+
+    getAudienceAIRecommendation: async (audienceData) => {
+        try {
+            const response = await api.post('/audience/ai-recommendation', audienceData);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching audience AI recommendation:', error);
             throw error;
         }
     }
