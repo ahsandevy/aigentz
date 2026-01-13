@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api/analytics';
+// Use relative URL in development (via Vite proxy) or absolute URL in production
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'http://localhost:8000/api/analytics' 
+  : '/api/analytics';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
