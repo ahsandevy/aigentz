@@ -14,6 +14,8 @@ import { usePlacementOptimizationRecommendation } from '../hooks/usePlacementOpt
 import { useAudienceOptimizationRecommendation } from '../hooks/useAudienceOptimizationRecommendation'
 import { useBiddingStrategyOptimizationRecommendation } from '../hooks/useBiddingStrategyOptimizationRecommendation'
 import { useDaypartingOptimizationRecommendation } from '../hooks/useDaypartingOptimizationRecommendation'
+import { useAllRecommendationsPriorities } from '../hooks/useAllRecommendationsPriorities'
+import { useAppliedRecommendations } from '../hooks/useAppliedRecommendations'
 import { analyticsAPI } from '../services/api'
 
 function AIRecommendations() {
@@ -25,33 +27,11 @@ function AIRecommendations() {
   const { data: biddingData, isLoading: biddingIsLoading, error: biddingError, refetch: refetchBidding } = useBiddingStrategyOptimizationRecommendation(7)
   const { data: daypartingData, isLoading: daypartingIsLoading, error: daypartingError, refetch: refetchDayparting } = useDaypartingOptimizationRecommendation(7)
   
-  // Fetch priorities from the all recommendations endpoint
-  const [priorities, setPriorities] = useState({})
-  const [prioritiesLoading, setPrioritiesLoading] = useState(true)
+  // Fetch priorities from the all recommendations endpoint using React Query
+  const { data: priorities = {}, isLoading: prioritiesLoading, refetch: refetchPriorities } = useAllRecommendationsPriorities(7)
   
-  useEffect(() => {
-    const fetchPriorities = async () => {
-      try {
-        setPrioritiesLoading(true)
-        const response = await analyticsAPI.getAllRecommendationsPriorities(7)
-        if (response?.recommendations) {
-          // Create a map of card_name to priority
-          const priorityMap = {}
-          response.recommendations.forEach(rec => {
-            priorityMap[rec.card_name] = rec.priority
-          })
-          setPriorities(priorityMap)
-        }
-      } catch (error) {
-        console.error('Error fetching priorities:', error)
-        // Continue with default priorities if API fails
-      } finally {
-        setPrioritiesLoading(false)
-      }
-    }
-    
-    fetchPriorities()
-  }, [])
+  // Fetch applied recommendations using React Query
+  const { data: appliedRecommendations = [], isLoading: appliedLoading, refetch: refetchAppliedRecommendations } = useAppliedRecommendations(50)
   const [selectedBudgetRecommendation, setSelectedBudgetRecommendation] = useState(null)
   const [selectedCreativeRecommendation, setSelectedCreativeRecommendation] = useState(null)
   const [selectedPlacementRecommendation, setSelectedPlacementRecommendation] = useState(null)
@@ -79,10 +59,6 @@ function AIRecommendations() {
   
   // Force refresh trigger to ensure component updates
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-  
-  // Applied recommendations state
-  const [appliedRecommendations, setAppliedRecommendations] = useState([])
-  const [appliedLoading, setAppliedLoading] = useState(false)
 
   // Helper function to get priority from API or fallback to individual response
   const getPriority = (cardName, fallbackPriority, category = null) => {
@@ -756,26 +732,6 @@ function AIRecommendations() {
     setIsDaypartingModalOpen(false)
   }
 
-  // Fetch applied recommendations
-  useEffect(() => {
-    const fetchAppliedRecommendations = async () => {
-      try {
-        setAppliedLoading(true)
-        const response = await analyticsAPI.getAppliedRecommendations(50)
-        if (response?.success && response?.data) {
-          // Filter out reverted items (only show active applied recommendations)
-          const activeApplied = response.data.filter(rec => rec.reverted_at === null)
-          setAppliedRecommendations(activeApplied)
-        }
-      } catch (error) {
-        console.error('Error fetching applied recommendations:', error)
-      } finally {
-        setAppliedLoading(false)
-      }
-    }
-    fetchAppliedRecommendations()
-  }, [])
-
   // Handle simulate
   const handleSimulate = async (recommendationId) => {
     if (!recommendationId) {
@@ -840,69 +796,108 @@ function AIRecommendations() {
         // Show success message
         const successMessage = result.message || 'Recommendation approved successfully!'
         
-        // Check if a new recommendation was generated
-        if (result.new_recommendation_generated) {
-          alert(`${successMessage}\n\nA new recommendation has been generated and will appear shortly.`)
+        // Map recommendation types to their refetch functions and query keys
+        const recommendationTypeMap = {
+          'budget': { refetch: refetchBudget, queryKey: ['budget-reallocation', 7] },
+          'creative': { refetch: refetchCreative, queryKey: ['creative-analysis', 7] },
+          'placement': { refetch: refetchPlacement, queryKey: ['placement-optimization', 7] },
+          'audience': { refetch: refetchAudience, queryKey: ['audience-optimization', 7] },
+          'bidding': { refetch: refetchBidding, queryKey: ['bidding-strategy-optimization', 7] },
+          'dayparting': { refetch: refetchDayparting, queryKey: ['dayparting-optimization', 7] },
+          'budget_reallocation': { refetch: refetchBudget, queryKey: ['budget-reallocation', 7] },
+          'creative_analysis': { refetch: refetchCreative, queryKey: ['creative-analysis', 7] },
+          'placement_optimization': { refetch: refetchPlacement, queryKey: ['placement-optimization', 7] },
+          'audience_optimization': { refetch: refetchAudience, queryKey: ['audience-optimization', 7] },
+          'bidding_strategy_optimization': { refetch: refetchBidding, queryKey: ['bidding-strategy-optimization', 7] },
+          'dayparting_optimization': { refetch: refetchDayparting, queryKey: ['dayparting-optimization', 7] }
+        }
+        
+        // Always refetch applied recommendations and priorities (needed for UI updates)
+        const refreshOperations = [
+          refetchAppliedRecommendations({ cancelRefetch: false }),
+          refetchPriorities({ cancelRefetch: false })
+        ]
+        
+        let regeneratedTypeConfig = null
+        
+        // If a new recommendation was generated, refetch only that specific type
+        if (result.new_recommendation_generated && result.new_recommendation_type) {
+          regeneratedTypeConfig = recommendationTypeMap[result.new_recommendation_type.toLowerCase()]
+          
+          if (regeneratedTypeConfig) {
+            console.log('New recommendation generated:', {
+              type: result.new_recommendation_type,
+              id: result.new_recommendation_id,
+              queryKey: regeneratedTypeConfig.queryKey
+            })
+            
+            // Remove only the specific query from cache to force fresh fetch
+            queryClient.removeQueries({ queryKey: regeneratedTypeConfig.queryKey })
+            
+            // Refetch only the specific recommendation type that was regenerated
+            refreshOperations.push(regeneratedTypeConfig.refetch({ cancelRefetch: false }))
+            
+            // Show informative success message
+            const typeName = result.new_recommendation_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+            alert(`${successMessage}\n\nA new ${typeName} recommendation (ID: ${result.new_recommendation_id}) has been generated and will appear shortly.`)
+          } else {
+            console.warn('Unknown recommendation type:', result.new_recommendation_type)
+            // Fallback: refetch all if type mapping not found
+            // Set regeneratedTypeConfig to null so we remove all queries below
+            regeneratedTypeConfig = null
+            refreshOperations.push(
+              refetchBudget({ cancelRefetch: false }),
+              refetchCreative({ cancelRefetch: false }),
+              refetchPlacement({ cancelRefetch: false }),
+              refetchAudience({ cancelRefetch: false }),
+              refetchBidding({ cancelRefetch: false }),
+              refetchDayparting({ cancelRefetch: false })
+            )
+            alert(`${successMessage}\n\nA new recommendation has been generated and will appear shortly.`)
+          }
         } else {
+          // No new recommendation generated - refetch all to ensure UI is up to date
+          // (The approved recommendation should disappear from the list)
+          refreshOperations.push(
+            refetchBudget({ cancelRefetch: false }),
+            refetchCreative({ cancelRefetch: false }),
+            refetchPlacement({ cancelRefetch: false }),
+            refetchAudience({ cancelRefetch: false }),
+            refetchBidding({ cancelRefetch: false }),
+            refetchDayparting({ cancelRefetch: false })
+          )
           alert(successMessage)
         }
         
-        // Refresh applied recommendations to show the newly approved one
-        try {
-          const response = await analyticsAPI.getAppliedRecommendations(50)
-          if (response?.success && response?.data) {
-            const activeApplied = response.data.filter(rec => rec.reverted_at === null)
-            setAppliedRecommendations(activeApplied)
-          }
-        } catch (error) {
-          console.error('Error refreshing applied recommendations:', error)
-        }
-        
-        // Refresh recommendations using /ai-recommendations/all endpoint
-        // This endpoint returns all pending recommendations (approved ones are filtered out)
-        try {
-          const allRecommendationsResponse = await analyticsAPI.getAllRecommendationsPriorities(7)
-          
-          if (allRecommendationsResponse?.recommendations) {
-            // Update priorities map
-            const priorityMap = {}
-            allRecommendationsResponse.recommendations.forEach(rec => {
-              priorityMap[rec.card_name] = rec.priority
-            })
-            setPriorities(priorityMap)
-            
-            // Invalidate all queries to mark them as stale
-            await Promise.all([
-              queryClient.invalidateQueries({ queryKey: ['budget-reallocation', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['creative-analysis', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['placement-optimization', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['audience-optimization', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['bidding-strategy-optimization', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['dayparting-optimization', 7], refetchType: 'active' })
-            ])
-            
-            // Force component re-render by updating trigger
-            setRefreshTrigger(prev => prev + 1)
-          }
-        } catch (error) {
-          console.error('Error refreshing recommendations:', error)
-          // Fallback: still try to refetch individual endpoints
+        // Remove queries from cache for the ones we're refetching
+        if (regeneratedTypeConfig) {
+          // Only remove the specific regenerated query (already done above)
+          queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
+          queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
+        } else {
+          // Remove all queries if we're refetching everything
           queryClient.removeQueries({ queryKey: ['budget-reallocation', 7] })
           queryClient.removeQueries({ queryKey: ['creative-analysis', 7] })
           queryClient.removeQueries({ queryKey: ['placement-optimization', 7] })
           queryClient.removeQueries({ queryKey: ['audience-optimization', 7] })
           queryClient.removeQueries({ queryKey: ['bidding-strategy-optimization', 7] })
           queryClient.removeQueries({ queryKey: ['dayparting-optimization', 7] })
-          
-          await Promise.all([
-            refetchBudget(),
-            refetchCreative(),
-            refetchPlacement(),
-            refetchAudience(),
-            refetchBidding(),
-            refetchDayparting()
-          ])
+          queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
+          queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
         }
+        
+        // Execute refresh operations in parallel
+        if (regeneratedTypeConfig) {
+          console.log(`Refetching specific recommendation type (${result.new_recommendation_type}) after approval...`)
+        } else {
+          console.log('Refetching all recommendations after approval...')
+        }
+        await Promise.all(refreshOperations)
+        console.log('Recommendations refetched successfully')
+        
+        // Force component re-render by updating trigger
+        setRefreshTrigger(prev => prev + 1)
+        console.log('Component refresh trigger updated')
         
         // Clear refreshing state after all refetches complete
         if (category) {
@@ -958,59 +953,33 @@ function AIRecommendations() {
       if (result?.success) {
         alert(result.message || 'Recommendation reverted successfully!')
         
-        // Refresh applied recommendations
-        try {
-          const response = await analyticsAPI.getAppliedRecommendations(50)
-          if (response?.success && response?.data) {
-            // Filter out reverted items
-            const activeApplied = response.data.filter(rec => rec.reverted_at === null)
-            setAppliedRecommendations(activeApplied)
-          }
-        } catch (error) {
-          console.error('Error refreshing applied recommendations:', error)
-        }
+        // First, remove queries from cache to force fresh fetch
+        queryClient.removeQueries({ queryKey: ['budget-reallocation', 7] })
+        queryClient.removeQueries({ queryKey: ['creative-analysis', 7] })
+        queryClient.removeQueries({ queryKey: ['placement-optimization', 7] })
+        queryClient.removeQueries({ queryKey: ['audience-optimization', 7] })
+        queryClient.removeQueries({ queryKey: ['bidding-strategy-optimization', 7] })
+        queryClient.removeQueries({ queryKey: ['dayparting-optimization', 7] })
+        queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
+        queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
         
-        // Refresh recommendations using /ai-recommendations/all endpoint
-        // This endpoint returns all pending recommendations (reverted ones may reappear)
-        try {
-          const allRecommendationsResponse = await analyticsAPI.getAllRecommendationsPriorities(7)
-          
-          if (allRecommendationsResponse?.recommendations) {
-            // Update priorities map
-            const priorityMap = {}
-            allRecommendationsResponse.recommendations.forEach(rec => {
-              priorityMap[rec.card_name] = rec.priority
-            })
-            setPriorities(priorityMap)
-            
-            // Invalidate all queries to mark them as stale and trigger refetch
-            await Promise.all([
-              queryClient.invalidateQueries({ queryKey: ['budget-reallocation', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['creative-analysis', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['placement-optimization', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['audience-optimization', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['bidding-strategy-optimization', 7], refetchType: 'active' }),
-              queryClient.invalidateQueries({ queryKey: ['dayparting-optimization', 7], refetchType: 'active' })
-            ])
-            
-            // Force component re-render
-            setRefreshTrigger(prev => prev + 1)
-          }
-        } catch (error) {
-          console.error('Error refreshing recommendations:', error)
-          // Fallback: invalidate and refetch
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['budget-reallocation', 7], refetchType: 'active' }),
-            queryClient.invalidateQueries({ queryKey: ['creative-analysis', 7], refetchType: 'active' }),
-            queryClient.invalidateQueries({ queryKey: ['placement-optimization', 7], refetchType: 'active' }),
-            queryClient.invalidateQueries({ queryKey: ['audience-optimization', 7], refetchType: 'active' }),
-            queryClient.invalidateQueries({ queryKey: ['bidding-strategy-optimization', 7], refetchType: 'active' }),
-            queryClient.invalidateQueries({ queryKey: ['dayparting-optimization', 7], refetchType: 'active' })
-          ])
-          
-          // Force component re-render
-          setRefreshTrigger(prev => prev + 1)
-        }
+        // Then explicitly refetch all queries to ensure UI updates immediately
+        console.log('Refetching all recommendations after revert...')
+        await Promise.all([
+          refetchAppliedRecommendations({ cancelRefetch: false }),
+          refetchPriorities({ cancelRefetch: false }),
+          // Explicitly refetch all recommendation queries
+          refetchBudget({ cancelRefetch: false }),
+          refetchCreative({ cancelRefetch: false }),
+          refetchPlacement({ cancelRefetch: false }),
+          refetchAudience({ cancelRefetch: false }),
+          refetchBidding({ cancelRefetch: false }),
+          refetchDayparting({ cancelRefetch: false })
+        ])
+        console.log('All recommendations refetched successfully')
+        
+        // Force component re-render
+        setRefreshTrigger(prev => prev + 1)
       }
     } catch (error) {
       console.error('Error reverting execution:', error)
@@ -1027,23 +996,16 @@ function AIRecommendations() {
         <h2 className="text-2xl font-bold text-[#1e4a79]">AI Recommendations</h2>
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Recommendations Grid - Render independently as data loads */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Budget Recommendation */}
+        {isLoading ? (
           <div className="rounded-lg border border-[#e2e8f0] p-6 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-2/3"></div>
           </div>
-          {staticRecommendations.map((rec, idx) => (
-            <RecommendationCard key={`static-${idx}`} {...rec} />
-          ))}
-        </div>
-      )}
-
-      {/* Error State - API error or success: false */}
-      {(error || (data && !data.success)) && !isLoading && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        ) : (error || (data && !data.success)) ? (
           <div className="rounded-lg border border-red-200 p-6 shadow-sm bg-red-50">
             <div className="flex items-center gap-2 mb-2">
               <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1055,138 +1017,371 @@ function AIRecommendations() {
               {error?.message || data?.error || 'Failed to fetch budget reallocation recommendation. Please try again later.'}
             </p>
           </div>
-          {staticRecommendations.map((rec, idx) => (
-            <RecommendationCard key={`static-${idx}`} {...rec} />
-          ))}
-        </div>
-      )}
-
-      {/* Success State - Show recommendations */}
-      {!isLoading && !creativeIsLoading && !placementIsLoading && !audienceIsLoading && !biddingIsLoading && !daypartingIsLoading && !error && !creativeError && !placementError && !audienceError && !biddingError && !daypartingError && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {allRecommendations
-            .filter(rec => !rec.status || rec.status === 'pending')
-            .map((rec, idx) => {
-              // Debug: Log missing IDs (remove in production)
-              if (!rec.recommendationId) {
-                console.warn(`Recommendation "${rec.title}" (${rec.category}) is missing recommendationId`)
-              }
-              const isRefreshing = refreshingCategories.has(rec.category)
-              
-              return (
-                <div key={idx} className="relative">
-                  {isRefreshing && (
-                    <div className="absolute inset-0 bg-white bg-opacity-80 rounded-lg z-10 flex items-center justify-center">
-                      <div className="text-center">
-                        <svg className="animate-spin h-8 w-8 text-[#1e4a79] mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <p className="text-sm font-semibold text-[#1e4a79]">Loading new recommendation...</p>
-                      </div>
-                    </div>
-                  )}
-                  <RecommendationCard 
-                    {...rec} 
-                    onMoreDetails={() => handleMoreDetails(idx)}
-                    onApprove={handleApprove}
-                    onSimulate={handleSimulate}
-                    isApproving={approvingIds.has(rec.recommendationId)}
-                    isSimulating={simulatingIds.has(rec.recommendationId)}
-                  />
+        ) : budgetRecommendation && (!budgetRecommendation.status || budgetRecommendation.status === 'pending') ? (
+          <div className="relative">
+            {refreshingCategories.has('Budget') && (
+              <div className="absolute inset-0 bg-white bg-opacity-80 rounded-lg z-10 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="animate-spin h-8 w-8 text-[#1e4a79] mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-sm font-semibold text-[#1e4a79]">Loading new recommendation...</p>
                 </div>
-              )
-            })}
-          {/* Show loading skeleton cards for categories that are refreshing */}
-          {refreshingCategories.size > 0 && Array.from(refreshingCategories).map(category => {
-            // Check if this category already has a recommendation displayed
-            const hasRecommendation = allRecommendations.some(
-              rec => rec.category === category && (!rec.status || rec.status === 'pending')
-            )
-            
-            // Show loading skeleton card
-            return (
-              <div key={`loading-${category}`} className="rounded-lg border-l-[6px] border-gray-300 p-6 shadow-sm relative bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
-                {/* Header Section */}
-                <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-3 flex-wrap">
-                      <div className="h-5 w-20 bg-gray-300 rounded-full"></div>
-                      <div className="h-5 w-24 bg-gray-300 rounded-full"></div>
-                      <div className="h-5 w-32 bg-gray-300 rounded-full"></div>
-                      <div className="h-5 w-28 bg-gray-300 rounded-full"></div>
-                    </div>
-                    <div className="h-6 w-3/4 bg-gray-300 rounded mb-2"></div>
-                  </div>
-                  <div className="text-left sm:text-right shrink-0">
-                    <div className="h-7 w-32 bg-gray-300 rounded mb-2"></div>
-                    <div className="h-4 w-24 bg-gray-300 rounded"></div>
-                  </div>
-                </div>
+              </div>
+            )}
+            <RecommendationCard 
+              {...budgetRecommendation} 
+              onMoreDetails={() => {
+                if (data?.success && data?.recommendation) {
+                  setSelectedBudgetRecommendation(data)
+                  setIsBudgetModalOpen(true)
+                }
+              }}
+              onApprove={handleApprove}
+              onSimulate={handleSimulate}
+              isApproving={approvingIds.has(budgetRecommendation.recommendationId)}
+              isSimulating={simulatingIds.has(budgetRecommendation.recommendationId)}
+            />
+          </div>
+        ) : null}
 
-                {/* Scope Section */}
-                <div className="mb-5">
-                  <div className="h-3 w-16 bg-gray-300 rounded mb-2"></div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-[3px] h-3.5 bg-gray-300 shrink-0"></div>
-                      <div className="h-4 w-2/3 bg-gray-300 rounded"></div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-[3px] h-3.5 bg-gray-300 shrink-0"></div>
-                      <div className="h-4 w-1/2 bg-gray-300 rounded"></div>
-                    </div>
-                  </div>
+        {/* Creative Recommendation */}
+        {creativeIsLoading ? (
+          <div className="rounded-lg border border-[#e2e8f0] p-6 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        ) : creativeError || (creativeData && !creativeData.success) ? (
+          <div className="rounded-lg border border-red-200 p-6 shadow-sm bg-red-50">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-red-800 font-bold">Unable to Load Creative Recommendation</h3>
+            </div>
+            <p className="text-sm text-red-600">
+              {creativeError?.message || creativeData?.error || 'Failed to fetch creative analysis recommendation.'}
+            </p>
+          </div>
+        ) : creativeAnalysisRecommendation && (!creativeAnalysisRecommendation.status || creativeAnalysisRecommendation.status === 'pending') ? (
+          <div className="relative">
+            {refreshingCategories.has('Creative') && (
+              <div className="absolute inset-0 bg-white bg-opacity-80 rounded-lg z-10 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="animate-spin h-8 w-8 text-[#1e4a79] mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-sm font-semibold text-[#1e4a79]">Loading new recommendation...</p>
                 </div>
+              </div>
+            )}
+            <RecommendationCard 
+              {...creativeAnalysisRecommendation} 
+              onMoreDetails={() => {
+                if (creativeData?.success && creativeData?.recommendation) {
+                  setSelectedCreativeRecommendation(creativeData)
+                  setIsCreativeModalOpen(true)
+                }
+              }}
+              onApprove={handleApprove}
+              onSimulate={handleSimulate}
+              isApproving={approvingIds.has(creativeAnalysisRecommendation.recommendationId)}
+              isSimulating={simulatingIds.has(creativeAnalysisRecommendation.recommendationId)}
+            />
+          </div>
+        ) : null}
 
-                {/* Insights Section */}
-                <div className="mb-6">
-                  <div className="h-3 w-32 bg-gray-300 rounded mb-2"></div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-[3px] h-3.5 bg-gray-300 shrink-0"></div>
-                      <div className="h-4 w-full bg-gray-300 rounded"></div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-[3px] h-3.5 bg-gray-300 shrink-0"></div>
-                      <div className="h-4 w-4/5 bg-gray-300 rounded"></div>
-                    </div>
-                  </div>
+        {/* Placement Recommendation */}
+        {placementIsLoading ? (
+          <div className="rounded-lg border border-[#e2e8f0] p-6 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        ) : placementError || (placementData && !placementData.success) ? (
+          <div className="rounded-lg border border-red-200 p-6 shadow-sm bg-red-50">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-red-800 font-bold">Unable to Load Placement Recommendation</h3>
+            </div>
+            <p className="text-sm text-red-600">
+              {placementError?.message || placementData?.error || 'Failed to fetch placement optimization recommendation.'}
+            </p>
+          </div>
+        ) : placementOptimizationRecommendation && (!placementOptimizationRecommendation.status || placementOptimizationRecommendation.status === 'pending') ? (
+          <div className="relative">
+            {refreshingCategories.has('Placement') && (
+              <div className="absolute inset-0 bg-white bg-opacity-80 rounded-lg z-10 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="animate-spin h-8 w-8 text-[#1e4a79] mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-sm font-semibold text-[#1e4a79]">Loading new recommendation...</p>
                 </div>
+              </div>
+            )}
+            <RecommendationCard 
+              {...placementOptimizationRecommendation} 
+              onMoreDetails={() => {
+                if (placementData?.success && placementData?.recommendation) {
+                  setSelectedPlacementRecommendation(placementData)
+                  setIsPlacementModalOpen(true)
+                }
+              }}
+              onApprove={handleApprove}
+              onSimulate={handleSimulate}
+              isApproving={approvingIds.has(placementOptimizationRecommendation.recommendationId)}
+              isSimulating={simulatingIds.has(placementOptimizationRecommendation.recommendationId)}
+            />
+          </div>
+        ) : null}
 
-                {/* Metrics Bar */}
-                <div className="bg-white rounded-lg p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 shadow-sm border border-gray-100">
-                  <div className="flex flex-col">
-                    <div className="h-3 w-20 bg-gray-300 rounded mb-2"></div>
-                    <div className="h-5 w-24 bg-gray-300 rounded"></div>
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="h-3 w-20 bg-gray-300 rounded mb-2"></div>
-                    <div className="h-5 w-16 bg-gray-300 rounded"></div>
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="h-3 w-16 bg-gray-300 rounded mb-2"></div>
-                    <div className="h-5 w-20 bg-gray-300 rounded"></div>
-                  </div>
+        {/* Audience Recommendation */}
+        {audienceIsLoading ? (
+          <div className="rounded-lg border border-[#e2e8f0] p-6 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        ) : audienceError || (audienceData && !audienceData.success) ? (
+          <div className="rounded-lg border border-red-200 p-6 shadow-sm bg-red-50">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-red-800 font-bold">Unable to Load Audience Recommendation</h3>
+            </div>
+            <p className="text-sm text-red-600">
+              {audienceError?.message || audienceData?.error || 'Failed to fetch audience optimization recommendation.'}
+            </p>
+          </div>
+        ) : audienceOptimizationRecommendation && (!audienceOptimizationRecommendation.status || audienceOptimizationRecommendation.status === 'pending') ? (
+          <div className="relative">
+            {refreshingCategories.has('Audience') && (
+              <div className="absolute inset-0 bg-white bg-opacity-80 rounded-lg z-10 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="animate-spin h-8 w-8 text-[#1e4a79] mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-sm font-semibold text-[#1e4a79]">Loading new recommendation...</p>
                 </div>
+              </div>
+            )}
+            <RecommendationCard 
+              {...audienceOptimizationRecommendation} 
+              onMoreDetails={() => {
+                if (audienceData?.success && audienceData?.recommendation) {
+                  setSelectedAudienceRecommendation(audienceData)
+                  setIsAudienceModalOpen(true)
+                }
+              }}
+              onApprove={handleApprove}
+              onSimulate={handleSimulate}
+              isApproving={approvingIds.has(audienceOptimizationRecommendation.recommendationId)}
+              isSimulating={simulatingIds.has(audienceOptimizationRecommendation.recommendationId)}
+            />
+          </div>
+        ) : null}
 
-                {/* Footer Actions */}
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-t border-gray-100 pt-4">
-                  <div className="flex flex-wrap gap-x-6 gap-y-2">
-                    <div className="h-4 w-24 bg-gray-300 rounded"></div>
-                    <div className="h-4 w-20 bg-gray-300 rounded"></div>
+        {/* Bidding Recommendation */}
+        {biddingIsLoading ? (
+          <div className="rounded-lg border border-[#e2e8f0] p-6 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        ) : biddingError || (biddingData && !biddingData.success) ? (
+          <div className="rounded-lg border border-red-200 p-6 shadow-sm bg-red-50">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-red-800 font-bold">Unable to Load Bidding Recommendation</h3>
+            </div>
+            <p className="text-sm text-red-600">
+              {biddingError?.message || biddingData?.error || 'Failed to fetch bidding strategy optimization recommendation.'}
+            </p>
+          </div>
+        ) : biddingStrategyOptimizationRecommendation && (!biddingStrategyOptimizationRecommendation.status || biddingStrategyOptimizationRecommendation.status === 'pending') ? (
+          <div className="relative">
+            {refreshingCategories.has('Bidding') && (
+              <div className="absolute inset-0 bg-white bg-opacity-80 rounded-lg z-10 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="animate-spin h-8 w-8 text-[#1e4a79] mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-sm font-semibold text-[#1e4a79]">Loading new recommendation...</p>
+                </div>
+              </div>
+            )}
+            <RecommendationCard 
+              {...biddingStrategyOptimizationRecommendation} 
+              onMoreDetails={() => {
+                if (biddingData?.success && biddingData?.recommendation) {
+                  setSelectedBiddingRecommendation(biddingData)
+                  setIsBiddingModalOpen(true)
+                }
+              }}
+              onApprove={handleApprove}
+              onSimulate={handleSimulate}
+              isApproving={approvingIds.has(biddingStrategyOptimizationRecommendation.recommendationId)}
+              isSimulating={simulatingIds.has(biddingStrategyOptimizationRecommendation.recommendationId)}
+            />
+          </div>
+        ) : null}
+
+        {/* Dayparting Recommendation */}
+        {daypartingIsLoading ? (
+          <div className="rounded-lg border border-[#e2e8f0] p-6 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        ) : daypartingError || (daypartingData && !daypartingData.success) ? (
+          <div className="rounded-lg border border-red-200 p-6 shadow-sm bg-red-50">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-red-800 font-bold">Unable to Load Dayparting Recommendation</h3>
+            </div>
+            <p className="text-sm text-red-600">
+              {daypartingError?.message || daypartingData?.error || 'Failed to fetch dayparting optimization recommendation.'}
+            </p>
+          </div>
+        ) : daypartingOptimizationRecommendation && (!daypartingOptimizationRecommendation.status || daypartingOptimizationRecommendation.status === 'pending') ? (
+          <div className="relative">
+            {refreshingCategories.has('Dayparting') && (
+              <div className="absolute inset-0 bg-white bg-opacity-80 rounded-lg z-10 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="animate-spin h-8 w-8 text-[#1e4a79] mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-sm font-semibold text-[#1e4a79]">Loading new recommendation...</p>
+                </div>
+              </div>
+            )}
+            <RecommendationCard 
+              {...daypartingOptimizationRecommendation} 
+              onMoreDetails={() => {
+                if (daypartingData?.success && daypartingData?.recommendation) {
+                  setSelectedDaypartingRecommendation(daypartingData)
+                  setIsDaypartingModalOpen(true)
+                }
+              }}
+              onApprove={handleApprove}
+              onSimulate={handleSimulate}
+              isApproving={approvingIds.has(daypartingOptimizationRecommendation.recommendationId)}
+              isSimulating={simulatingIds.has(daypartingOptimizationRecommendation.recommendationId)}
+            />
+          </div>
+        ) : null}
+
+        {/* Static Recommendations */}
+        {staticRecommendations.map((rec, idx) => (
+          <RecommendationCard key={`static-${idx}`} {...rec} />
+        ))}
+
+        {/* Show loading skeleton cards for categories that are refreshing */}
+        {refreshingCategories.size > 0 && Array.from(refreshingCategories).map(category => {
+          // Check if this category already has a recommendation displayed
+          const hasRecommendation = allRecommendations.some(
+            rec => rec.category === category && (!rec.status || rec.status === 'pending')
+          )
+          
+          if (hasRecommendation) return null
+          
+          // Show loading skeleton card
+          return (
+            <div key={`loading-${category}`} className="rounded-lg border-l-[6px] border-gray-300 p-6 shadow-sm relative bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
+              {/* Header Section */}
+              <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <div className="h-5 w-20 bg-gray-300 rounded-full"></div>
+                    <div className="h-5 w-24 bg-gray-300 rounded-full"></div>
+                    <div className="h-5 w-32 bg-gray-300 rounded-full"></div>
+                    <div className="h-5 w-28 bg-gray-300 rounded-full"></div>
                   </div>
-                  <div className="flex flex-wrap gap-3">
-                    <div className="h-8 w-20 bg-gray-300 rounded-full"></div>
-                    <div className="h-8 w-24 bg-gray-300 rounded-full"></div>
-                    <div className="h-8 w-28 bg-gray-300 rounded-full"></div>
+                  <div className="h-6 w-3/4 bg-gray-300 rounded mb-2"></div>
+                </div>
+                <div className="text-left sm:text-right shrink-0">
+                  <div className="h-7 w-32 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-4 w-24 bg-gray-300 rounded"></div>
+                </div>
+              </div>
+
+              {/* Scope Section */}
+              <div className="mb-5">
+                <div className="h-3 w-16 bg-gray-300 rounded mb-2"></div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-[3px] h-3.5 bg-gray-300 shrink-0"></div>
+                    <div className="h-4 w-2/3 bg-gray-300 rounded"></div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-[3px] h-3.5 bg-gray-300 shrink-0"></div>
+                    <div className="h-4 w-1/2 bg-gray-300 rounded"></div>
                   </div>
                 </div>
               </div>
-            )
-          })}
-        </div>
-      )}
+
+              {/* Insights Section */}
+              <div className="mb-6">
+                <div className="h-3 w-32 bg-gray-300 rounded mb-2"></div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-[3px] h-3.5 bg-gray-300 shrink-0"></div>
+                    <div className="h-4 w-full bg-gray-300 rounded"></div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-[3px] h-3.5 bg-gray-300 shrink-0"></div>
+                    <div className="h-4 w-4/5 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Metrics Bar */}
+              <div className="bg-white rounded-lg p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 shadow-sm border border-gray-100">
+                <div className="flex flex-col">
+                  <div className="h-3 w-20 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-5 w-24 bg-gray-300 rounded"></div>
+                </div>
+                <div className="flex flex-col">
+                  <div className="h-3 w-20 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-5 w-16 bg-gray-300 rounded"></div>
+                </div>
+                <div className="flex flex-col">
+                  <div className="h-3 w-16 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-5 w-20 bg-gray-300 rounded"></div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-t border-gray-100 pt-4">
+                <div className="flex flex-wrap gap-x-6 gap-y-2">
+                  <div className="h-4 w-24 bg-gray-300 rounded"></div>
+                  <div className="h-4 w-20 bg-gray-300 rounded"></div>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <div className="h-8 w-20 bg-gray-300 rounded-full"></div>
+                  <div className="h-8 w-24 bg-gray-300 rounded-full"></div>
+                  <div className="h-8 w-28 bg-gray-300 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
       {/* Budget Recommendation Modal */}
       {isBudgetModalOpen && (
@@ -1414,15 +1609,17 @@ function AIRecommendations() {
           )}
         </div>
 
-      {/* Empty State - No recommendations available */}
-      {!isLoading && !error && allRecommendations.length === 0 && (
+      {/* Empty State - No recommendations available (only show if all queries have finished) */}
+      {!isLoading && !creativeIsLoading && !placementIsLoading && !audienceIsLoading && !biddingIsLoading && !daypartingIsLoading && 
+       allRecommendations.length === 0 && 
+       !error && !creativeError && !placementError && !audienceError && !biddingError && !daypartingError && (
         <div className="rounded-lg border border-[#e2e8f0] p-8 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] text-center">
           <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="text-lg font-bold text-gray-700 mb-2">No Budget Recommendations Available</h3>
+          <h3 className="text-lg font-bold text-gray-700 mb-2">No Recommendations Available</h3>
           <p className="text-sm text-gray-500">
-            {data?.error || 'No budget reallocation opportunities found at this time.'}
+            No recommendations found at this time. Please check back later.
           </p>
         </div>
       )}
