@@ -1,12 +1,23 @@
 import axios from 'axios';
 
 // Use relative URL in development (via Vite proxy) or absolute URL in production
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'http://localhost:8000/api/analytics' 
-  : '/api/analytics';
+const API_BASE_URL = import.meta.env.PROD
+    ? 'http://localhost:8000/api/analytics'
+    : '/api/analytics';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+const AGENT_BASE_URL = import.meta.env.PROD
+    ? 'http://localhost:8000/api/agent'
+    : '/api/agent';
+
+const agentApi = axios.create({
+    baseURL: AGENT_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -125,6 +136,48 @@ export const analyticsAPI = {
             return response.data;
         } catch (error) {
             console.error('Error fetching efficiency drivers:', error);
+            throw error;
+        }
+    }
+};
+
+// Session ID management for agent conversation isolation
+const getOrCreateSessionId = () => {
+    const STORAGE_KEY = 'agent_session_id';
+    let sessionId = localStorage.getItem(STORAGE_KEY);
+
+    if (!sessionId) {
+        // Generate a UUID v4
+        sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+        localStorage.setItem(STORAGE_KEY, sessionId);
+    }
+
+    return sessionId;
+};
+
+export const agentAPI = {
+    // Get current session ID (useful for debugging)
+    getSessionId: () => getOrCreateSessionId(),
+
+    // Clear session to start fresh conversation
+    clearSession: () => {
+        localStorage.removeItem('agent_session_id');
+    },
+
+    chatWithAgent: async (query) => {
+        try {
+            const sessionId = getOrCreateSessionId();
+            const response = await agentApi.post('/chat', {
+                query,
+                session_id: sessionId
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error chatting with agent:', error);
             throw error;
         }
     }

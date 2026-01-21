@@ -35,3 +35,4 @@ function MetricCard({ title, value, change, changeType, subtitle, target }) {
 
 export default MetricCard
 
+
