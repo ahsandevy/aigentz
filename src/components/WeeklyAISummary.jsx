@@ -14,7 +14,7 @@ function WeeklyAISummary() {
         </p>
         <div className="space-y-3 text-base md:text-[18px] text-[#374151] mb-8">
           <p className="flex justify-between md:justify-start gap-4"><strong>Approved Actions:</strong> <span className="font-normal">4</span></p>
-          <p className="flex justify-between md:justify-start gap-4"><strong>Budget Shift:</strong> <span className="font-normal">+380K PKR toward higher ROAS inventory</span></p>
+          <p className="flex justify-between md:justify-start gap-4"><strong>Budget Shift:</strong> <span className="font-normal">+380K AED toward higher ROAS inventory</span></p>
           <p className="flex flex-col md:flex-row md:gap-4"><strong>Primary Risk Managed:</strong> <span className="font-normal">Creative fatigue and audience overlap</span></p>
         </div>
         <button className="flex items-center gap-2 bg-[#EDF0A8] text-[#1e4a79] px-6 py-3 rounded-[18px] font-semibold shadow-[2px_2px_4px_0px_rgba(0,0,0,0.1)] hover:opacity-90 transition-opacity">
