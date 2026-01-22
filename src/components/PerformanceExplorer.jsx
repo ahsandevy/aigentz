@@ -1,30 +1,42 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { analyticsAPI } from '../services/api'
+import { useCampaigns, useAdSets, useAds, useAudiences } from '../hooks/usePerformanceData'
 
 function PerformanceExplorer() {
   const [activeTab, setActiveTab] = useState('Campaigns')
-  const [campaigns, setCampaigns] = useState([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [selectedAI, setSelectedAI] = useState(null)
   const [selectedAssessment, setSelectedAssessment] = useState(null)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
+  // Use React Query hooks - data is automatically cached
+  const { data: campaigns = [], isLoading: campaignsLoading } = useCampaigns()
+  const { data: adSets = [], isLoading: adSetsLoading } = useAdSets()
+  const { data: ads = [], isLoading: adsLoading } = useAds()
+  const {
+    data: audiences = [],
+    isLoading: audiencesLoading,
+    refreshAudienceLLM,
+    refreshingAudienceIds,
+    refreshAllAudiencesLLM,
+    isRefreshingAll
+  } = useAudiences()
 
-  const fetchData = async () => {
-    try {
-      setLoading(true)
-      const response = await analyticsAPI.getPerformanceExplorer(7)
-      setCampaigns(response.data)
-    } catch (error) {
-      console.error('Error fetching explorer data:', error)
-    } finally {
-      setLoading(false)
+  // Determine loading state based on active tab
+  const loading = useMemo(() => {
+    switch (activeTab) {
+      case 'Campaigns':
+        return campaignsLoading
+      case 'Ad Sets':
+        return adSetsLoading
+      case 'Ads':
+        return adsLoading
+      case 'Audiences':
+        return audiencesLoading
+      default:
+        return false
     }
-  }
+  }, [activeTab, campaignsLoading, adSetsLoading, adsLoading, audiencesLoading])
 
   const handleAIRequest = async (campaignId) => {
     try {
@@ -39,75 +51,30 @@ function PerformanceExplorer() {
     }
   }
 
-
-
-
-  // Fetch AdSets when tab changes
-  useEffect(() => {
-    if (activeTab === 'Ad Sets') {
-      fetchAdSets()
-    }
-  }, [activeTab])
-
-  const [adSets, setAdSets] = useState([])
-
-  const fetchAdSets = async () => {
-    try {
-      setLoading(true)
-      const response = await analyticsAPI.getPerformanceAdSets(7)
-      setAdSets(response.data)
-    } catch (error) {
-      console.error('Error fetching adsets:', error)
-    } finally {
-      setLoading(false)
-    }
+  // Handle refresh with selected assessment update
+  const handleRefreshAudienceLLM = (audienceId) => {
+    refreshAudienceLLM(audienceId)
   }
 
-  const [ads, setAds] = useState([])
+  const handleRefreshAllAudiencesLLM = () => {
+    const allAudienceIds = audiences.map(aud => aud.audience_id || aud.id).filter(Boolean)
+    if (allAudienceIds.length === 0) return
+    refreshAllAudiencesLLM(allAudienceIds)
+  }
 
-  // Fetch Ads when tab changes
+  // Update selectedAssessment when audiences data changes (after refresh)
   useEffect(() => {
-    if (activeTab === 'Ads') {
-      fetchAds()
-    }
-  }, [activeTab])
-
-  const fetchAds = async () => {
-    try {
-      setLoading(true)
-      const response = await analyticsAPI.getPerformanceAds(7)
-      console.log('Ads response:', response.data) // Debug: Check if image_url is present
-      if (response.data && response.data.length > 0) {
-        console.log('First ad sample:', response.data[0]) // Debug: Check first ad structure
+    if (selectedAssessment && audiences.length > 0) {
+      const updated = audiences.find(aud =>
+        (aud.audience_id === selectedAssessment.audience_id || aud.id === selectedAssessment.id) ||
+        (selectedAssessment.audience_id && aud.audience_id === selectedAssessment.audience_id) ||
+        (selectedAssessment.id && aud.id === selectedAssessment.id)
+      )
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedAssessment)) {
+        setSelectedAssessment(updated)
       }
-      setAds(response.data)
-    } catch (error) {
-      console.error('Error fetching ads:', error)
-    } finally {
-      setLoading(false)
     }
-  }
-
-  const [audiences, setAudiences] = useState([])
-
-  // Fetch Audiences when tab changes
-  useEffect(() => {
-    if (activeTab === 'Audiences') {
-      fetchAudiences()
-    }
-  }, [activeTab])
-
-  const fetchAudiences = async () => {
-    try {
-      setLoading(true)
-      const response = await analyticsAPI.getPerformanceAudiences(7)
-      setAudiences(response.data)
-    } catch (error) {
-      console.error('Error fetching audiences:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [audiences, selectedAssessment])
 
   const handleAudienceAIRequest = async (aud) => {
     try {
@@ -236,15 +203,31 @@ function PerformanceExplorer() {
   const getReadinessLevelClasses = (readinessLevel) => {
     switch (readinessLevel) {
       case 'ready_to_scale':
-        return 'bg-[#c8f687] text-[#15803d]'
+        return 'bg-green-100 text-green-800 border-green-300'
       case 'optimizing':
-        return 'bg-[#fee97e] text-[#a26f05]'
+        return 'bg-blue-50 text-blue-700 border-blue-200'
       case 'needs_refresh':
-        return 'bg-[#ffd89b] text-[#b45309]'
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300'
       case 'needs_different_approach':
-        return 'bg-[#ffa7a7] text-[#aa2929]'
+        return 'bg-red-100 text-red-800 border-red-300'
       default:
-        return 'bg-gray-200 text-gray-600'
+        return 'bg-blue-50 text-blue-700 border-blue-200'
+    }
+  }
+
+  // Helper function to format date created/made live
+  const formatDateCreated = (item) => {
+    // Backend sends made_live_date as the primary field (ISO format string)
+    // Falls back to other common date field names for backward compatibility
+    const dateField = item.made_live_date || item.created_time || item.created_at || item.start_time || item.created_date || item.time_created || item.date_created
+    if (!dateField) return 'N/A'
+    
+    try {
+      const date = new Date(dateField)
+      if (isNaN(date.getTime())) return 'N/A'
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    } catch (error) {
+      return 'N/A'
     }
   }
 
@@ -415,6 +398,7 @@ function PerformanceExplorer() {
                 <thead>
                   <tr className="text-[#334155] text-[13px] font-extrabold tracking-tight">
                     <th className="px-6 py-6 text-left">Ad Set</th>
+                    <th className="px-6 py-6 text-center hidden lg:table-cell">Made Live</th>
                     <th className="px-6 py-6 text-left">Audience Strategy</th>
                     <th className="px-6 py-6 text-center">Funnel Role</th>
                     <th className="px-6 py-6 text-center hidden lg:table-cell">Bid Strategy</th>
@@ -433,6 +417,9 @@ function PerformanceExplorer() {
                       <tr key={as.id} className="group bg-white border-b border-[#cbd5e1]/40 last:border-0 hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-8 text-[12px] text-[#334155] font-medium max-w-[220px] break-words">
                           {as.name}
+                        </td>
+                        <td className="px-6 py-8 text-center text-[11px] text-[#64748b] hidden lg:table-cell">
+                          {formatDateCreated(as)}
                         </td>
                         <td className="px-6 py-8 text-[12px] text-[#64748b] font-medium">
                           {as.audience_type}
@@ -538,12 +525,13 @@ function PerformanceExplorer() {
                 <thead>
                   <tr className="text-[#334155] text-[13px] font-extrabold tracking-tight border-b border-[#cbd5e1]/40">
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-left">Ad</th>
+                    <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden lg:table-cell">Made Live</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden sm:table-cell">Format</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Fatigue</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden lg:table-cell">Spend</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden md:table-cell">CTR</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden lg:table-cell">Assessment</th>
-                    <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Status</th>
+                    <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Creative Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -602,6 +590,9 @@ function PerformanceExplorer() {
                               </div>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center text-[11px] sm:text-[12px] text-[#64748b] hidden lg:table-cell">
+                          {formatDateCreated(ad)}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center text-[11px] sm:text-[12px] text-[#64748b] font-medium hidden sm:table-cell">
                           <span className={`px-2 sm:px-3 py-1 bg-gray-100 rounded-full font-bold text-[10px] sm:text-[11px] ${ad.format === 'Video' ? 'text-blue-600 bg-blue-50' : ad.format === 'Carousel' ? 'text-purple-600 bg-purple-50' : 'text-gray-600'}`}>
@@ -667,16 +658,43 @@ function PerformanceExplorer() {
           </div>
         ) : activeTab === 'Audiences' ? (
           <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm flex flex-col">
+            <div className="flex justify-between items-center px-4 sm:px-6 py-3 border-b border-[#e2e8f0]">
+              <h3 className="text-sm font-bold text-[#334155]">Audiences</h3>
+              <button
+                onClick={handleRefreshAllAudiencesLLM}
+                disabled={isRefreshingAll || refreshingAudienceIds.size > 0}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-[#1e4a79] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh AI analysis for all audiences"
+              >
+                {(isRefreshingAll || refreshingAudienceIds.size > 0) ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh All
+                  </>
+                )}
+              </button>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse bg-white">
                 <thead>
                   <tr className="text-[#334155] text-[13px] font-extrabold tracking-tight border-b border-[#cbd5e1]/40">
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-left">Audience</th>
+                    <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden lg:table-cell">Made Live</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Funnel Role</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden sm:table-cell">AVG Size</th>
-                    <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden md:table-cell">Spend Share</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden lg:table-cell">Assessment</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Status</th>
+                    <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Refresh</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -689,9 +707,11 @@ function PerformanceExplorer() {
                             <span className="truncate">{aud.name}</span>
                             <div className="sm:hidden flex flex-col gap-1">
                               <span className="text-[10px] text-gray-500">AVG Size: {getAudienceSize(aud)}</span>
-                              <span className="text-[10px] text-gray-500">Share: {aud.share}</span>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center text-[11px] sm:text-[12px] text-[#64748b] hidden lg:table-cell">
+                          {formatDateCreated(aud)}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">
                           <div className="flex flex-col items-center gap-1 sm:gap-2">
@@ -705,9 +725,6 @@ function PerformanceExplorer() {
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center text-[11px] sm:text-[12px] text-[#64748b] font-medium hidden sm:table-cell">
                           {getAudienceSize(aud)}
-                        </td>
-                        <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center text-[11px] sm:text-[12px] text-[#64748b] font-medium hidden md:table-cell">
-                          {aud.share}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden lg:table-cell">
                           {audienceAssessment.summary ? (
@@ -730,10 +747,29 @@ function PerformanceExplorer() {
                             >
                               View
                             </button>
-                            <span className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-[9px] sm:text-[10px] font-bold shadow-sm whitespace-nowrap ${getReadinessLevelClasses(audienceAssessment.readinessLevel)}`}>
+                            <span className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full border text-[9px] sm:text-[10px] font-bold shadow-sm whitespace-nowrap ${getReadinessLevelClasses(audienceAssessment.readinessLevel)}`}>
                               {audienceAssessment.readinessLevel?.replace(/_/g, ' ').toUpperCase() || 'OPTIMIZING'}
                             </span>
                           </div>
+                        </td>
+                        <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">
+                          <button
+                            onClick={() => handleRefreshAudienceLLM(aud.audience_id || aud.id)}
+                            disabled={refreshingAudienceIds.has(aud.audience_id || aud.id)}
+                            className="flex items-center justify-center px-2 py-1.5 text-[#1e4a79] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
+                            title="Refresh AI analysis for this audience"
+                          >
+                            {refreshingAudienceIds.has(aud.audience_id || aud.id) ? (
+                              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            )}
+                          </button>
                         </td>
                       </tr>
                     )
@@ -762,8 +798,9 @@ function PerformanceExplorer() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="px-6 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Campaign Name</th>
+                    <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Made Live</th>
                     <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Funnel</th>
-                    <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Spend (PKR)</th>
+                    <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Spend (AED)</th>
                     <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Metics</th>
                     <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Assessment</th>
                     <th className="px-6 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
@@ -776,6 +813,9 @@ function PerformanceExplorer() {
                       <tr key={cp.id} className="group hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-5 whitespace-nowrap text-sm font-semibold text-gray-700">
                           {cp.name}
+                        </td>
+                        <td className="px-6 py-5 whitespace-nowrap text-center text-xs text-gray-600 hidden lg:table-cell">
+                          {formatDateCreated(cp)}
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap hidden lg:table-cell">
                           <div className="flex flex-col items-center gap-1">
@@ -1567,8 +1607,9 @@ function PerformanceExplorer() {
                               <span className={`text-sm sm:text-base font-bold px-2 py-1 rounded ${
                                 (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'highly_engaged' ? 'bg-green-100 text-green-800' :
                                 (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'engaged' ? 'bg-blue-100 text-blue-800' :
-                                (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'passive' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'passive' ? 'bg-gray-100 text-gray-700' :
+                                (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'disengaged' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-700'
                               }`}>
                                 {(selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality)?.replace(/_/g, ' ').toUpperCase() || 'N/A'}
                               </span>
@@ -1580,7 +1621,8 @@ function PerformanceExplorer() {
                               <span className={`text-sm sm:text-base font-bold px-2 py-1 rounded ${
                                 (selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'strong' ? 'bg-green-100 text-green-800' :
                                 (selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                (selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'weak' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-700'
                               }`}>
                                 {(selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level)?.toUpperCase() || 'N/A'}
                               </span>
@@ -1602,7 +1644,7 @@ function PerformanceExplorer() {
                         <div className="flex-1 flex flex-col">
                           <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Readiness Level</span>
                           <div className="mt-1">
-                            <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-sm inline-block ${getReadinessLevelClasses(selectedAssessment.assessment.readiness_level)}`}>
+                            <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-xs sm:text-sm font-bold shadow-sm inline-block ${getReadinessLevelClasses(selectedAssessment.assessment.readiness_level)}`}>
                               {selectedAssessment.assessment.readiness_level?.replace(/_/g, ' ').toUpperCase() || 'OPTIMIZING'}
                             </span>
                           </div>
@@ -1644,18 +1686,34 @@ function PerformanceExplorer() {
                             <div className="flex flex-col sm:flex-row sm:items-center">
                               <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current Reach:</span>
                               <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.audience_characteristics.current_reach ? selectedAssessment.assessment.audience_characteristics.current_reach.toLocaleString() : 'N/A'}
+                                {(() => {
+                                  const reach = selectedAssessment.assessment.audience_characteristics?.current_reach || 
+                                                selectedAssessment.assessment.audience_characteristics?.reach_value ||
+                                                (selectedAssessment.assessment.performance?.cost_efficiency?.reach) ||
+                                                (selectedAssessment.impressions && selectedAssessment.impressions > 0 ? selectedAssessment.impressions : null);
+                                  return reach ? reach.toLocaleString() : 'N/A';
+                                })()}
                               </span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center">
                               <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Saturation:</span>
-                              <span className={`font-bold ${selectedAssessment.assessment.audience_characteristics.saturation_percent > 80 ? 'text-red-600' : selectedAssessment.assessment.audience_characteristics.saturation_percent > 60 ? 'text-yellow-600' : 'text-green-600'}`}>
-                                {selectedAssessment.assessment.audience_characteristics.saturation_percent ? `${selectedAssessment.assessment.audience_characteristics.saturation_percent.toFixed(1)}%` : 'N/A'}
+                              <span className={`font-bold ${
+                                selectedAssessment.assessment.audience_characteristics?.saturation_percent != null && selectedAssessment.assessment.audience_characteristics.saturation_percent > 80 ? 'text-red-600' : 
+                                selectedAssessment.assessment.audience_characteristics?.saturation_percent != null && selectedAssessment.assessment.audience_characteristics.saturation_percent > 60 ? 'text-yellow-600' : 
+                                selectedAssessment.assessment.audience_characteristics?.saturation_percent != null ? 'text-green-600' : 'text-gray-600'
+                              }`}>
+                                {selectedAssessment.assessment.audience_characteristics?.saturation_percent != null ? `${selectedAssessment.assessment.audience_characteristics.saturation_percent.toFixed(1)}%` : 'N/A'}
                               </span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center">
                               <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Saturation Level:</span>
-                              <span className={`font-bold uppercase ${selectedAssessment.assessment.audience_characteristics.saturation_level === 'saturated' ? 'text-red-600' : selectedAssessment.assessment.audience_characteristics.saturation_level === 'moderate' ? 'text-yellow-600' : 'text-green-600'}`}>
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                selectedAssessment.assessment.audience_characteristics.saturation_level === 'saturated' ? 'bg-red-100 text-red-800' :
+                                selectedAssessment.assessment.audience_characteristics.saturation_level === 'high' ? 'bg-yellow-100 text-yellow-800' :
+                                selectedAssessment.assessment.audience_characteristics.saturation_level === 'healthy' ? 'bg-blue-100 text-blue-800' :
+                                selectedAssessment.assessment.audience_characteristics.saturation_level === 'low' ? 'bg-green-100 text-green-800' :
+                                'text-gray-600'
+                              }`}>
                                 {selectedAssessment.assessment.audience_characteristics.saturation_level || 'N/A'}
                               </span>
                             </div>
@@ -1697,7 +1755,12 @@ function PerformanceExplorer() {
                                 </div>
                                 <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
                                   <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Status:</span>
-                                  <span className={`font-bold uppercase ${selectedAssessment.assessment.health.frequency.status === 'high' ? 'text-red-600' : selectedAssessment.assessment.health.frequency.status === 'moderate' ? 'text-yellow-600' : 'text-green-600'}`}>
+                                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                    selectedAssessment.assessment.health.frequency.status === 'critical' ? 'bg-red-100 text-red-800' :
+                                    selectedAssessment.assessment.health.frequency.status === 'high' ? 'bg-yellow-100 text-yellow-800' :
+                                    selectedAssessment.assessment.health.frequency.status === 'normal' ? 'bg-green-100 text-green-800' :
+                                    'bg-green-100 text-green-800'
+                                  }`}>
                                     {selectedAssessment.assessment.health.frequency.status || 'NORMAL'}
                                   </span>
                                 </div>
@@ -1767,7 +1830,12 @@ function PerformanceExplorer() {
                           <div className="space-y-2">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                               <span className="text-gray-600 text-xs sm:text-sm">Potential:</span>
-                              <span className={`font-bold uppercase ${selectedAssessment.assessment.scaling.potential === 'high' ? 'text-green-600' : selectedAssessment.assessment.scaling.potential === 'moderate' ? 'text-yellow-600' : 'text-red-600'}`}>
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                selectedAssessment.assessment.scaling.potential === 'high' ? 'bg-green-100 text-green-800' :
+                                selectedAssessment.assessment.scaling.potential === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
+                                selectedAssessment.assessment.scaling.potential === 'low' ? 'bg-red-100 text-red-800' :
+                                'text-gray-600'
+                              }`}>
                                 {selectedAssessment.assessment.scaling.potential || 'N/A'}
                               </span>
                             </div>
@@ -1816,8 +1884,9 @@ function PerformanceExplorer() {
                               <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
                                 selectedAssessment.assessment.audience_reaction.reaction_quality === 'highly_engaged' ? 'bg-green-100 text-green-800' :
                                 selectedAssessment.assessment.audience_reaction.reaction_quality === 'engaged' ? 'bg-blue-100 text-blue-800' :
-                                selectedAssessment.assessment.audience_reaction.reaction_quality === 'passive' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                selectedAssessment.assessment.audience_reaction.reaction_quality === 'passive' ? 'bg-gray-100 text-gray-700' :
+                                selectedAssessment.assessment.audience_reaction.reaction_quality === 'disengaged' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-700'
                               }`}>
                                 {selectedAssessment.assessment.audience_reaction.reaction_quality?.replace(/_/g, ' ').toUpperCase() || 'N/A'}
                               </span>
@@ -1941,7 +2010,8 @@ function PerformanceExplorer() {
                               <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
                                 selectedAssessment.assessment.sway_analysis.sway_level === 'strong' ? 'bg-green-100 text-green-800' :
                                 selectedAssessment.assessment.sway_analysis.sway_level === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                selectedAssessment.assessment.sway_analysis.sway_level === 'weak' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-700'
                               }`}>
                                 {selectedAssessment.assessment.sway_analysis.sway_level?.toUpperCase() || 'N/A'}
                               </span>
@@ -2268,7 +2338,13 @@ function PerformanceExplorer() {
                             <div className="flex flex-col">
                               <span className="text-gray-600 mb-1">Reach:</span>
                               <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.cost_efficiency.reach ? selectedAssessment.assessment.performance.cost_efficiency.reach.toLocaleString() : 'N/A'}
+                                {(() => {
+                                  const reach = selectedAssessment.assessment.performance?.cost_efficiency?.reach ||
+                                                selectedAssessment.assessment.audience_characteristics?.current_reach ||
+                                                selectedAssessment.assessment.audience_characteristics?.reach_value ||
+                                                (selectedAssessment.assessment.performance?.cost_efficiency?.impressions && selectedAssessment.assessment.performance.cost_efficiency.impressions > 0 ? selectedAssessment.assessment.performance.cost_efficiency.impressions : null);
+                                  return reach ? reach.toLocaleString() : 'N/A';
+                                })()}
                               </span>
                             </div>
                             <div className="flex flex-col">

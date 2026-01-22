@@ -110,12 +110,32 @@ export const analyticsAPI = {
         }
     },
 
-    getPerformanceAudiences: async (days) => {
+    getPerformanceAudiences: async (days, refreshAudienceIds = null) => {
         try {
-            const response = await api.get('/performance-explorer/audiences', { params: { days } });
+            const params = { days };
+            if (refreshAudienceIds && refreshAudienceIds.length > 0) {
+                params.refresh_audience_ids = Array.isArray(refreshAudienceIds) 
+                    ? refreshAudienceIds.join(',') 
+                    : refreshAudienceIds;
+            }
+            const response = await api.get('/performance-explorer/audiences', { params });
             return response.data;
         } catch (error) {
             console.error('Error fetching performance audiences:', error);
+            throw error;
+        }
+    },
+
+    refreshAudienceLLM: async (audienceId, days) => {
+        try {
+            const response = await api.post(
+                `/performance-explorer/audiences/${audienceId}/refresh-llm`,
+                null,
+                { params: { days } }
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Error refreshing audience LLM:', error);
             throw error;
         }
     },
@@ -136,6 +156,181 @@ export const analyticsAPI = {
             return response.data;
         } catch (error) {
             console.error('Error fetching efficiency drivers:', error);
+            throw error;
+        }
+    },
+
+    // Budget Reallocation Recommendation
+    getBudgetReallocationRecommendation: async (days = 7) => {
+        try {
+            const response = await api.get('/budget-reallocation/recommendation', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching budget reallocation recommendation:', error);
+            throw error;
+        }
+    },
+
+    // Creative Analysis Recommendation
+    getCreativeAnalysisRecommendation: async (days = 7) => {
+        try {
+            const response = await api.get('/creative-analysis/recommendation', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching creative analysis recommendation:', error);
+            throw error;
+        }
+    },
+
+    // Placement Optimization Recommendation
+    getPlacementOptimizationRecommendation: async (days = 7) => {
+        try {
+            const response = await api.get('/placement-optimization/recommendation', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching placement optimization recommendation:', error);
+            throw error;
+        }
+    },
+
+    // Audience Optimization Recommendation
+    getAudienceOptimizationRecommendation: async (days = 7) => {
+        try {
+            const response = await api.get('/audience-optimization/recommendation', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching audience optimization recommendation:', error);
+            throw error;
+        }
+    },
+
+    // Bidding Strategy Optimization Recommendation
+    getBiddingStrategyOptimizationRecommendation: async (days = 7) => {
+        try {
+            const response = await api.get('/bidding-strategy-optimization/recommendation', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching bidding strategy optimization recommendation:', error);
+            throw error;
+        }
+    },
+
+    // Dayparting Optimization Recommendation
+    getDaypartingOptimizationRecommendation: async (days = 7) => {
+        try {
+            const response = await api.get('/dayparting/recommendation', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching dayparting optimization recommendation:', error);
+            throw error;
+        }
+    },
+
+    // Get All Recommendations Priorities
+    getAllRecommendationsPriorities: async (days = 7) => {
+        try {
+            const response = await api.get('/ai-recommendations/all', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching all recommendations priorities:', error);
+            throw error;
+        }
+    },
+
+    // Executive Brief
+    getExecutiveBrief: async (days = 7, forceRefresh = false) => {
+        try {
+            const params = { days };
+            if (forceRefresh) {
+                params.force_refresh = true;
+            }
+            const response = await api.get('/executive-brief', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching executive brief:', error);
+            throw error;
+        }
+    },
+
+    // Board Ready Summary
+    getBoardReadySummary: async (days = 7, forceRefresh = false) => {
+        try {
+            const params = { days };
+            if (forceRefresh) {
+                params.force_refresh = true;
+            }
+            const response = await api.get('/executive-brief/board-ready-summary', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching board-ready summary:', error);
+            throw error;
+        }
+    },
+
+    // Recommendation Execution
+    simulateRecommendation: async (recommendationId, tokenBearer = null) => {
+        try {
+            const body = {};
+            if (tokenBearer) {
+                body.token_bearer = tokenBearer;
+            }
+            const response = await api.post(`/recommendations/${recommendationId}/simulate`, body);
+            return response.data;
+        } catch (error) {
+            console.error('Error simulating recommendation:', error);
+            throw error;
+        }
+    },
+
+    approveRecommendation: async (recommendationId, tokenBearer = null) => {
+        try {
+            const body = {};
+            if (tokenBearer) {
+                body.token_bearer = tokenBearer;
+            }
+            const response = await api.post(`/recommendations/${recommendationId}/approve`, body);
+            return response.data;
+        } catch (error) {
+            console.error('Error approving recommendation:', error);
+            throw error;
+        }
+    },
+
+    revertExecution: async (executionId, tokenBearer = null) => {
+        try {
+            const body = {};
+            if (tokenBearer) {
+                body.token_bearer = tokenBearer;
+            }
+            const response = await api.post(`/recommendations/executions/${executionId}/revert`, body);
+            return response.data;
+        } catch (error) {
+            console.error('Error reverting execution:', error);
+            throw error;
+        }
+    },
+
+    getRecommendationsHistory: async (status = null, days = 7) => {
+        try {
+            const params = { days };
+            if (status) {
+                params.status = status;
+            }
+            const response = await api.get('/recommendations/history', { params });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching recommendations history:', error);
+            throw error;
+        }
+    },
+
+    // Get Applied Recommendations
+    getAppliedRecommendations: async (limit = 50) => {
+        try {
+            const response = await api.get('/recommendations/applied', { params: { limit } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching applied recommendations:', error);
             throw error;
         }
     }
