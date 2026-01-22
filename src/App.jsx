@@ -1,11 +1,6 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import Header from './components/Header'
-import AIExecutiveBrief from './components/AIExecutiveBrief'
-import PerformanceExplorer from './components/PerformanceExplorer'
-import AIRecommendations from './components/AIRecommendations'
-import EfficiencyDrivers from './components/EfficiencyDrivers'
-import ChangeControl from './components/ChangeControl'
-import WeeklyAISummary from './components/WeeklyAISummary'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import HomePage from './components/HomePage'
+import Dashboard from './components/Dashboard'
 
 // Create a query client with default options
 const queryClient = new QueryClient({
@@ -21,20 +16,12 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gradient-to-b from-[#f4f8fe] to-white">
-        <Header />
-
-        <main className="w-full md:w-[85%] mx-auto px-4 md:px-8 py-8">
-          <AIExecutiveBrief />
-          <PerformanceExplorer />
-          <AIRecommendations />
-          <EfficiencyDrivers />
-          <ChangeControl />
-          <WeeklyAISummary />
-        </main>
-      </div>
-    </QueryClientProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
   )
 }
 
