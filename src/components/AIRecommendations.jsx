@@ -26,10 +26,10 @@ function AIRecommendations() {
   const { data: audienceData, isLoading: audienceIsLoading, error: audienceError, refetch: refetchAudience } = useAudienceOptimizationRecommendation(7)
   const { data: biddingData, isLoading: biddingIsLoading, error: biddingError, refetch: refetchBidding } = useBiddingStrategyOptimizationRecommendation(7)
   const { data: daypartingData, isLoading: daypartingIsLoading, error: daypartingError, refetch: refetchDayparting } = useDaypartingOptimizationRecommendation(7)
-  
+
   // Fetch priorities from the all recommendations endpoint using React Query
   const { data: priorities = {}, isLoading: prioritiesLoading, refetch: refetchPriorities } = useAllRecommendationsPriorities(7)
-  
+
   // Fetch applied recommendations using React Query
   const { data: appliedRecommendations = [], isLoading: appliedLoading, refetch: refetchAppliedRecommendations } = useAppliedRecommendations(50)
   const [selectedBudgetRecommendation, setSelectedBudgetRecommendation] = useState(null)
@@ -44,19 +44,19 @@ function AIRecommendations() {
   const [isAudienceModalOpen, setIsAudienceModalOpen] = useState(false)
   const [isBiddingModalOpen, setIsBiddingModalOpen] = useState(false)
   const [isDaypartingModalOpen, setIsDaypartingModalOpen] = useState(false)
-  
+
   // Preview modal state
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const [previewData, setPreviewData] = useState(null)
   const [previewRecommendation, setPreviewRecommendation] = useState(null)
-  
+
   // Loading states for approve/simulate
   const [approvingIds, setApprovingIds] = useState(new Set())
   const [simulatingIds, setSimulatingIds] = useState(new Set())
-  
+
   // Track which categories are refreshing after approval
   const [refreshingCategories, setRefreshingCategories] = useState(new Set())
-  
+
   // Force refresh trigger to ensure component updates
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
@@ -66,7 +66,7 @@ function AIRecommendations() {
     if (category && refreshingCategories.has(category)) {
       return null
     }
-    
+
     const apiPriority = priorities[cardName]
     if (apiPriority) {
       return apiPriority.charAt(0).toUpperCase() + apiPriority.slice(1)
@@ -90,20 +90,20 @@ function AIRecommendations() {
     }
 
     const rec = data.recommendation
-    
+
     // Get priority from API (card_name: "Budget")
     const priority = getPriority('Budget', rec.priority, 'Budget')
-    
+
     // Format confidence
     const confidence = `${rec.confidence}% Confidence`
-    
+
     // Format risk level
     const risk = rec.risk_level ? rec.risk_level.charAt(0).toUpperCase() + rec.risk_level.slice(1) + ' Risk' : 'Low Risk'
-    
+
     // Format revenue lift
     const revenueLift = `+${rec.revenue_lift.value.toLocaleString()} AED Revenue Lift`
     const revenueRange = `+${rec.revenue_lift.range_low.toLocaleString()} to +${rec.revenue_lift.range_high.toLocaleString()} AED`
-    
+
     // Build scope array
     const scope = []
     if (rec.scope.source) {
@@ -118,17 +118,17 @@ function AIRecommendations() {
       const action = rec.scope.destination.recommended_change_pct < 0 ? 'Reduce' : 'Increase'
       scope.push(`${destType}: ${rec.scope.destination.name} (${action} ${changePct}%)`)
     }
-    
+
     // Use insights from API
     const insights = rec.insights || []
-    
+
     // Format metrics
     const metrics = [
       { label: 'Revenue Lift', value: rec.metrics.revenue_lift, highlight: true },
       { label: 'CPA Change', value: rec.metrics.cpa_change, highlight: false },
       { label: 'ROAS', value: rec.metrics.roas_change, highlight: false }
     ]
-    
+
     return {
       priority,
       category: 'Budget',
@@ -162,20 +162,20 @@ function AIRecommendations() {
     }
 
     const rec = creativeData.recommendation
-    
+
     // Get priority from API (card_name: "Creative")
     const priority = getPriority('Creative', rec.priority, 'Creative')
-    
+
     // Format confidence
     const confidence = `${rec.confidence}% Confidence`
-    
+
     // Format risk level
     const risk = rec.risk_level ? rec.risk_level.charAt(0).toUpperCase() + rec.risk_level.slice(1) + ' Risk' : 'Low Risk'
-    
+
     // Format revenue lift
     const revenueLift = `+${rec.revenue_lift.value.toLocaleString()} AED Revenue Lift`
     const revenueRange = `+${rec.revenue_lift.range_low.toLocaleString()} to +${rec.revenue_lift.range_high.toLocaleString()} AED`
-    
+
     // Build scope array from ad scope
     const scope = []
     if (rec.scope?.ad) {
@@ -190,21 +190,21 @@ function AIRecommendations() {
         scope.push(`Ad: ${ad.name}`)
       }
     }
-    
+
     // Use insights from API
     const insights = rec.insights || []
-    
+
     // Format metrics - use metrics from API (convert PKR to AED if needed, or use as-is)
-    const revenueLiftMetric = rec.metrics?.revenue_lift 
-      ? rec.metrics.revenue_lift.replace('PKR', 'AED') 
+    const revenueLiftMetric = rec.metrics?.revenue_lift
+      ? rec.metrics.revenue_lift.replace('PKR', 'AED')
       : `+${rec.revenue_lift.value.toLocaleString()} AED revenue lift`
-    
+
     const metrics = [
       { label: 'Revenue Lift', value: revenueLiftMetric, highlight: true },
       { label: 'CTR Improvement', value: rec.metrics?.ctr_improvement || 'N/A', highlight: false },
       { label: 'Engagement Lift', value: rec.metrics?.engagement_lift || 'N/A', highlight: false }
     ]
-    
+
     return {
       priority,
       category: rec.category || 'Creative',
@@ -231,20 +231,20 @@ function AIRecommendations() {
     }
 
     const rec = placementData.recommendation
-    
+
     // Get priority from API (card_name: "Placement")
     const priority = getPriority('Placement', rec.priority, 'Placement')
-    
+
     // Format confidence
     const confidence = `${rec.confidence}% Confidence`
-    
+
     // Format risk level
     const risk = rec.risk_level ? rec.risk_level.charAt(0).toUpperCase() + rec.risk_level.slice(1) + ' Risk' : 'Low Risk'
-    
+
     // Format revenue lift
     const revenueLift = `+${rec.revenue_lift.value.toLocaleString()} AED Revenue Lift`
     const revenueRange = `+${rec.revenue_lift.range_low.toLocaleString()} to +${rec.revenue_lift.range_high.toLocaleString()} AED`
-    
+
     // Build scope array from source and destination
     const scope = []
     if (rec.scope?.source) {
@@ -261,17 +261,17 @@ function AIRecommendations() {
       const typeLabel = dest.type === 'platform' ? 'Platform' : 'Placement'
       scope.push(`${typeLabel}: ${dest.name} (${action} ${changePct}%)`)
     }
-    
+
     // Use insights from API
     const insights = rec.insights || []
-    
+
     // Format metrics - use metrics from API
     const metrics = [
       { label: 'Revenue Lift', value: rec.metrics?.revenue_lift || `+${rec.revenue_lift.value.toLocaleString()} AED revenue lift`, highlight: true },
       { label: 'CPA Change', value: rec.metrics?.cpa_change || 'N/A', highlight: false },
       { label: 'ROAS', value: rec.metrics?.roas_change || 'N/A', highlight: false }
     ]
-    
+
     return {
       priority,
       category: rec.category || 'Placement',
@@ -298,20 +298,20 @@ function AIRecommendations() {
     }
 
     const rec = audienceData.recommendation
-    
+
     // Get priority from API (card_name: "Audience")
     const priority = getPriority('Audience', rec.priority, 'Audience')
-    
+
     // Format confidence
     const confidence = `${rec.confidence}% Confidence`
-    
+
     // Format risk level
     const risk = rec.risk_level ? rec.risk_level.charAt(0).toUpperCase() + rec.risk_level.slice(1) + ' Risk' : 'Low Risk'
-    
+
     // Format revenue lift - check if revenue_lift exists (object with value, range_low, range_high)
     let revenueLift = 'Operational Optimization'
     let revenueRange = 'Focus on saturation, frequency & engagement'
-    
+
     if (rec.revenue_lift) {
       if (typeof rec.revenue_lift === 'object' && rec.revenue_lift.value !== undefined) {
         // Revenue lift is an object with value, range_low, range_high
@@ -324,7 +324,7 @@ function AIRecommendations() {
         revenueLift = `+${rec.revenue_lift.toLocaleString()} AED Revenue Lift`
       }
     }
-    
+
     // Build scope array from audience
     const scope = []
     if (rec.scope?.audience) {
@@ -337,10 +337,10 @@ function AIRecommendations() {
         scope.push(`Action: ${audience.recommended_changes.action_description}`)
       }
     }
-    
+
     // Use insights from API
     const insights = rec.insights || []
-    
+
     // Format metrics - include revenue lift if available, otherwise use operational metrics
     const metrics = []
     if (rec.metrics?.revenue_lift) {
@@ -368,7 +368,7 @@ function AIRecommendations() {
         { label: 'Engagement Improvement', value: rec.metrics?.engagement_improvement || 'N/A', highlight: false }
       )
     }
-    
+
     return {
       priority,
       category: rec.category || 'Audience',
@@ -395,20 +395,20 @@ function AIRecommendations() {
     }
 
     const rec = biddingData.recommendation
-    
+
     // Get priority from API (card_name: "Bidding Strategy")
     const priority = getPriority('Bidding Strategy', rec.priority, 'Bidding')
-    
+
     // Format confidence
     const confidence = `${rec.confidence}% Confidence`
-    
+
     // Format risk level
     const risk = rec.risk_level ? rec.risk_level.charAt(0).toUpperCase() + rec.risk_level.slice(1) + ' Risk' : 'Low Risk'
-    
+
     // Format revenue lift
     const revenueLift = `+${rec.revenue_lift.value.toLocaleString()} AED Revenue Lift`
     const revenueRange = `+${rec.revenue_lift.range_low.toLocaleString()} to +${rec.revenue_lift.range_high.toLocaleString()} AED`
-    
+
     // Build scope array from campaign/adset (only one will be populated based on scope.type)
     const scope = []
     if (rec.scope?.type === 'campaign' && rec.scope?.campaign) {
@@ -419,7 +419,7 @@ function AIRecommendations() {
         scope.push(`Campaign: ${rec.scope.adset.campaign_name}`)
       }
     }
-    
+
     // Add current and recommended bid strategy info
     if (rec.scope?.current_bid_strategy) {
       const currentStrategy = rec.scope.current_bid_strategy.replace(/_/g, ' ')
@@ -430,7 +430,7 @@ function AIRecommendations() {
         scope.push(`Current Strategy: ${currentStrategy}`)
       }
     }
-    
+
     // Add config information if available
     if (rec.scope?.current_config?.type && rec.scope?.current_config?.value !== null && rec.scope?.current_config?.value !== undefined) {
       const configType = rec.scope.current_config.type.replace(/_/g, ' ')
@@ -440,22 +440,22 @@ function AIRecommendations() {
       const configType = rec.scope.recommended_config.type.replace(/_/g, ' ')
       scope.push(`Recommended ${configType}: $${rec.scope.recommended_config.value}`)
     }
-    
+
     // Use insights from API
     const insights = rec.insights || []
-    
+
     // Format metrics - include revenue_lift and cost efficiency metrics from API
     const metrics = [
       { label: 'Revenue Lift', value: rec.metrics?.revenue_lift || `+${rec.revenue_lift.value.toLocaleString()} AED revenue lift`, highlight: true },
       { label: 'CPM Improvement', value: rec.metrics?.cpm_improvement || 'N/A', highlight: false },
       { label: 'Budget Utilization', value: rec.metrics?.budget_utilization_improvement || 'N/A', highlight: false }
     ]
-    
+
     // Add cost efficiency gain if available
     if (rec.metrics?.cost_efficiency_gain) {
       metrics.push({ label: 'Cost Efficiency', value: rec.metrics.cost_efficiency_gain, highlight: false })
     }
-    
+
     return {
       priority,
       category: rec.category || 'Bidding',
@@ -482,20 +482,20 @@ function AIRecommendations() {
     }
 
     const rec = daypartingData.recommendation
-    
+
     // Get priority from API (card_name: "Dayparting")
     const priority = getPriority('Dayparting', rec.priority, 'Dayparting')
-    
+
     // Format confidence
     const confidence = `${rec.confidence}% Confidence`
-    
+
     // Format risk level
     const risk = rec.risk_level ? rec.risk_level.charAt(0).toUpperCase() + rec.risk_level.slice(1) + ' Risk' : 'Low Risk'
-    
+
     // Format revenue lift
     const revenueLift = `+${rec.revenue_lift.value.toLocaleString()} AED Revenue Lift`
     const revenueRange = `+${rec.revenue_lift.range_low.toLocaleString()} to +${rec.revenue_lift.range_high.toLocaleString()} AED`
-    
+
     // Build scope array from campaign/adset
     const scope = []
     if (rec.scope?.type === 'campaign' && rec.scope?.campaign?.name) {
@@ -513,17 +513,17 @@ function AIRecommendations() {
         scope.push(`Low: ${dayparting.low_hours_description} (${dayparting.low_budget_decrease_pct}%)`)
       }
     }
-    
+
     // Use insights from API
     const insights = rec.insights || []
-    
+
     // Format metrics - include revenue_lift and other metrics from API
     const metrics = [
       { label: 'Revenue Lift', value: rec.metrics?.revenue_lift || `+${rec.revenue_lift.value.toLocaleString()} AED revenue lift`, highlight: true },
       { label: 'CPA Change', value: rec.metrics?.cpa_change || 'N/A', highlight: false },
       { label: 'ROAS', value: rec.metrics?.roas_change || 'N/A', highlight: false }
     ]
-    
+
     return {
       priority,
       category: rec.category || 'Dayparting',
@@ -549,40 +549,40 @@ function AIRecommendations() {
   // Combine budget recommendation, creative analysis, placement optimization, and static recommendations
   const allRecommendations = useMemo(() => {
     const recommendations = []
-    
+
     // Add budget recommendation if available
     if (budgetRecommendation) {
       recommendations.push(budgetRecommendation)
     }
-    
+
     // Add creative analysis recommendation if available (second position)
     if (creativeAnalysisRecommendation) {
       recommendations.push(creativeAnalysisRecommendation)
     }
-    
+
     // Add placement optimization recommendation if available (third position)
     if (placementOptimizationRecommendation) {
       recommendations.push(placementOptimizationRecommendation)
     }
-    
+
     // Add audience optimization recommendation if available (fourth position)
     if (audienceOptimizationRecommendation) {
       recommendations.push(audienceOptimizationRecommendation)
     }
-    
+
     // Add bidding strategy optimization recommendation if available (fifth position)
     if (biddingStrategyOptimizationRecommendation) {
       recommendations.push(biddingStrategyOptimizationRecommendation)
     }
-    
+
     // Add dayparting optimization recommendation if available (sixth position)
     if (daypartingOptimizationRecommendation) {
       recommendations.push(daypartingOptimizationRecommendation)
     }
-    
+
     // Add static recommendations
     recommendations.push(...staticRecommendations)
-    
+
     return recommendations
   }, [budgetRecommendation, creativeAnalysisRecommendation, placementOptimizationRecommendation, audienceOptimizationRecommendation, biddingStrategyOptimizationRecommendation, daypartingOptimizationRecommendation, refreshTrigger])
 
@@ -590,7 +590,7 @@ function AIRecommendations() {
   const handleMoreDetails = (index) => {
     // Calculate which recommendation is at this index based on what exists
     let expectedIndex = 0
-    
+
     // Index 0: Budget (if exists), otherwise Creative, otherwise Placement, otherwise Audience, otherwise Bidding, otherwise Dayparting
     if (index === expectedIndex) {
       if (budgetRecommendation && data?.success && data?.recommendation) {
@@ -619,7 +619,7 @@ function AIRecommendations() {
         return
       }
     }
-    
+
     // Index 1: Creative (if budget exists), otherwise Placement, otherwise Audience, otherwise Bidding, otherwise Dayparting
     if (budgetRecommendation) expectedIndex++
     if (index === expectedIndex) {
@@ -645,7 +645,7 @@ function AIRecommendations() {
         return
       }
     }
-    
+
     // Index 2: Placement (if budget and creative exist), otherwise Audience, otherwise Bidding, otherwise Dayparting
     if (creativeAnalysisRecommendation) expectedIndex++
     if (index === expectedIndex) {
@@ -667,7 +667,7 @@ function AIRecommendations() {
         return
       }
     }
-    
+
     // Index 3: Audience (if budget, creative, and placement exist), otherwise Bidding, otherwise Dayparting
     if (placementOptimizationRecommendation) expectedIndex++
     if (index === expectedIndex) {
@@ -685,7 +685,7 @@ function AIRecommendations() {
         return
       }
     }
-    
+
     // Index 4: Bidding (if budget, creative, placement, and audience exist), otherwise Dayparting
     if (audienceOptimizationRecommendation) expectedIndex++
     if (index === expectedIndex) {
@@ -699,7 +699,7 @@ function AIRecommendations() {
         return
       }
     }
-    
+
     // Index 5: Dayparting (if budget, creative, placement, audience, and bidding exist)
     if (biddingStrategyOptimizationRecommendation) expectedIndex++
     if (index === expectedIndex && daypartingOptimizationRecommendation && daypartingData?.success && daypartingData?.recommendation) {
@@ -739,11 +739,11 @@ function AIRecommendations() {
       alert('This recommendation cannot be simulated. Missing recommendation ID.')
       return
     }
-    
+
     try {
       setSimulatingIds(prev => new Set(prev).add(recommendationId))
       const result = await analyticsAPI.simulateRecommendation(recommendationId)
-      
+
       if (result?.success && result?.preview) {
         // Find the recommendation text
         const rec = allRecommendations.find(r => r.recommendationId === recommendationId)
@@ -773,29 +773,29 @@ function AIRecommendations() {
       alert('This recommendation cannot be approved. Missing recommendation ID.')
       return
     }
-    
+
     if (!confirm('Are you sure you want to approve this recommendation? Changes will be applied.')) {
       return
     }
-    
+
     // Find the category of the recommendation being approved
     const approvedRec = allRecommendations.find(r => r.recommendationId === recommendationId)
     const category = approvedRec?.category || null
-    
+
     // Set category to refreshing state immediately to show loading icon
     if (category) {
       setRefreshingCategories(prev => new Set(prev).add(category))
     }
-    
+
     try {
       setApprovingIds(prev => new Set(prev).add(recommendationId))
-      
+
       const result = await analyticsAPI.approveRecommendation(recommendationId)
-      
+
       if (result?.success) {
         // Show success message
         const successMessage = result.message || 'Recommendation approved successfully!'
-        
+
         // Map recommendation types to their refetch functions and query keys
         const recommendationTypeMap = {
           'budget': { refetch: refetchBudget, queryKey: ['budget-reallocation', 7] },
@@ -811,95 +811,95 @@ function AIRecommendations() {
           'bidding_strategy_optimization': { refetch: refetchBidding, queryKey: ['bidding-strategy-optimization', 7] },
           'dayparting_optimization': { refetch: refetchDayparting, queryKey: ['dayparting-optimization', 7] }
         }
-        
-        // Always refetch applied recommendations and priorities (needed for UI updates)
-        const refreshOperations = [
-          refetchAppliedRecommendations({ cancelRefetch: false }),
-          refetchPriorities({ cancelRefetch: false })
-        ]
-        
-        let regeneratedTypeConfig = null
-        
-        // If a new recommendation was generated, refetch only that specific type
+
+        // OPTIMIZED: Only refetch what's necessary based on backend response
         if (result.new_recommendation_generated && result.new_recommendation_type) {
-          regeneratedTypeConfig = recommendationTypeMap[result.new_recommendation_type.toLowerCase()]
-          
+          // New recommendation was generated - refetch only specific type + supporting queries
+          const regeneratedTypeConfig = recommendationTypeMap[result.new_recommendation_type.toLowerCase()]
+
           if (regeneratedTypeConfig) {
-            console.log('New recommendation generated:', {
+            console.log('New recommendation generated - refetching specific type:', {
               type: result.new_recommendation_type,
               id: result.new_recommendation_id,
               queryKey: regeneratedTypeConfig.queryKey
             })
-            
-            // Remove only the specific query from cache to force fresh fetch
+
+            // Remove only the necessary queries from cache
             queryClient.removeQueries({ queryKey: regeneratedTypeConfig.queryKey })
-            
-            // Refetch only the specific recommendation type that was regenerated
-            refreshOperations.push(regeneratedTypeConfig.refetch({ cancelRefetch: false }))
-            
+            queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
+            queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
+
+            // Refetch only the regenerated type + priorities + applied (3 queries total)
+            await Promise.all([
+              regeneratedTypeConfig.refetch({ cancelRefetch: false }),
+              refetchPriorities({ cancelRefetch: false }),
+              refetchAppliedRecommendations({ cancelRefetch: false })
+            ])
+
+            console.log('Refetch complete - only 3 queries executed')
+
             // Show informative success message
             const typeName = result.new_recommendation_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
             alert(`${successMessage}\n\nA new ${typeName} recommendation (ID: ${result.new_recommendation_id}) has been generated and will appear shortly.`)
           } else {
-            console.warn('Unknown recommendation type:', result.new_recommendation_type)
-            // Fallback: refetch all if type mapping not found
-            // Set regeneratedTypeConfig to null so we remove all queries below
-            regeneratedTypeConfig = null
-            refreshOperations.push(
+            // Unknown type - fallback to refetching all (safety net)
+            console.warn('Unknown recommendation type - falling back to full refetch:', result.new_recommendation_type)
+
+            queryClient.removeQueries({ queryKey: ['budget-reallocation', 7] })
+            queryClient.removeQueries({ queryKey: ['creative-analysis', 7] })
+            queryClient.removeQueries({ queryKey: ['placement-optimization', 7] })
+            queryClient.removeQueries({ queryKey: ['audience-optimization', 7] })
+            queryClient.removeQueries({ queryKey: ['bidding-strategy-optimization', 7] })
+            queryClient.removeQueries({ queryKey: ['dayparting-optimization', 7] })
+            queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
+            queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
+
+            await Promise.all([
               refetchBudget({ cancelRefetch: false }),
               refetchCreative({ cancelRefetch: false }),
               refetchPlacement({ cancelRefetch: false }),
               refetchAudience({ cancelRefetch: false }),
               refetchBidding({ cancelRefetch: false }),
-              refetchDayparting({ cancelRefetch: false })
-            )
+              refetchDayparting({ cancelRefetch: false }),
+              refetchPriorities({ cancelRefetch: false }),
+              refetchAppliedRecommendations({ cancelRefetch: false })
+            ])
+
             alert(`${successMessage}\n\nA new recommendation has been generated and will appear shortly.`)
           }
         } else {
-          // No new recommendation generated - refetch all to ensure UI is up to date
-          // (The approved recommendation should disappear from the list)
-          refreshOperations.push(
-            refetchBudget({ cancelRefetch: false }),
-            refetchCreative({ cancelRefetch: false }),
-            refetchPlacement({ cancelRefetch: false }),
-            refetchAudience({ cancelRefetch: false }),
-            refetchBidding({ cancelRefetch: false }),
-            refetchDayparting({ cancelRefetch: false })
-          )
+          // No new recommendation generated - refetch approved type to update status + applied list
+          console.log('No new recommendation generated - refetching approved type and applied recommendations')
+
+          // Find which type was approved based on the category
+          const approvedTypeConfig = category ? recommendationTypeMap[category.toLowerCase()] : null
+
+          if (approvedTypeConfig) {
+            // Refetch the approved type to update its status
+            queryClient.removeQueries({ queryKey: approvedTypeConfig.queryKey })
+            queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
+
+            await Promise.all([
+              approvedTypeConfig.refetch({ cancelRefetch: false }),
+              refetchAppliedRecommendations({ cancelRefetch: false })
+            ])
+
+            console.log('Refetch complete - 2 queries executed (approved type + applied)')
+          } else {
+            // Fallback: only refetch applied if category not found
+            queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
+            await refetchAppliedRecommendations({ cancelRefetch: false })
+
+            console.log('Refetch complete - only 1 query executed (applied)')
+          }
+
           alert(successMessage)
         }
-        
-        // Remove queries from cache for the ones we're refetching
-        if (regeneratedTypeConfig) {
-          // Only remove the specific regenerated query (already done above)
-          queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
-          queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
-        } else {
-          // Remove all queries if we're refetching everything
-          queryClient.removeQueries({ queryKey: ['budget-reallocation', 7] })
-          queryClient.removeQueries({ queryKey: ['creative-analysis', 7] })
-          queryClient.removeQueries({ queryKey: ['placement-optimization', 7] })
-          queryClient.removeQueries({ queryKey: ['audience-optimization', 7] })
-          queryClient.removeQueries({ queryKey: ['bidding-strategy-optimization', 7] })
-          queryClient.removeQueries({ queryKey: ['dayparting-optimization', 7] })
-          queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
-          queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
-        }
-        
-        // Execute refresh operations in parallel
-        if (regeneratedTypeConfig) {
-          console.log(`Refetching specific recommendation type (${result.new_recommendation_type}) after approval...`)
-        } else {
-          console.log('Refetching all recommendations after approval...')
-        }
-        await Promise.all(refreshOperations)
-        console.log('Recommendations refetched successfully')
-        
+
         // Force component re-render by updating trigger
         setRefreshTrigger(prev => prev + 1)
-        console.log('Component refresh trigger updated')
-        
-        // Clear refreshing state after all refetches complete
+
+        // Clear refreshing state
         if (category) {
           setRefreshingCategories(prev => {
             const next = new Set(prev)
@@ -939,45 +939,51 @@ function AIRecommendations() {
     }
   }
 
+
   // Handle revert
-  const handleRevert = async (executionId) => {
+  const handleRevert = async (executionId, recommendationType = null) => {
     if (!executionId) return
-    
+
     if (!confirm('Are you sure you want to revert this recommendation? Changes will be undone.')) {
       return
     }
-    
+
     try {
       const result = await analyticsAPI.revertExecution(executionId)
-      
+
       if (result?.success) {
         alert(result.message || 'Recommendation reverted successfully!')
-        
-        // First, remove queries from cache to force fresh fetch
-        queryClient.removeQueries({ queryKey: ['budget-reallocation', 7] })
-        queryClient.removeQueries({ queryKey: ['creative-analysis', 7] })
-        queryClient.removeQueries({ queryKey: ['placement-optimization', 7] })
-        queryClient.removeQueries({ queryKey: ['audience-optimization', 7] })
-        queryClient.removeQueries({ queryKey: ['bidding-strategy-optimization', 7] })
-        queryClient.removeQueries({ queryKey: ['dayparting-optimization', 7] })
-        queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
-        queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
-        
-        // Then explicitly refetch all queries to ensure UI updates immediately
-        console.log('Refetching all recommendations after revert...')
+
+        // Refetch all recommendation types + applied recommendations
+        // This ensures new pending recommendations appear immediately after revert
+        console.log('Reverting recommendation - refetching all recommendation types')
+
+        const queriesToRemove = [
+          ['budget-reallocation', 7],
+          ['creative-analysis', 7],
+          ['placement-optimization', 7],
+          ['audience-optimization', 7],
+          ['bidding-strategy-optimization', 7],
+          ['dayparting-optimization', 7],
+          ['applied-recommendations', 50]
+        ]
+
+        // Remove all queries from cache
+        queriesToRemove.forEach(key => queryClient.removeQueries({ queryKey: key }))
+
+        // Refetch everything asynchronously
         await Promise.all([
-          refetchAppliedRecommendations({ cancelRefetch: false }),
-          refetchPriorities({ cancelRefetch: false }),
-          // Explicitly refetch all recommendation queries
           refetchBudget({ cancelRefetch: false }),
           refetchCreative({ cancelRefetch: false }),
           refetchPlacement({ cancelRefetch: false }),
           refetchAudience({ cancelRefetch: false }),
           refetchBidding({ cancelRefetch: false }),
-          refetchDayparting({ cancelRefetch: false })
+          refetchDayparting({ cancelRefetch: false }),
+          refetchAppliedRecommendations({ cancelRefetch: false })
         ])
-        console.log('All recommendations refetched successfully')
-        
+
+        console.log('Refetch complete - all queries executed')
+
         // Force component re-render
         setRefreshTrigger(prev => prev + 1)
       }
@@ -986,6 +992,7 @@ function AIRecommendations() {
       alert(error.response?.data?.detail || 'Failed to revert recommendation. Please try again.')
     }
   }
+
 
   return (
     <section className="mb-8">
@@ -1030,8 +1037,8 @@ function AIRecommendations() {
                 </div>
               </div>
             )}
-            <RecommendationCard 
-              {...budgetRecommendation} 
+            <RecommendationCard
+              {...budgetRecommendation}
               onMoreDetails={() => {
                 if (data?.success && data?.recommendation) {
                   setSelectedBudgetRecommendation(data)
@@ -1078,8 +1085,8 @@ function AIRecommendations() {
                 </div>
               </div>
             )}
-            <RecommendationCard 
-              {...creativeAnalysisRecommendation} 
+            <RecommendationCard
+              {...creativeAnalysisRecommendation}
               onMoreDetails={() => {
                 if (creativeData?.success && creativeData?.recommendation) {
                   setSelectedCreativeRecommendation(creativeData)
@@ -1126,8 +1133,8 @@ function AIRecommendations() {
                 </div>
               </div>
             )}
-            <RecommendationCard 
-              {...placementOptimizationRecommendation} 
+            <RecommendationCard
+              {...placementOptimizationRecommendation}
               onMoreDetails={() => {
                 if (placementData?.success && placementData?.recommendation) {
                   setSelectedPlacementRecommendation(placementData)
@@ -1174,8 +1181,8 @@ function AIRecommendations() {
                 </div>
               </div>
             )}
-            <RecommendationCard 
-              {...audienceOptimizationRecommendation} 
+            <RecommendationCard
+              {...audienceOptimizationRecommendation}
               onMoreDetails={() => {
                 if (audienceData?.success && audienceData?.recommendation) {
                   setSelectedAudienceRecommendation(audienceData)
@@ -1222,8 +1229,8 @@ function AIRecommendations() {
                 </div>
               </div>
             )}
-            <RecommendationCard 
-              {...biddingStrategyOptimizationRecommendation} 
+            <RecommendationCard
+              {...biddingStrategyOptimizationRecommendation}
               onMoreDetails={() => {
                 if (biddingData?.success && biddingData?.recommendation) {
                   setSelectedBiddingRecommendation(biddingData)
@@ -1270,8 +1277,8 @@ function AIRecommendations() {
                 </div>
               </div>
             )}
-            <RecommendationCard 
-              {...daypartingOptimizationRecommendation} 
+            <RecommendationCard
+              {...daypartingOptimizationRecommendation}
               onMoreDetails={() => {
                 if (daypartingData?.success && daypartingData?.recommendation) {
                   setSelectedDaypartingRecommendation(daypartingData)
@@ -1297,9 +1304,9 @@ function AIRecommendations() {
           const hasRecommendation = allRecommendations.some(
             rec => rec.category === category && (!rec.status || rec.status === 'pending')
           )
-          
+
           if (hasRecommendation) return null
-          
+
           // Show loading skeleton card
           return (
             <div key={`loading-${category}`} className="rounded-lg border-l-[6px] border-gray-300 p-6 shadow-sm relative bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] animate-pulse">
@@ -1466,163 +1473,157 @@ function AIRecommendations() {
         ) : appliedRecommendations.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {appliedRecommendations.map((rec) => (
-                <div key={rec.id} className="rounded-lg border-l-[6px] border-green-500 p-6 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa]">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className="px-3 py-1 bg-green-500 text-white text-[10px] uppercase font-bold rounded-full">Applied</span>
-                        <span className="px-3 py-1 bg-white border border-[#e5e7eb] text-[#4b5563] text-[10px] font-medium rounded-full">
-                          {rec.recommendation_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Recommendation'}
-                        </span>
-                        {rec.execution_status && (
-                          <span className={`px-3 py-1 text-[10px] font-medium rounded-full ${
-                            rec.execution_status === 'executed' 
-                              ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                              : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+              <div key={rec.id} className="rounded-lg border-l-[6px] border-green-500 p-6 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa]">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className="px-3 py-1 bg-green-500 text-white text-[10px] uppercase font-bold rounded-full">Applied</span>
+                      <span className="px-3 py-1 bg-white border border-[#e5e7eb] text-[#4b5563] text-[10px] font-medium rounded-full">
+                        {rec.recommendation_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Recommendation'}
+                      </span>
+                      {rec.execution_status && (
+                        <span className={`px-3 py-1 text-[10px] font-medium rounded-full ${rec.execution_status === 'executed'
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                          : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
                           }`}>
-                            {rec.execution_status === 'executed' ? 'Live' : 'Logged'}
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="text-[#1e4a79] font-bold text-lg leading-tight mb-2">
-                        {rec.recommendation?.recommendation || 'Applied Recommendation'}
-                      </h3>
-                      {rec.recommendation?.priority && (
-                        <span className={`inline-block px-2 py-1 text-[10px] font-bold rounded ${
-                          rec.recommendation.priority === 'high' ? 'bg-red-100 text-red-800' :
-                          rec.recommendation.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          {rec.execution_status === 'executed' ? 'Live' : 'Logged'}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-[#1e4a79] font-bold text-lg leading-tight mb-2">
+                      {rec.recommendation?.recommendation || 'Applied Recommendation'}
+                    </h3>
+                    {rec.recommendation?.priority && (
+                      <span className={`inline-block px-2 py-1 text-[10px] font-bold rounded ${rec.recommendation.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        rec.recommendation.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-green-100 text-green-800'
                         }`}>
-                          {rec.recommendation.priority.toUpperCase()} Priority
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Changes Made */}
-                  {rec.changes && rec.changes.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-[#1e4a79] font-bold text-[10px] uppercase mb-2">Changes Made</p>
-                      <div className="space-y-2">
-                        {rec.changes.map((change, idx) => (
-                          <div key={idx} className="bg-white rounded-lg p-3 border border-gray-200">
-                            <div className="flex items-start justify-between mb-1">
-                              <div className="flex-1">
-                                <p className="text-sm font-semibold text-gray-900">{change.entity_name}</p>
-                                <p className="text-xs text-gray-500">
-                                  {change.entity_type === 'campaign' ? 'Campaign' : 'Ad Set'} • ID: {change.entity_id}
-                                </p>
-                              </div>
-                              <span className={`px-2 py-1 rounded text-[10px] font-bold ${
-                                change.change_type.includes('increase') ? 'bg-green-100 text-green-800' :
-                                change.change_type.includes('reduction') ? 'bg-red-100 text-red-800' :
-                                'bg-blue-100 text-blue-800'
-                              }`}>
-                                {change.change_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
-                              <div>
-                                <span className="text-gray-500">Before:</span>
-                                <span className="ml-1 font-semibold text-gray-700">
-                                  {change.current_budget !== undefined ? `${change.current_budget.toLocaleString()} AED` : 'N/A'}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">After:</span>
-                                <span className={`ml-1 font-semibold ${
-                                  change.new_budget > (change.current_budget || 0) ? 'text-green-700' : 'text-red-700'
-                                }`}>
-                                  {change.new_budget !== undefined ? `${change.new_budget.toLocaleString()} AED` : 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                            {(change.change_percentage || change.change_amount) && (
-                              <div className="mt-2 flex gap-3 text-xs">
-                                {change.change_percentage !== undefined && (
-                                  <span className={`font-semibold ${
-                                    change.change_percentage > 0 ? 'text-green-600' : 'text-red-600'
-                                  }`}>
-                                    {change.change_percentage > 0 ? '+' : ''}{change.change_percentage}%
-                                  </span>
-                                )}
-                                {change.change_amount !== undefined && (
-                                  <span className={`font-semibold ${
-                                    change.change_amount > 0 ? 'text-green-600' : 'text-red-600'
-                                  }`}>
-                                    {change.change_amount > 0 ? '+' : ''}{change.change_amount.toLocaleString()} AED
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Recommendation Details */}
-                  {rec.recommendation && (
-                    <div className="mb-4">
-                      {rec.recommendation.revenue_lift && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
-                          <p className="text-xs text-gray-600 mb-1">Expected Revenue Lift</p>
-                          <p className="text-sm font-bold text-green-700">
-                            +{rec.recommendation.revenue_lift.value?.toLocaleString() || 'N/A'} AED
-                          </p>
-                        </div>
-                      )}
-                      {rec.recommendation.confidence && (
-                        <p className="text-xs text-gray-600">
-                          Confidence: <span className="font-semibold">{rec.recommendation.confidence}%</span>
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <div className="text-xs text-[#6b7280]">
-                      {rec.approved_at && (
-                        <span>Applied: {new Date(rec.approved_at).toLocaleString()}</span>
-                      )}
-                    </div>
-                    {(rec.execution_id || rec.execution?.execution_id) && (
-                      <button
-                        onClick={() => handleRevert(rec.execution_id || rec.execution?.execution_id)}
-                        className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold transition-colors"
-                      >
-                        Revert
-                      </button>
+                        {rec.recommendation.priority.toUpperCase()} Priority
+                      </span>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-gray-200 p-8 bg-gray-50 text-center">
-              <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Applied Recommendations</h3>
-              <p className="text-sm text-gray-500">Approved recommendations will appear here</p>
-            </div>
-          )}
-        </div>
+
+                {/* Changes Made */}
+                {rec.changes && rec.changes.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[#1e4a79] font-bold text-[10px] uppercase mb-2">Changes Made</p>
+                    <div className="space-y-2">
+                      {rec.changes.map((change, idx) => (
+                        <div key={idx} className="bg-white rounded-lg p-3 border border-gray-200">
+                          <div className="flex items-start justify-between mb-1">
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-gray-900">{change.entity_name}</p>
+                              <p className="text-xs text-gray-500">
+                                {change.entity_type === 'campaign' ? 'Campaign' : 'Ad Set'} • ID: {change.entity_id}
+                              </p>
+                            </div>
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${change.change_type.includes('increase') ? 'bg-green-100 text-green-800' :
+                              change.change_type.includes('reduction') ? 'bg-red-100 text-red-800' :
+                                'bg-blue-100 text-blue-800'
+                              }`}>
+                              {change.change_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                            <div>
+                              <span className="text-gray-500">Before:</span>
+                              <span className="ml-1 font-semibold text-gray-700">
+                                {change.current_budget !== undefined ? `${change.current_budget.toLocaleString()} AED` : 'N/A'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">After:</span>
+                              <span className={`ml-1 font-semibold ${change.new_budget > (change.current_budget || 0) ? 'text-green-700' : 'text-red-700'
+                                }`}>
+                                {change.new_budget !== undefined ? `${change.new_budget.toLocaleString()} AED` : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                          {(change.change_percentage || change.change_amount) && (
+                            <div className="mt-2 flex gap-3 text-xs">
+                              {change.change_percentage !== undefined && (
+                                <span className={`font-semibold ${change.change_percentage > 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                  {change.change_percentage > 0 ? '+' : ''}{change.change_percentage}%
+                                </span>
+                              )}
+                              {change.change_amount !== undefined && (
+                                <span className={`font-semibold ${change.change_amount > 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                  {change.change_amount > 0 ? '+' : ''}{change.change_amount.toLocaleString()} AED
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendation Details */}
+                {rec.recommendation && (
+                  <div className="mb-4">
+                    {rec.recommendation.revenue_lift && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
+                        <p className="text-xs text-gray-600 mb-1">Expected Revenue Lift</p>
+                        <p className="text-sm font-bold text-green-700">
+                          +{rec.recommendation.revenue_lift.value?.toLocaleString() || 'N/A'} AED
+                        </p>
+                      </div>
+                    )}
+                    {rec.recommendation.confidence && (
+                      <p className="text-xs text-gray-600">
+                        Confidence: <span className="font-semibold">{rec.recommendation.confidence}%</span>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                  <div className="text-xs text-[#6b7280]">
+                    {rec.approved_at && (
+                      <span>Applied: {new Date(rec.approved_at).toLocaleString()}</span>
+                    )}
+                  </div>
+                  {(rec.execution_id || rec.execution?.execution_id) && (
+                    <button
+                      onClick={() => handleRevert(rec.execution_id || rec.execution?.execution_id, rec.recommendation_type)}
+                      className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold transition-colors"
+                    >
+                      Revert
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-gray-200 p-8 bg-gray-50 text-center">
+            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">No Applied Recommendations</h3>
+            <p className="text-sm text-gray-500">Approved recommendations will appear here</p>
+          </div>
+        )}
+      </div>
 
       {/* Empty State - No recommendations available (only show if all queries have finished) */}
-      {!isLoading && !creativeIsLoading && !placementIsLoading && !audienceIsLoading && !biddingIsLoading && !daypartingIsLoading && 
-       allRecommendations.length === 0 && 
-       !error && !creativeError && !placementError && !audienceError && !biddingError && !daypartingError && (
-        <div className="rounded-lg border border-[#e2e8f0] p-8 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] text-center">
-          <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className="text-lg font-bold text-gray-700 mb-2">No Recommendations Available</h3>
-          <p className="text-sm text-gray-500">
-            No recommendations found at this time. Please check back later.
-          </p>
-        </div>
-      )}
+      {!isLoading && !creativeIsLoading && !placementIsLoading && !audienceIsLoading && !biddingIsLoading && !daypartingIsLoading &&
+        allRecommendations.length === 0 &&
+        !error && !creativeError && !placementError && !audienceError && !biddingError && !daypartingError && (
+          <div className="rounded-lg border border-[#e2e8f0] p-8 shadow-sm bg-gradient-to-br from-[#f8faff] to-[#f0f4fa] text-center">
+            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 className="text-lg font-bold text-gray-700 mb-2">No Recommendations Available</h3>
+            <p className="text-sm text-gray-500">
+              No recommendations found at this time. Please check back later.
+            </p>
+          </div>
+        )}
     </section>
   )
 }
