@@ -47,8 +47,16 @@ function ChatInterface() {
         localStorage.setItem(STORAGE_KEY, sessionId);
       }
 
+      // Construct the API URL using environment variable
+      const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+      const agentApiUrl = VITE_API_BASE_URL
+        ? `${VITE_API_BASE_URL}/api/agent/chat`
+        : import.meta.env.PROD
+          ? 'http://localhost:8000/api/agent/chat'
+          : '/api/agent/chat';
+
       // Use native fetch for streaming, bypassing axios interceptors if any
-      const response = await fetch('/api/agent/chat', {
+      const response = await fetch(agentApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

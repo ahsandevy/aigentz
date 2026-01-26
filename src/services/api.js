@@ -1,9 +1,15 @@
 import axios from 'axios';
 
-// Use relative URL in development (via Vite proxy) or absolute URL in production
-const API_BASE_URL = import.meta.env.PROD
-    ? 'http://localhost:8000/api/analytics'
-    : '/api/analytics';
+// Get backend API base URL from environment variable
+// VITE_API_BASE_URL should be set in .env file (e.g., http://localhost:8000)
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Use VITE_API_BASE_URL if set, otherwise use relative URL in dev (via proxy) or default in production
+const API_BASE_URL = VITE_API_BASE_URL
+    ? `${VITE_API_BASE_URL}/api/analytics`
+    : import.meta.env.PROD
+        ? 'http://localhost:8000/api/analytics'
+        : '/api/analytics';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -12,9 +18,11 @@ const api = axios.create({
     },
 });
 
-const AGENT_BASE_URL = import.meta.env.PROD
-    ? 'http://localhost:8000/api/agent'
-    : '/api/agent';
+const AGENT_BASE_URL = VITE_API_BASE_URL
+    ? `${VITE_API_BASE_URL}/api/agent`
+    : import.meta.env.PROD
+        ? 'http://localhost:8000/api/agent'
+        : '/api/agent';
 
 const agentApi = axios.create({
     baseURL: AGENT_BASE_URL,
