@@ -10,7 +10,7 @@ const STATIC_METRICS = {
   ctr: { value: 1.8, change_percentage: 5.4, trend: 'positive' },
   purchases: { value: 450, change_percentage: 10.1, trend: 'positive' },
   aov: { value: 400, change_percentage: 4.8, trend: 'positive' },
-  new_customers_share: { value: 35 }
+  reach_efficiency: { value: 35 }
 }
 
 function MetricsGrid({ days = 7 }) {
@@ -122,9 +122,11 @@ function MetricsGrid({ days = 7 }) {
           changeType={getChangeType(metrics.aov)}
         />
         <MetricCard
-          title="New Customers"
-          value={`${metrics.new_customers_share.value}%`}
-          subtitle="Share"
+          title="Reach Efficiency"
+          value={`${metrics.reach_efficiency.value}%`}
+          subtitle={metrics.reach_efficiency.subtitle || "% of impressions reaching unique people"}
+          change={metrics.reach_efficiency.change_percentage !== undefined ? getChangeLabel(metrics.reach_efficiency.change_percentage) : null}
+          changeType={metrics.reach_efficiency.change_percentage !== undefined ? getChangeType(metrics.reach_efficiency) : null}
         />
       </div>
     </div>
