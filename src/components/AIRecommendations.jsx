@@ -17,8 +17,10 @@ import { useDaypartingOptimizationRecommendation } from '../hooks/useDaypartingO
 import { useAllRecommendationsPriorities } from '../hooks/useAllRecommendationsPriorities'
 import { useAppliedRecommendations } from '../hooks/useAppliedRecommendations'
 import { analyticsAPI } from '../services/api'
+import { useModal } from '../context/ModalContext'
 
 function AIRecommendations() {
+  const { showAlert, showConfirm, showSuccess, showError } = useModal()
   const queryClient = useQueryClient()
   const { data, isLoading, error, refetch: refetchBudget } = useBudgetRecommendation(7)
   const { data: creativeData, isLoading: creativeIsLoading, error: creativeError, refetch: refetchCreative } = useCreativeAnalysisRecommendation(7)
@@ -736,7 +738,7 @@ function AIRecommendations() {
   const handleSimulate = async (recommendationId) => {
     if (!recommendationId) {
       console.warn('Cannot simulate: Missing recommendation ID')
-      alert('This recommendation cannot be simulated. Missing recommendation ID.')
+      showAlert('Missing ID', 'This recommendation cannot be simulated. Missing recommendation ID.')
       return
     }
 
@@ -751,12 +753,12 @@ function AIRecommendations() {
         setPreviewData(result.preview)
         setPreviewModalOpen(true)
       } else {
-        alert('Simulation failed. Please try again.')
+        showError('Simulation Failed', 'Simulation failed. Please try again.')
       }
     } catch (error) {
       console.error('Error simulating recommendation:', error)
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to simulate recommendation. Please try again.'
-      alert(errorMessage)
+      showError('Simulation Error', errorMessage)
     } finally {
       setSimulatingIds(prev => {
         const next = new Set(prev)
@@ -770,11 +772,15 @@ function AIRecommendations() {
   const handleApprove = async (recommendationId) => {
     if (!recommendationId) {
       console.warn('Cannot approve: Missing recommendation ID')
-      alert('This recommendation cannot be approved. Missing recommendation ID.')
+      showAlert('Missing ID', 'This recommendation cannot be approved. Missing recommendation ID.')
       return
     }
 
-    if (!confirm('Are you sure you want to approve this recommendation? Changes will be applied.')) {
+    const confirmed = await showConfirm(
+      'Confirm Approval',
+      'Are you sure you want to approve this recommendation? Changes will be applied immediately to your Meta account.'
+    )
+    if (!confirmed) {
       return
     }
 
@@ -818,82 +824,66 @@ function AIRecommendations() {
           const regeneratedTypeConfig = recommendationTypeMap[result.new_recommendation_type.toLowerCase()]
 
           if (regeneratedTypeConfig) {
-            console.log('New recommendation generated - refetching specific type:', {
+            console.log('New recommendation generated - invalidating specific type:', {
               type: result.new_recommendation_type,
               id: result.new_recommendation_id,
               queryKey: regeneratedTypeConfig.queryKey
             })
 
-            // Remove only the necessary queries from cache
-            queryClient.removeQueries({ queryKey: regeneratedTypeConfig.queryKey })
-            queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
-            queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
-
-            // Refetch only the regenerated type + priorities + applied (3 queries total)
+            // Invalidate necessary queries
+            // Use Promise.all for concurrent invalidation
             await Promise.all([
-              regeneratedTypeConfig.refetch({ cancelRefetch: false }),
-              refetchPriorities({ cancelRefetch: false }),
-              refetchAppliedRecommendations({ cancelRefetch: false })
+              queryClient.invalidateQueries({ queryKey: regeneratedTypeConfig.queryKey }),
+              queryClient.invalidateQueries({ queryKey: ['all-recommendations-priorities', 7] }),
+              queryClient.invalidateQueries({ queryKey: ['applied-recommendations', 50] }),
+              queryClient.invalidateQueries({ queryKey: ['weekly-summary', 7] })
             ])
 
-            console.log('Refetch complete - only 3 queries executed')
+            console.log('Invalidation complete - active observers will refetch')
 
             // Show informative success message
             const typeName = result.new_recommendation_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-            alert(`${successMessage}\n\nA new ${typeName} recommendation (ID: ${result.new_recommendation_id}) has been generated and will appear shortly.`)
+            showSuccess(
+              'Recommendation Approved',
+              `${successMessage}\n\nA new ${typeName} recommendation (ID: ${result.new_recommendation_id}) has been generated and will appear shortly.`
+            )
           } else {
-            // Unknown type - fallback to refetching all (safety net)
-            console.warn('Unknown recommendation type - falling back to full refetch:', result.new_recommendation_type)
+            // Unknown type - fallback to invalidating all (safety net)
+            console.warn('Unknown recommendation type - falling back to full invalidation:', result.new_recommendation_type)
 
-            queryClient.removeQueries({ queryKey: ['budget-reallocation', 7] })
-            queryClient.removeQueries({ queryKey: ['creative-analysis', 7] })
-            queryClient.removeQueries({ queryKey: ['placement-optimization', 7] })
-            queryClient.removeQueries({ queryKey: ['audience-optimization', 7] })
-            queryClient.removeQueries({ queryKey: ['bidding-strategy-optimization', 7] })
-            queryClient.removeQueries({ queryKey: ['dayparting-optimization', 7] })
-            queryClient.removeQueries({ queryKey: ['all-recommendations-priorities', 7] })
-            queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
+            const queriesToInvalidate = [
+              ['budget-reallocation', 7],
+              ['creative-analysis', 7],
+              ['placement-optimization', 7],
+              ['audience-optimization', 7],
+              ['bidding-strategy-optimization', 7],
+              ['dayparting-optimization', 7],
+              ['all-recommendations-priorities', 7],
+              ['applied-recommendations', 50],
+              ['weekly-summary', 7]
+            ]
 
-            await Promise.all([
-              refetchBudget({ cancelRefetch: false }),
-              refetchCreative({ cancelRefetch: false }),
-              refetchPlacement({ cancelRefetch: false }),
-              refetchAudience({ cancelRefetch: false }),
-              refetchBidding({ cancelRefetch: false }),
-              refetchDayparting({ cancelRefetch: false }),
-              refetchPriorities({ cancelRefetch: false }),
-              refetchAppliedRecommendations({ cancelRefetch: false })
-            ])
+            await Promise.all(queriesToInvalidate.map(key => queryClient.invalidateQueries({ queryKey: key })))
 
-            alert(`${successMessage}\n\nA new recommendation has been generated and will appear shortly.`)
+            showSuccess('Recommendation Approved', `${successMessage}\n\nA new recommendation has been generated and will appear shortly.`)
           }
         } else {
           // No new recommendation generated - refetch approved type to update status + applied list
-          console.log('No new recommendation generated - refetching approved type and applied recommendations')
+          console.log('No new recommendation generated - invalidating approved type and applied recommendations')
 
           // Find which type was approved based on the category
           const approvedTypeConfig = category ? recommendationTypeMap[category.toLowerCase()] : null
 
+          const queriesToInvalidate = [['applied-recommendations', 50], ['weekly-summary', 7]]
           if (approvedTypeConfig) {
-            // Refetch the approved type to update its status
-            queryClient.removeQueries({ queryKey: approvedTypeConfig.queryKey })
-            queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
-
-            await Promise.all([
-              approvedTypeConfig.refetch({ cancelRefetch: false }),
-              refetchAppliedRecommendations({ cancelRefetch: false })
-            ])
-
-            console.log('Refetch complete - 2 queries executed (approved type + applied)')
-          } else {
-            // Fallback: only refetch applied if category not found
-            queryClient.removeQueries({ queryKey: ['applied-recommendations', 50] })
-            await refetchAppliedRecommendations({ cancelRefetch: false })
-
-            console.log('Refetch complete - only 1 query executed (applied)')
+            queriesToInvalidate.push(approvedTypeConfig.queryKey)
           }
 
-          alert(successMessage)
+          await Promise.all(queriesToInvalidate.map(key => queryClient.invalidateQueries({ queryKey: key })))
+
+          console.log('Invalidation complete - active observers will refetch')
+
+          showSuccess('Recommendation Approved', successMessage)
         }
 
         // Force component re-render by updating trigger
@@ -908,7 +898,7 @@ function AIRecommendations() {
           })
         }
       } else {
-        alert('Approval failed. Please try again.')
+        showError('Approval Failed', 'Approval failed. Please try again.')
         // Clear refreshing state on failure
         if (category) {
           setRefreshingCategories(prev => {
@@ -921,7 +911,7 @@ function AIRecommendations() {
     } catch (error) {
       console.error('Error approving recommendation:', error)
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to approve recommendation. Please try again.'
-      alert(errorMessage)
+      showError('Approval Error', errorMessage)
       // Clear refreshing state on error
       if (category) {
         setRefreshingCategories(prev => {
@@ -944,7 +934,11 @@ function AIRecommendations() {
   const handleRevert = async (executionId, recommendationType = null) => {
     if (!executionId) return
 
-    if (!confirm('Are you sure you want to revert this recommendation? Changes will be undone.')) {
+    const confirmed = await showConfirm(
+      'Confirm Revert',
+      'Are you sure you want to revert this recommendation? This will attempt to restore the previous budget settings.'
+    )
+    if (!confirmed) {
       return
     }
 
@@ -952,44 +946,34 @@ function AIRecommendations() {
       const result = await analyticsAPI.revertExecution(executionId)
 
       if (result?.success) {
-        alert(result.message || 'Recommendation reverted successfully!')
+        showSuccess('Revert Successful', result.message || 'Recommendation reverted successfully!')
 
         // Refetch all recommendation types + applied recommendations
         // This ensures new pending recommendations appear immediately after revert
-        console.log('Reverting recommendation - refetching all recommendation types')
+        console.log('Reverting recommendation - invalidating all recommendation types')
 
-        const queriesToRemove = [
+        const queriesToInvalidate = [
           ['budget-reallocation', 7],
           ['creative-analysis', 7],
           ['placement-optimization', 7],
           ['audience-optimization', 7],
           ['bidding-strategy-optimization', 7],
           ['dayparting-optimization', 7],
-          ['applied-recommendations', 50]
+          ['applied-recommendations', 50],
+          ['weekly-summary', 7]
         ]
 
-        // Remove all queries from cache
-        queriesToRemove.forEach(key => queryClient.removeQueries({ queryKey: key }))
+        // Invalidate all queries to force refetch for all active observers
+        await Promise.all(queriesToInvalidate.map(key => queryClient.invalidateQueries({ queryKey: key })))
 
-        // Refetch everything asynchronously
-        await Promise.all([
-          refetchBudget({ cancelRefetch: false }),
-          refetchCreative({ cancelRefetch: false }),
-          refetchPlacement({ cancelRefetch: false }),
-          refetchAudience({ cancelRefetch: false }),
-          refetchBidding({ cancelRefetch: false }),
-          refetchDayparting({ cancelRefetch: false }),
-          refetchAppliedRecommendations({ cancelRefetch: false })
-        ])
-
-        console.log('Refetch complete - all queries executed')
+        console.log('Invalidation complete - active observers will refetch')
 
         // Force component re-render
         setRefreshTrigger(prev => prev + 1)
       }
     } catch (error) {
       console.error('Error reverting execution:', error)
-      alert(error.response?.data?.detail || 'Failed to revert recommendation. Please try again.')
+      showError('Revert Error', error.response?.data?.detail || 'Failed to revert recommendation. Please try again.')
     }
   }
 

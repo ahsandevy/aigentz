@@ -114,8 +114,8 @@ export const analyticsAPI = {
         try {
             const params = { days };
             if (refreshAudienceIds && refreshAudienceIds.length > 0) {
-                params.refresh_audience_ids = Array.isArray(refreshAudienceIds) 
-                    ? refreshAudienceIds.join(',') 
+                params.refresh_audience_ids = Array.isArray(refreshAudienceIds)
+                    ? refreshAudienceIds.join(',')
                     : refreshAudienceIds;
             }
             const response = await api.get('/performance-explorer/audiences', { params });
@@ -248,6 +248,17 @@ export const analyticsAPI = {
             return response.data;
         } catch (error) {
             console.error('Error fetching executive brief:', error);
+            throw error;
+        }
+    },
+
+    // Weekly Summary
+    getWeeklySummary: async (days = 7) => {
+        try {
+            const response = await api.get('/weekly-summary', { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching weekly summary:', error);
             throw error;
         }
     },

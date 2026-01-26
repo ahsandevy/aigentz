@@ -1,26 +1,66 @@
+import { useAppliedRecommendations } from '../hooks/useAppliedRecommendations'
+
 function ChangeControl() {
-  const auditLogs = [
-    {
-      title: 'Scaled Reels Mid-Funnel (+20%)',
-      desc: 'Above threshold efficiency (ROAS 9.9x). Guardrail: pause if CPA > 1.5K.',
-      color: 'bg-[#84cc16]' // Green
-    },
-    {
-      title: 'Reduce Broad Prospecting (−20%)',
-      desc: 'Below target ROAS with creative fatigue and overlap risk.',
-      color: 'bg-[#eab308]' // Yellow
-    },
-    {
-      title: 'Creative Refresh Launched',
-      desc: 'New hook and thumbnail to counter CTR decline.',
-      color: 'bg-[#f97316]' // Orange
-    },
-    {
-      title: 'Audience Overlap Resolved',
-      desc: 'Excluded 1% Lookalike from Broad to reduce auction pressure.',
-      color: 'bg-[#eab308]' // Yellow
-    },
-  ]
+  const { data: appliedRecommendations, isLoading } = useAppliedRecommendations(50)
+
+  // Helper to format log details based on recommendation type
+  const getLogDetails = (rec) => {
+    const typeMap = {
+      'budget_reallocation': 'Budget Optimization',
+      'creative_analysis': 'Creative Analysis',
+      'placement_optimization': 'Placement Optimization',
+      'audience_optimization': 'Audience Optimization',
+      'bidding_strategy_optimization': 'Bidding Strategy',
+      'dayparting': 'Dayparting Optimization'
+    }
+
+    const title = typeMap[rec.recommendation_type] || rec.recommendation_type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    let desc = 'Applied optimization changes.'
+
+    // Color mapping logic
+    let color = 'bg-[#84cc16]' // Default Green
+
+    if (rec.recommendation_type === 'creative_analysis') {
+      color = 'bg-[#f97316]' // Orange
+    } else if (rec.recommendation_type.includes('optimization') || rec.recommendation_type === 'dayparting') {
+      color = 'bg-[#eab308]' // Yellow
+    }
+
+    // Description generation logic
+    if (rec.changes && rec.changes.length > 0) {
+      // Look for the most significant change or summarize
+      const change = rec.changes[0] // Take the first change for now
+      const entityName = change.entity_name || 'Unknown Entity'
+
+      switch (rec.recommendation_type) {
+        case 'budget_reallocation':
+          const pct = change.change_percentage ? `${Math.abs(change.change_percentage)}%` : ''
+          const action = change.change_percentage > 0 ? 'Increased' : 'Decreased'
+          desc = `${action} budget for ${entityName} ${pct ? `by ${pct}` : ''}`
+          break
+        case 'dayparting':
+          desc = `Updated ad schedule for ${entityName}`
+          break
+        case 'creative_analysis':
+          desc = `Creative updates applied to ${entityName}`
+          break
+        default:
+          // Generic fallback
+          desc = `${change.change_type.replace(/_/g, ' ')} applied to ${entityName}`
+      }
+    } else if (rec.recommendation && rec.recommendation.recommendation) {
+      // Fallback to the recommendation title if specific changes aren't clear
+      // We truncate it if it's too long
+      desc = rec.recommendation.recommendation.length > 70
+        ? rec.recommendation.recommendation.substring(0, 70) + '...'
+        : rec.recommendation.recommendation
+    }
+
+    return { title, desc, color }
+  }
+
+  // Transform data or use empty array
+  const auditLogs = appliedRecommendations?.map(getLogDetails) || []
 
   return (
     <section className="mb-8">
@@ -36,15 +76,25 @@ function ChangeControl() {
         <div className="bg-white rounded-xl p-6 shadow-sm h-[300px] flex flex-col">
           <h3 className="text-lg font-bold text-[#1e4a79] mb-4">Audit Log</h3>
           <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar flex-1">
-            {auditLogs.map((log, idx) => (
-              <div key={idx} className="flex gap-4">
-                <div className={`w-1 ${log.color} rounded-full shrink-0`}></div>
-                <div>
-                  <p className="font-bold text-[#374151] text-sm">{log.title}</p>
-                  <p className="text-sm text-[#6b7280] leading-snug mt-0.5">{log.desc}</p>
-                </div>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-full text-gray-400 text-sm">
+                Loading logs...
               </div>
-            ))}
+            ) : auditLogs.length > 0 ? (
+              auditLogs.map((log, idx) => (
+                <div key={idx} className="flex gap-4">
+                  <div className={`w-1 ${log.color} rounded-full shrink-0`}></div>
+                  <div>
+                    <p className="font-bold text-[#374151] text-sm">{log.title}</p>
+                    <p className="text-sm text-[#6b7280] leading-snug mt-0.5">{log.desc}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-center items-center h-full text-gray-400 text-sm">
+                No active changes recorded.
+              </div>
+            )}
           </div>
         </div>
 

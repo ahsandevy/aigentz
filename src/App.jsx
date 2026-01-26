@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import HomePage from './components/HomePage'
 import Dashboard from './components/Dashboard'
 
+import { ModalProvider } from './context/ModalContext'
+
 // Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,12 +20,14 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-      </Router>
+      <ModalProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Routes>
+        </Router>
+      </ModalProvider>
     </QueryClientProvider>
   )
 }

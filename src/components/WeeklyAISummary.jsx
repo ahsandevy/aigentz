@@ -1,4 +1,27 @@
+import { useWeeklySummary } from '../hooks/useWeeklySummary'
+
 function WeeklyAISummary() {
+  const { data: summary, isLoading, error } = useWeeklySummary(7)
+
+  const formatCurrency = (val) => {
+    if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`
+    if (val >= 1000) return `${(val / 1000).toFixed(0)}K`
+    return val.toLocaleString()
+  }
+
+  if (isLoading) {
+    return (
+      <section className="animate-pulse">
+        <div className="h-8 w-48 bg-gray-200 rounded mb-6"></div>
+        <div className="h-64 bg-gray-100 rounded-lg"></div>
+      </section>
+    )
+  }
+
+  if (error || !summary) {
+    return null // Silent fail or simple error message
+  }
+
   return (
     <section>
       <div className="flex items-center gap-3 mb-6">
@@ -9,13 +32,24 @@ function WeeklyAISummary() {
       </div>
 
       <div className="rounded-lg border-l-[5px] border-[#1e4a79] border-t-[0.5px] border-r-[0.5px] border-b-[0.5px] border-[#1e4a79] p-6 md:p-8 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]" style={{ backgroundImage: 'linear-gradient(159.11026453997087deg, rgba(245, 248, 253, 1) 31.672%, rgba(255, 255, 255, 1) 101.75%)' }}>
-        <p className="text-lg md:text-[20px] font-bold text-[#374151] mb-6">
-          This week's decisions improved efficiency by reallocation spend from low-performing prospecting to high-converting mid and lower funnel audiences.
+        <p className="text-lg md:text-[20px] font-bold text-[#374151] mb-6 leading-relaxed">
+          {summary.headline}
         </p>
         <div className="space-y-3 text-base md:text-[18px] text-[#374151] mb-8">
-          <p className="flex justify-between md:justify-start gap-4"><strong>Approved Actions:</strong> <span className="font-normal">4</span></p>
-          <p className="flex justify-between md:justify-start gap-4"><strong>Budget Shift:</strong> <span className="font-normal">+380K AED toward higher ROAS inventory</span></p>
-          <p className="flex flex-col md:flex-row md:gap-4"><strong>Primary Risk Managed:</strong> <span className="font-normal">Creative fatigue and audience overlap</span></p>
+          <p className="flex justify-between md:justify-start gap-4">
+            <strong>Approved Actions:</strong>
+            <span className="font-normal">{summary.approved_actions}</span>
+          </p>
+          <p className="flex justify-between md:justify-start gap-4">
+            <strong>Budget Shift:</strong>
+            <span className="font-normal">
+              {summary.budget_shift > 0 ? '+' : ''}{formatCurrency(summary.budget_shift)} {summary.currency} toward higher ROAS inventory
+            </span>
+          </p>
+          <p className="flex flex-col md:flex-row md:gap-4">
+            <strong>Primary Risk Managed:</strong>
+            <span className="font-normal">{summary.primary_risk}</span>
+          </p>
         </div>
         <button className="flex items-center gap-2 bg-[#EDF0A8] text-[#1e4a79] px-6 py-3 rounded-[18px] font-semibold shadow-[2px_2px_4px_0px_rgba(0,0,0,0.1)] hover:opacity-90 transition-opacity">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,5 +63,3 @@ function WeeklyAISummary() {
 }
 
 export default WeeklyAISummary
-
-

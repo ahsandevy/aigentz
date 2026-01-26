@@ -7,7 +7,7 @@ function RecommendationPreviewModal({ isOpen, onClose, preview, recommendation }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fadeIn overflow-y-auto">
+    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8 relative">
         <button
           onClick={onClose}
@@ -44,15 +44,14 @@ function RecommendationPreviewModal({ isOpen, onClose, preview, recommendation }
                         {change.entity_type === 'campaign' ? 'Campaign' : 'Ad Set'} • ID: {change.entity_id}
                       </p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      change.change_type.includes('increase') ? 'bg-green-100 text-green-800' :
-                      change.change_type.includes('reduction') ? 'bg-red-100 text-red-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${change.change_type.includes('increase') ? 'bg-green-100 text-green-800' :
+                        change.change_type.includes('reduction') ? 'bg-red-100 text-red-800' :
+                          'bg-blue-100 text-blue-800'
+                      }`}>
                       {change.change_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div className="bg-white rounded-lg p-3 border border-gray-200">
                       <p className="text-xs text-gray-500 mb-1">Before</p>
@@ -75,16 +74,14 @@ function RecommendationPreviewModal({ isOpen, onClose, preview, recommendation }
                   {(change.change_percentage || change.change_amount) && (
                     <div className="mt-3 flex gap-4 text-sm">
                       {change.change_percentage && (
-                        <span className={`font-semibold ${
-                          change.change_percentage > 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <span className={`font-semibold ${change.change_percentage > 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
                           {change.change_percentage > 0 ? '+' : ''}{change.change_percentage}%
                         </span>
                       )}
                       {change.change_amount && (
-                        <span className={`font-semibold ${
-                          change.change_amount > 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <span className={`font-semibold ${change.change_amount > 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
                           {change.change_amount > 0 ? '+' : ''}{change.change_amount} AED
                         </span>
                       )}
