@@ -1,12 +1,148 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { analyticsAPI } from '../services/api';
+
+// Pie Chart Component
+function PieChart({ data, size = 200 }) {
+  // Theme-aligned colors matching the app's color scheme
+  const colors = ['#1e4a79', '#78a3cd', '#16a34a'];
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  
+  const total = data.reduce((sum, item) => sum + item.count, 0);
+  
+  if (total === 0) {
+    return (
+      <div className="flex items-center justify-center" style={{ width: size, height: size }}>
+        <span className="text-sm text-gray-400">No data</span>
+      </div>
+    );
+  }
+
+  let currentAngle = -90; // Start from top
+  const radius = size / 2 - 10;
+  const centerX = size / 2;
+  const centerY = size / 2;
+
+  const segments = data.map((item, index) => {
+    const percentage = (item.count / total) * 100;
+    const angle = (item.count / total) * 360;
+    
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + angle;
+    
+    const x1 = centerX + radius * Math.cos((startAngle * Math.PI) / 180);
+    const y1 = centerY + radius * Math.sin((startAngle * Math.PI) / 180);
+    const x2 = centerX + radius * Math.cos((endAngle * Math.PI) / 180);
+    const y2 = centerY + radius * Math.sin((endAngle * Math.PI) / 180);
+    
+    const largeArcFlag = angle > 180 ? 1 : 0;
+    
+    const pathData = [
+      `M ${centerX} ${centerY}`,
+      `L ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+      'Z'
+    ].join(' ');
+
+    currentAngle += angle;
+
+    return {
+      path: pathData,
+      color: colors[index % colors.length],
+      label: item.label,
+      count: item.count,
+      percentage: percentage.toFixed(1),
+      conversion_rate: item.conversion_rate
+    };
+  });
+
+  const handleMouseMove = (e, index, svgRef) => {
+    if (svgRef && svgRef.current) {
+      const svgRect = svgRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        x: e.clientX - svgRect.left,
+        y: e.clientY - svgRect.top
+      });
+    }
+    setHoveredIndex(index);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+  };
+
+  const svgRef = useRef(null);
+
+  return (
+    <div className="flex flex-col items-center relative">
+      <div className="relative" onMouseLeave={handleMouseLeave}>
+        <svg ref={svgRef} width={size} height={size} className="mb-4">
+          {segments.map((segment, index) => (
+            <path
+              key={index}
+              d={segment.path}
+              fill={segment.color}
+              stroke="white"
+              strokeWidth="2"
+              className="transition-all cursor-pointer"
+              style={{
+                opacity: hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.5,
+                transform: hoveredIndex === index ? 'scale(1.05)' : 'scale(1)',
+                transformOrigin: 'center'
+              }}
+              onMouseMove={(e) => handleMouseMove(e, index, svgRef)}
+            />
+          ))}
+        </svg>
+        {hoveredIndex !== null && (
+          <div
+            className="absolute bg-[#1e4a79] text-white px-3 py-2 rounded-lg shadow-lg text-sm font-semibold pointer-events-none z-10 whitespace-nowrap"
+            style={{
+              left: `${tooltipPosition.x}px`,
+              top: `${tooltipPosition.y - 50}px`,
+              transform: 'translateX(-50%)'
+            }}
+          >
+            <div className="font-bold">{segments[hoveredIndex].label}</div>
+            <div className="text-xs font-normal opacity-90">
+              {segments[hoveredIndex].count.toLocaleString()}
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="space-y-2 w-full">
+        {segments.map((segment, index) => (
+          <div key={index} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: segment.color }}
+              ></div>
+              <span className="text-xs font-semibold text-[#374151]">{segment.label}</span>
+            </div>
+            <div className="text-right">
+              <span className="text-sm font-bold text-[#111827]">
+                {segment.count.toLocaleString()}
+              </span>
+              {segment.conversion_rate && (
+                <span className="text-[10px] text-[#6b7280] block">
+                  CR: {segment.conversion_rate}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function EfficiencyDrivers() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     funnelMix: [],
-    newVsReturning: [],
-    creativeFatigue: [],
+    conversionFunnel: [],
+    qualityRankings: [],
     placementPerformance: []
   });
 
@@ -64,42 +200,61 @@ function EfficiencyDrivers() {
           </div>
         </div>
 
-        {/* New vs Returning */}
+        {/* Conversion Funnel */}
         <div className="bg-[#fafafa] rounded-lg border border-[#e5e7eb] p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
-          <h3 className="text-sm font-semibold text-[#374151] mb-4">New vs Returning</h3>
-          <div className="space-y-4">
-            {data.newVsReturning.map((item, idx) => (
-              <div key={idx}>
-                <div className="flex justify-between mb-1">
-                  <span className="text-[15px] font-bold text-[#111827]">{item.label}</span>
-                  <span className="text-[12px] font-bold text-[#78a3cd]">{item.percentage}</span>
-                </div>
-                <div className="w-full bg-[#e5e7eb] rounded-full h-[9px]">
-                  <div className="h-[9px] rounded-full transition-all duration-500" style={{ width: item.width, backgroundColor: item.color }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <h3 className="text-sm font-semibold text-[#374151] mb-4">Conversion Funnel</h3>
+          {data.conversionFunnel && data.conversionFunnel.length > 0 ? (
+            <PieChart data={data.conversionFunnel} size={180} />
+          ) : (
+            <div className="flex items-center justify-center h-48">
+              <span className="text-sm text-gray-400">No data available</span>
+            </div>
+          )}
         </div>
 
-        {/* Creative Fatigue */}
+        {/* Quality Rankings */}
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
-          <h3 className="text-sm font-semibold text-[#374151] mb-4">Creative Fatigue (Top 5)</h3>
+          <h3 className="text-sm font-semibold text-[#374151] mb-4">Quality Rankings</h3>
           <div className="space-y-3">
-            {data.creativeFatigue.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between">
-                <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
-                <span className="px-2 py-1 rounded-[4px] text-[12px] font-bold text-white min-w-[30px] text-center" style={{ backgroundColor: item.color }}>
-                  {item.score}
-                </span>
-              </div>
-            ))}
+            {data.qualityRankings.map((item, idx) => {
+              const getQualityColor = (ranking) => {
+                switch (ranking) {
+                  case 'ABOVE_AVERAGE':
+                    return '#16a34a'; // Green
+                  case 'AVERAGE':
+                    return '#f59e0b'; // Amber/Yellow
+                  case 'BELOW_AVERAGE':
+                    return '#dc2626'; // Red
+                  default:
+                    return '#6b7280'; // Gray
+                }
+              };
+              
+              const formatQualityRanking = (ranking) => {
+                return ranking
+                  .split('_')
+                  .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+                  .join(' ');
+              };
+              
+              return (
+                <div key={idx} className="flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
+                  <span 
+                    className="px-2 py-1 rounded-[4px] text-[12px] font-bold text-white min-w-[100px] text-center" 
+                    style={{ backgroundColor: getQualityColor(item.quality_ranking) }}
+                  >
+                    {formatQualityRanking(item.quality_ranking)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Placement Performance */}
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
-          <h3 className="text-sm font-semibold text-[#374151] mb-4">Placement Performance</h3>
+          <h3 className="text-sm font-semibold text-[#374151] mb-4">Placement Performance (ROAS - Top 5)</h3>
           <div className="space-y-3">
             {data.placementPerformance.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between">
