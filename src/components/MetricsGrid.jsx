@@ -49,18 +49,32 @@ function MetricsGrid({ days = 7 }) {
 
   if (!metrics) return null;
 
-  const formatCurrency = (val) => new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', maximumFractionDigits: 0 }).format(val)
-  const formatNumber = (val) => new Intl.NumberFormat('en-US').format(val)
-  const formatPercent = (val) => `${val}%`
+  const formatCurrency = (val) => {
+    if (val === null || val === undefined) return 'N/A'
+    return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', maximumFractionDigits: 0 }).format(val)
+  }
+  const formatNumber = (val) => {
+    if (val === null || val === undefined) return 'N/A'
+    return new Intl.NumberFormat('en-US').format(val)
+  }
+  const formatPercent = (val) => {
+    if (val === null || val === undefined) return 'N/A%'
+    return `${val}%`
+  }
 
   // Helper to determine change type securely
   // API returns trend as 'positive' or 'negative', but sometimes we want to check value directly if trend isn't sent
   const getChangeType = (metric) => {
+    if (!metric) return 'positive'
     if (metric.trend) return metric.trend
-    return metric.change_percentage >= 0 ? 'positive' : 'negative'
+    if (metric.change_percentage !== undefined && metric.change_percentage !== null) {
+      return metric.change_percentage >= 0 ? 'positive' : 'negative'
+    }
+    return 'positive'
   }
 
   const getChangeLabel = (val) => {
+    if (val === null || val === undefined) return null
     const sign = val >= 0 ? '+' : ''
     return `${sign}${val}%`
   }
@@ -76,58 +90,73 @@ function MetricsGrid({ days = 7 }) {
         </div>
       )} */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="$ Spend"
-          value={formatCurrency(metrics.spend.value)}
-          change={getChangeLabel(metrics.spend.change_percentage)}
-          changeType={getChangeType(metrics.spend)}
-        />
-        <MetricCard
-          title="$ Revenue"
-          value={formatCurrency(metrics.revenue.value)}
-          change={getChangeLabel(metrics.revenue.change_percentage)}
-          changeType={getChangeType(metrics.revenue)}
-        />
-        <MetricCard
-          title="ROAS"
-          value={`${metrics.roas.value} x`}
-          target={metrics.roas.target ? `${metrics.roas.target}x` : null}
-          change={getChangeLabel(metrics.roas.change_percentage)}
-          changeType={getChangeType(metrics.roas)}
-        // Note: ROAS usually positive is good
-        />
-        <MetricCard
-          title="Cost per Action"
-          value={formatCurrency(metrics.cpa.value)}
-          change={getChangeLabel(metrics.cpa.change_percentage)}
-          changeType={metrics.cpa.trend || (metrics.cpa.change_percentage < 0 ? 'positive' : 'negative')} // Lower CPA is usually positive
-        />
-        <MetricCard
-          title="Click Through Rate"
-          value={`${metrics.ctr.value}%`}
-          subtitle="Click Rate"
-          change={getChangeLabel(metrics.ctr.change_percentage)}
-          changeType={getChangeType(metrics.ctr)}
-        />
-        <MetricCard
-          title="Purchases"
-          value={formatNumber(metrics.purchases.value)}
-          change={getChangeLabel(metrics.purchases.change_percentage)}
-          changeType={getChangeType(metrics.purchases)}
-        />
-        <MetricCard
-          title="Average Order Value"
-          value={formatCurrency(metrics.aov.value)}
-          change={getChangeLabel(metrics.aov.change_percentage)}
-          changeType={getChangeType(metrics.aov)}
-        />
-        <MetricCard
-          title="Reach Efficiency"
-          value={`${metrics.reach_efficiency.value}%`}
-          subtitle={metrics.reach_efficiency.subtitle || "% of impressions reaching unique people"}
-          change={metrics.reach_efficiency.change_percentage !== undefined ? getChangeLabel(metrics.reach_efficiency.change_percentage) : null}
-          changeType={metrics.reach_efficiency.change_percentage !== undefined ? getChangeType(metrics.reach_efficiency) : null}
-        />
+        {metrics.spend && (
+          <MetricCard
+            title="$ Spend"
+            value={formatCurrency(metrics.spend?.value)}
+            change={getChangeLabel(metrics.spend?.change_percentage)}
+            changeType={getChangeType(metrics.spend)}
+          />
+        )}
+        {metrics.revenue && (
+          <MetricCard
+            title="$ Revenue"
+            value={formatCurrency(metrics.revenue?.value)}
+            change={getChangeLabel(metrics.revenue?.change_percentage)}
+            changeType={getChangeType(metrics.revenue)}
+          />
+        )}
+        {metrics.roas && (
+          <MetricCard
+            title="ROAS"
+            value={`${metrics.roas?.value ?? 0} x`}
+            target={metrics.roas?.target ? `${metrics.roas.target}x` : null}
+            change={getChangeLabel(metrics.roas?.change_percentage)}
+            changeType={getChangeType(metrics.roas)}
+          />
+        )}
+        {metrics.cpa && (
+          <MetricCard
+            title="Cost per Action"
+            value={formatCurrency(metrics.cpa?.value)}
+            change={getChangeLabel(metrics.cpa?.change_percentage)}
+            changeType={getChangeType(metrics.cpa)}
+          />
+        )}
+        {metrics.ctr && (
+          <MetricCard
+            title="Click Through Rate"
+            value={formatPercent(metrics.ctr?.value)}
+            subtitle="Click Rate"
+            change={getChangeLabel(metrics.ctr?.change_percentage)}
+            changeType={getChangeType(metrics.ctr)}
+          />
+        )}
+        {metrics.purchases && (
+          <MetricCard
+            title="Purchases"
+            value={formatNumber(metrics.purchases?.value)}
+            change={getChangeLabel(metrics.purchases?.change_percentage)}
+            changeType={getChangeType(metrics.purchases)}
+          />
+        )}
+        {metrics.aov && (
+          <MetricCard
+            title="Average Order Value"
+            value={formatCurrency(metrics.aov?.value)}
+            change={getChangeLabel(metrics.aov?.change_percentage)}
+            changeType={getChangeType(metrics.aov)}
+          />
+        )}
+        {metrics.reach_efficiency && (
+          <MetricCard
+            title="Reach Efficiency"
+            value={formatPercent(metrics.reach_efficiency?.value)}
+            subtitle={metrics.reach_efficiency?.subtitle || "% of impressions reaching unique people"}
+            change={metrics.reach_efficiency?.change_percentage !== undefined ? getChangeLabel(metrics.reach_efficiency.change_percentage) : null}
+            changeType={metrics.reach_efficiency?.change_percentage !== undefined ? getChangeType(metrics.reach_efficiency) : null}
+          />
+        )}
       </div>
     </div>
   )
