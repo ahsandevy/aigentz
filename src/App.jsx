@@ -4,7 +4,7 @@ import HomePage from './components/HomePage'
 import Dashboard from './components/Dashboard'
 
 import { ModalProvider } from './context/ModalContext'
-
+//dummy line
 // Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
