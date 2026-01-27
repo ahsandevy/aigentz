@@ -183,20 +183,26 @@ function EfficiencyDrivers() {
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
           <h3 className="text-sm font-semibold text-[#374151] mb-4">Funnel Mix</h3>
           <div className="space-y-4">
-            {data.funnelMix.map((item, idx) => (
-              <div key={idx}>
-                <div className="flex justify-between mb-1">
-                  <span className="text-[15px] font-bold text-[#111827]">{item.label}</span>
-                  <div className="text-right">
-                    <span className="text-[10px] font-bold text-[#78a3cd] block">{item.roas}</span>
-                    <span className="text-[10px] text-[#374151]">{item.spend}</span>
+            {data.funnelMix && data.funnelMix.length > 0 ? (
+              data.funnelMix.map((item, idx) => (
+                <div key={idx}>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[15px] font-bold text-[#111827]">{item.label}</span>
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold text-[#78a3cd] block">{item.roas}</span>
+                      <span className="text-[10px] text-[#374151]">{item.spend}</span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-[#e5e7eb] rounded-full h-[9px]">
+                    <div className="bg-[#78a3cd] h-[9px] rounded-full transition-all duration-500" style={{ width: item.width }}></div>
                   </div>
                 </div>
-                <div className="w-full bg-[#e5e7eb] rounded-full h-[9px]">
-                  <div className="bg-[#78a3cd] h-[9px] rounded-full transition-all duration-500" style={{ width: item.width }}></div>
-                </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-32">
+                <span className="text-sm text-gray-400">No data available</span>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -216,39 +222,45 @@ function EfficiencyDrivers() {
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
           <h3 className="text-sm font-semibold text-[#374151] mb-4">Quality Rankings</h3>
           <div className="space-y-3">
-            {data.qualityRankings.map((item, idx) => {
-              const getQualityColor = (ranking) => {
-                switch (ranking) {
-                  case 'ABOVE_AVERAGE':
-                    return '#16a34a'; // Green
-                  case 'AVERAGE':
-                    return '#f59e0b'; // Amber/Yellow
-                  case 'BELOW_AVERAGE':
-                    return '#dc2626'; // Red
-                  default:
-                    return '#6b7280'; // Gray
-                }
-              };
-              
-              const formatQualityRanking = (ranking) => {
-                return ranking
-                  .split('_')
-                  .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-                  .join(' ');
-              };
-              
-              return (
-                <div key={idx} className="flex items-center justify-between">
-                  <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
-                  <span 
-                    className="px-2 py-1 rounded-[4px] text-[12px] font-bold text-white min-w-[100px] text-center" 
-                    style={{ backgroundColor: getQualityColor(item.quality_ranking) }}
-                  >
-                    {formatQualityRanking(item.quality_ranking)}
-                  </span>
-                </div>
-              );
-            })}
+            {data.qualityRankings && data.qualityRankings.length > 0 ? (
+              data.qualityRankings.map((item, idx) => {
+                const getQualityColor = (ranking) => {
+                  switch (ranking) {
+                    case 'ABOVE_AVERAGE':
+                      return '#16a34a'; // Green
+                    case 'AVERAGE':
+                      return '#f59e0b'; // Amber/Yellow
+                    case 'BELOW_AVERAGE':
+                      return '#dc2626'; // Red
+                    default:
+                      return '#6b7280'; // Gray
+                  }
+                };
+                
+                const formatQualityRanking = (ranking) => {
+                  return ranking
+                    .split('_')
+                    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+                    .join(' ');
+                };
+                
+                return (
+                  <div key={idx} className="flex items-center justify-between">
+                    <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
+                    <span 
+                      className="px-2 py-1 rounded-[4px] text-[12px] font-bold text-white min-w-[100px] text-center" 
+                      style={{ backgroundColor: getQualityColor(item.quality_ranking) }}
+                    >
+                      {formatQualityRanking(item.quality_ranking)}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="flex items-center justify-center h-32">
+                <span className="text-sm text-gray-400">No data available</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -256,12 +268,18 @@ function EfficiencyDrivers() {
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
           <h3 className="text-sm font-semibold text-[#374151] mb-4">Placement Performance (ROAS - Top 5)</h3>
           <div className="space-y-3">
-            {data.placementPerformance.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between">
-                <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
-                <span className={`text-[12px] font-bold ${idx === 0 ? 'text-[#78a3cd]' : 'text-[#6b7280]'}`}>{item.roas}</span>
+            {data.placementPerformance && data.placementPerformance.length > 0 ? (
+              data.placementPerformance.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
+                  <span className={`text-[12px] font-bold ${idx === 0 ? 'text-[#78a3cd]' : 'text-[#6b7280]'}`}>{item.roas}</span>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-32">
+                <span className="text-sm text-gray-400">No data available</span>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -270,5 +288,3 @@ function EfficiencyDrivers() {
 }
 
 export default EfficiencyDrivers;
-
-
