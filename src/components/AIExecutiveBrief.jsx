@@ -91,9 +91,9 @@ function AIExecutiveBrief() {
     if (!dateString) return ''
     try {
       const date = new Date(dateString)
-      return date.toLocaleString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit'
@@ -490,11 +490,10 @@ function AIExecutiveBrief() {
                     .map((rec, index) => (
                       <div key={index} className="border border-gray-200 rounded-lg p-5 bg-gray-50">
                         <div className="flex items-start gap-3 mb-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            rec.priority === 1 ? 'bg-red-100 text-red-800' :
-                            rec.priority === 2 ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-blue-100 text-blue-800'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${rec.priority === 1 ? 'bg-red-100 text-red-800' :
+                              rec.priority === 2 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-blue-100 text-blue-800'
+                            }`}>
                             Priority {rec.priority}
                           </span>
                           <h4 className="text-lg font-semibold text-[#1e4a79] flex-1">{rec.title}</h4>
