@@ -1,6 +1,61 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { agentAPI } from '../../services/api'
+
+const DataTable = ({ data }) => {
+  if (!data || !Array.isArray(data) || data.length === 0) return null;
+  const headers = Object.keys(data[0]);
+
+  return (
+    <div className="overflow-x-auto my-4 border border-gray-200 rounded-xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] bg-white">
+      <table className="min-w-full divide-y divide-gray-200 text-[13px]">
+        <thead>
+          <tr className="bg-slate-50/80 backdrop-blur-sm">
+            {headers.map(h => (
+              <th key={h} className="px-5 py-3 text-left font-bold text-slate-600 uppercase tracking-wider text-[11px] border-b border-gray-200">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
+          {data.map((row, i) => (
+            <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+              {headers.map(h => (
+                <td key={h} className="px-5 py-3 text-slate-700 font-medium group-hover:text-[#062a74] transition-colors">{String(row[h])}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const ReasoningSection = ({ content }) => {
+  if (!content) return null;
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="mb-4 bg-amber-50/50 border border-amber-100 rounded-xl overflow-hidden transition-all duration-300">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-2 flex items-center justify-between text-[13px] font-semibold text-amber-700 hover:bg-amber-100/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 19l7-7-7-7" />
+            <path d="M5 19l7-7-7-7" />
+          </svg>
+          Reasoning & Strategy
+        </div>
+        <span>{isOpen ? '−' : '+'}</span>
+      </button>
+      {isOpen && (
+        <div className="px-4 py-3 text-[14px] text-amber-800/80 prose prose-sm max-w-none border-t border-amber-100 antialiased italic">
+          <ReactMarkdown>{content}</ReactMarkdown>
+        </div>
+      )}
+    </div>
+  );
+};
 
 function ChatInterface() {
   const [query, setQuery] = useState('')
@@ -29,13 +84,9 @@ function ChatInterface() {
     setIsThinking(true)
 
     // Prepare placeholder for AI response
-    const aiMessageIndex = messages.length + 1
-
-    // We add an empty AI message first that we will populate via stream
-    setMessages(prev => [...prev, { role: 'ai', content: '' }])
+    setMessages(prev => [...prev, { role: 'ai', content: '', reasoning: '', sql: null, data: null }])
 
     try {
-      // Get or create session ID for conversation isolation
       const STORAGE_KEY = 'agent_session_id';
       let sessionId = localStorage.getItem(STORAGE_KEY);
       if (!sessionId) {
@@ -47,7 +98,6 @@ function ChatInterface() {
         localStorage.setItem(STORAGE_KEY, sessionId);
       }
 
-      // Construct the API URL using environment variable
       const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
       const agentApiUrl = VITE_API_BASE_URL
         ? `${VITE_API_BASE_URL}/api/agent/chat`
@@ -55,7 +105,6 @@ function ChatInterface() {
           ? 'http://localhost:8000/api/agent/chat'
           : '/api/agent/chat';
 
-      // Use native fetch for streaming, bypassing axios interceptors if any
       const response = await fetch(agentApiUrl, {
         method: 'POST',
         headers: {
@@ -74,13 +123,14 @@ function ChatInterface() {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let aiContent = ''
+      let aiReasoning = ''
+      let hasReceivedToolOutput = false
 
       while (true) {
         const { value, done } = await reader.read()
         if (done) break
 
         const chunk = decoder.decode(value)
-        // SSE parsing: split by double newline
         const lines = chunk.split('\n\n')
 
         for (const line of lines) {
@@ -91,9 +141,7 @@ function ChatInterface() {
             try {
               const data = JSON.parse(dataStr)
 
-              if (data.error) {
-                throw new Error(data.error)
-              }
+              if (data.error) throw new Error(data.error)
 
               if (data.type === 'sql') {
                 setIsThinking(false)
@@ -107,6 +155,7 @@ function ChatInterface() {
                 })
               } else if (data.type === 'data') {
                 setIsThinking(false)
+                hasReceivedToolOutput = true
                 setMessages(prev => {
                   const newMessages = [...prev]
                   const lastIdx = newMessages.length - 1
@@ -115,19 +164,36 @@ function ChatInterface() {
                   }
                   return newMessages
                 })
-              } else if (data.type === 'text' || data.token) {
-                // Determine if we need to remove the "Thinking..." state
+              } else if (data.type === 'text') {
                 setIsThinking(false)
+                let text = data.content
 
-                const text = data.content || data.token
-                aiContent += text
+                // 1. Detect explicit markers from instructions
+                if (text.includes('[REASONING]')) {
+                  hasReceivedToolOutput = false; // Reset if we see explicit reasoning again
+                  text = text.replace('[REASONING]', '').trim();
+                }
+                if (text.includes('[INSIGHTS]')) {
+                  hasReceivedToolOutput = true;
+                  text = text.replace('[INSIGHTS]', '').trim();
+                }
 
-                // Update the last message (which is our AI placeholder)
+                // 2. Use marker state or backend flag to decide placement
+                if (!hasReceivedToolOutput && data.is_reasoning !== false) {
+                  aiReasoning += text
+                } else {
+                  aiContent += text
+                }
+
                 setMessages(prev => {
                   const newMessages = [...prev]
                   const lastIdx = newMessages.length - 1
                   if (lastIdx >= 0 && newMessages[lastIdx].role === 'ai') {
-                    newMessages[lastIdx] = { ...newMessages[lastIdx], content: aiContent }
+                    newMessages[lastIdx] = {
+                      ...newMessages[lastIdx],
+                      content: aiContent,
+                      reasoning: aiReasoning
+                    }
                   }
                   return newMessages
                 })
@@ -138,16 +204,10 @@ function ChatInterface() {
           }
         }
       }
-
     } catch (error) {
       let errorMessage = 'Sorry, I encountered an error.'
-      if (error.message.includes('429')) {
-        errorMessage = "I'm receiving too many requests. Please wait a moment."
-      }
-
       setMessages(prev => {
         const newMessages = [...prev]
-        // Replace the partial or empty AI message with error
         newMessages[newMessages.length - 1] = { role: 'ai', content: errorMessage, isError: true }
         return newMessages
       })
@@ -164,7 +224,6 @@ function ChatInterface() {
 
   return (
     <div className={`w-full max-w-[1370px] mx-auto px-4 md:px-8 mb-12 md:mb-16 transition-all duration-500 ease-in-out`}>
-      {/* Chat Container */}
       <div className={`bg-white rounded-[17px] shadow-[2.008px_0.724px_10.042px_0px_rgba(0,0,0,0.1)] border border-[#d1d5db] overflow-hidden flex flex-col ${hasStarted ? 'h-[600px]' : 'h-auto'}`}>
 
         {hasStarted && (
@@ -174,7 +233,7 @@ function ChatInterface() {
           >
             {messages.map((msg, index) => (
               <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`flex gap-3 max-w-[85%] md:max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   {/* Avatar */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-[#062a74] text-white' : 'bg-[#f0f0bc]'}`}>
                     {msg.role === 'user' ? (
@@ -196,19 +255,46 @@ function ChatInterface() {
                       msg.content
                     ) : (
                       <>
+                        <ReasoningSection content={msg.reasoning} />
+
                         {msg.sql && (
-                          <div className="mb-4 bg-[#f8fafc] rounded-xl p-4 text-[13px] font-mono text-[#062a74] overflow-x-auto border border-[#e2e8f0] shadow-sm">
-                            <div className="text-[10px] text-[#94a3b8] mb-2 uppercase tracking-widest font-bold border-b border-[#e2e8f0] pb-1">Generated SQL Query</div>
+                          <div className="mb-4 bg-slate-900 rounded-xl p-4 text-[13px] font-mono text-emerald-400 overflow-x-auto border border-slate-800 shadow-inner">
+                            <div className="text-[10px] text-slate-500 mb-2 uppercase tracking-widest font-bold border-b border-slate-800 pb-1 flex items-center gap-2">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="16 18 22 12 16 6" />
+                                <polyline points="8 6 2 12 8 18" />
+                              </svg>
+                              Generated SQL Query
+                            </div>
                             {msg.sql}
                           </div>
                         )}
+
                         {msg.data && (
-                          <div className="mb-4 bg-[#f8fafc] rounded-xl p-4 text-[12px] font-mono text-[#334155] overflow-x-auto border border-[#e2e8f0] shadow-sm">
-                            <div className="text-[10px] text-[#94a3b8] mb-2 uppercase tracking-widest font-bold border-b border-[#e2e8f0] pb-1">Database Result</div>
-                            <pre className="whitespace-pre-wrap">{JSON.stringify(msg.data, null, 2)}</pre>
+                          <div className="mb-4">
+                            <div className="text-[10px] text-[#94a3b8] mb-2 uppercase tracking-widest font-bold flex items-center gap-2">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <line x1="3" y1="9" x2="21" y2="9" />
+                                <line x1="9" y1="21" x2="9" y2="9" />
+                              </svg>
+                              Query Results
+                            </div>
+                            <DataTable data={msg.data} />
                           </div>
                         )}
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+
+                        {msg.content && (
+                          <div className="insights-section mt-5 pt-5 border-t border-gray-100">
+                            <div className="text-[10px] text-[#062a74] mb-3 uppercase tracking-[0.15em] font-black flex items-center gap-2 opacity-70">
+                              <div className="w-1.5 h-1.5 bg-[#062a74] rounded-full"></div>
+                              AI Analysis & Insights
+                            </div>
+                            <div className="text-[15px] text-[#062a74] leading-relaxed">
+                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
