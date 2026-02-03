@@ -128,12 +128,12 @@ function PerformanceExplorer() {
     return filtered.sort((a, b) => {
       const sizeA = a.audience_size ?? a.assessment?.audience_characteristics?.size ?? null
       const sizeB = b.audience_size ?? b.assessment?.audience_characteristics?.size ?? null
-      
+
       // Handle null/undefined values - put them at the bottom
       if (sizeA === null && sizeB === null) return 0
       if (sizeA === null) return 1
       if (sizeB === null) return -1
-      
+
       // Sort descending (highest first)
       return sizeB - sizeA
     })
@@ -221,7 +221,7 @@ function PerformanceExplorer() {
     // Falls back to other common date field names for backward compatibility
     const dateField = item.made_live_date || item.created_time || item.created_at || item.start_time || item.created_date || item.time_created || item.date_created
     if (!dateField) return 'N/A'
-    
+
     try {
       const date = new Date(dateField)
       if (isNaN(date.getTime())) return 'N/A'
@@ -252,8 +252,8 @@ function PerformanceExplorer() {
     if (audience.audience_size !== null && audience.audience_size !== undefined) {
       return formatAudienceSize(audience.audience_size)
     }
-    if (audience.assessment?.audience_characteristics?.size !== null && 
-        audience.assessment?.audience_characteristics?.size !== undefined) {
+    if (audience.assessment?.audience_characteristics?.size !== null &&
+      audience.assessment?.audience_characteristics?.size !== undefined) {
       return formatAudienceSize(audience.assessment.audience_characteristics.size)
     }
     // Fallback to formatted string if available
@@ -448,13 +448,12 @@ function PerformanceExplorer() {
                         <td className="px-6 py-8 text-center hidden md:table-cell">
                           <div className="flex flex-col items-center gap-1">
                             {as.effective_status && (
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                                as.effective_status === 'ACTIVE' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : as.effective_status === 'PAUSED'
+                              <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${as.effective_status === 'ACTIVE'
+                                ? 'bg-green-100 text-green-800'
+                                : as.effective_status === 'PAUSED'
                                   ? 'bg-yellow-100 text-yellow-800'
                                   : 'bg-red-100 text-red-800'
-                              }`}>
+                                }`}>
                                 {as.effective_status}
                               </span>
                             )}
@@ -479,18 +478,18 @@ function PerformanceExplorer() {
                         <td className="px-6 py-8 text-center">
                           <div className="flex flex-col items-center text-[12px] text-[#334155] leading-tight font-medium">
                             <div><span className="font-extrabold text-[#1e293b]">ROAS:</span> {as.roas}x</div>
-                            <div><span className="font-extrabold text-[#1e293b]">CPA:</span> {as.cpa !== null && as.cpa !== undefined ? as.cpa.toLocaleString() : 'N/A'}</div>
+                            <div><span className="font-extrabold text-[#1e293b]">CPA:</span> {as.cpa != null ? Number(as.cpa).toLocaleString() : 'N/A'}</div>
                           </div>
                         </td>
-                      <td className="px-6 py-8 text-center hidden md:table-cell">
-                        <button
-                          onClick={() => setSelectedAssessment(as)}
-                          className={`text-[11px] text-gray-600 ${getStatusHoverColors(assessment.status, assessment.action)} hover:!text-[#1e4a79] hover:!bg-blue-50 transition-colors cursor-pointer text-left max-w-[200px] mx-auto block leading-relaxed break-words px-2 py-1 rounded`}
-                          title={assessment.summary || 'Click to view full assessment'}
-                        >
-                          {assessment.summary ? truncateText(assessment.summary, 40) : 'No assessment available'}
-                        </button>
-                      </td>
+                        <td className="px-6 py-8 text-center hidden md:table-cell">
+                          <button
+                            onClick={() => setSelectedAssessment(as)}
+                            className={`text-[11px] text-gray-600 ${getStatusHoverColors(assessment.status, assessment.action)} hover:!text-[#1e4a79] hover:!bg-blue-50 transition-colors cursor-pointer text-left max-w-[200px] mx-auto block leading-relaxed break-words px-2 py-1 rounded`}
+                            title={assessment.summary || 'Click to view full assessment'}
+                          >
+                            {assessment.summary ? truncateText(assessment.summary, 40) : 'No assessment available'}
+                          </button>
+                        </td>
                         <td className="px-6 py-8 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap ${getStatusClasses(assessment.status || assessment.action)}`}>
@@ -546,8 +545,8 @@ function PerformanceExplorer() {
                             <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 relative">
                               {ad.image_url ? (
                                 <>
-                                  <img 
-                                    src={ad.image_url} 
+                                  <img
+                                    src={ad.image_url}
                                     alt={ad.name}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
@@ -605,7 +604,7 @@ function PerformanceExplorer() {
                           </span>
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center text-[11px] sm:text-[12px] text-[#64748b] font-bold tracking-tight hidden lg:table-cell">
-                          {ad.spend ? ad.spend.toLocaleString() : 'N/A'}
+                          {ad.spend != null ? Number(ad.spend).toLocaleString() : 'N/A'}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center text-[11px] sm:text-[12px] text-[#64748b] font-medium hidden md:table-cell">
                           {ad.ctr ? `${ad.ctr}%` : 'N/A'}
@@ -841,17 +840,15 @@ function PerformanceExplorer() {
                           </button>
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap text-center">
-                          <div className="flex flex-col gap-2 items-center">
-                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap ${getStatusClasses(assessment.status || assessment.action)}`}>
-                              {assessment.action}
-                            </span>
-                            <button
-                              onClick={() => handleAIRequest(cp.id)}
-                              className="text-[10px] text-[#1e4a79] font-bold underline hover:text-blue-600 transition-colors"
-                            >
-                              Show AI Insight
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => {
+                              setSelectedAssessment(cp);
+                              handleAIRequest(cp.id);
+                            }}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap transition-all transform hover:scale-105 active:scale-95 cursor-pointer ${getStatusClasses(assessment.status || assessment.action)}`}
+                          >
+                            {assessment.action}
+                          </button>
                         </td>
                       </tr>
                     )
@@ -876,54 +873,7 @@ function PerformanceExplorer() {
         )}
       </div>
 
-      {/* AI Modal */}
-      {(aiLoading || selectedAI) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-[30px] border-2 border-[#1e4a79] p-8 max-w-2xl w-full shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-[#1e4a79] opacity-20"></div>
-            <div className="flex justify-between items-start mb-6">
-              <h3 className="text-xl font-bold text-[#1e4a79] flex items-center gap-2">
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-                </svg>
-                {selectedAI?.name || 'Generating AI Insight...'}
-              </h3>
-              <button
-                onClick={() => { setSelectedAI(null); setAiLoading(false); }}
-                className="text-gray-400 hover:text-gray-600 p-1"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
 
-            <div className="min-h-[150px]">
-              {aiLoading ? (
-                <div className="flex flex-col items-center justify-center h-48 gap-4">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e4a79]"></div>
-                  <p className="text-gray-500 font-medium">OpenAI is critically analyzing the 4 factors...</p>
-                </div>
-              ) : (
-                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed bg-[#f8fafc] p-6 rounded-2xl border border-[#e2e8f0]">
-                  <p className="whitespace-pre-line text-sm">
-                    {selectedAI?.ai_recommendation}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-8 flex justify-end">
-              <button
-                onClick={() => setSelectedAI(null)}
-                className="px-8 py-2 bg-[#1e4a79] text-white rounded-full font-bold shadow-lg hover:bg-[#2c6aa8] transition-all transform hover:scale-105"
-              >
-                Close Insight
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Assessment Details Modal */}
       {selectedAssessment && (
@@ -938,8 +888,8 @@ function PerformanceExplorer() {
                     <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100 shadow-sm relative">
                       {selectedAssessment.image_url ? (
                         <>
-                          <img 
-                            src={selectedAssessment.image_url} 
+                          <img
+                            src={selectedAssessment.image_url}
                             alt={selectedAssessment.name}
                             className="w-full h-full object-cover"
                             loading="lazy"
@@ -986,7 +936,11 @@ function PerformanceExplorer() {
                 </div>
               </div>
               <button
-                onClick={() => setSelectedAssessment(null)}
+                onClick={() => {
+                  setSelectedAssessment(null);
+                  setSelectedAI(null);
+                  setAiLoading(false);
+                }}
                 className="text-gray-400 hover:text-gray-600 p-1 sm:p-2 flex-shrink-0 touch-manipulation"
                 aria-label="Close modal"
               >
@@ -997,2050 +951,2251 @@ function PerformanceExplorer() {
             </div>
 
             <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 min-h-0">
-              {selectedAssessment.assessment ? (
-                <div className="space-y-4 sm:space-y-6">
-                  {/* Check if it's an Ad (has format field) */}
-                  {selectedAssessment.format ? (
-                    // AD ASSESSMENT STRUCTURE
-                    <>
-                      {/* Creative Performance Metrics Section */}
-                      {selectedAssessment.assessment.performance?.creative_performance && (
+              <div className="space-y-4 sm:space-y-6">
+                {/* AI Intelligence Highlight */}
+                {(aiLoading || selectedAI) && (
+                  <div className="bg-gradient-to-br from-[#1e4a79] to-[#0f172a] p-6 sm:p-8 rounded-[30px] border border-white/10 shadow-2xl text-white overflow-hidden relative mb-8">
+                    {/* Decorative Background Element */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[100px] -mr-32 -mt-32"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 blur-[100px] -ml-32 -mb-32"></div>
+
+                    {/* AI Header */}
+                    <div className="flex justify-between items-center mb-6 relative z-10">
+                      <div className="flex items-center gap-3">
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                        </span>
+                        <div>
+                          <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-blue-200">AI Intelligent Strategic Analysis</h4>
+                          {selectedAI?.saved && (
+                            <span className="text-[9px] text-blue-400/60 font-bold uppercase tracking-widest flex items-center gap-1">
+                              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l6-6a1 1 0 00-1.414-1.414l-5.293 5.293-2.293-2.293z" /></svg>
+                              Verified from Cache
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {selectedAI?.ai_recommendation?.priority && (
+                        <div className="flex gap-2">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${selectedAI.ai_recommendation.priority === 'HIGH' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                            selectedAI.ai_recommendation.priority === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                              'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                            }`}>
+                            {selectedAI.ai_recommendation.priority} Priority
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {aiLoading ? (
+                      <div className="py-8 space-y-4">
+                        <div className="h-6 bg-white/5 rounded-full animate-pulse w-3/4"></div>
+                        <div className="h-4 bg-white/5 rounded-full animate-pulse w-full"></div>
+                        <div className="h-4 bg-white/5 rounded-full animate-pulse w-5/6"></div>
+                        <div className="grid grid-cols-2 gap-4 pt-4">
+                          <div className="h-20 bg-white/5 rounded-2xl animate-pulse"></div>
+                          <div className="h-20 bg-white/5 rounded-2xl animate-pulse"></div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-8 relative z-10">
+                        {/* Performance DNA Snapshot */}
+                        {selectedAI?.metrics && (
+                          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 bg-[#0f172a]/40 p-5 rounded-[24px] border border-white/5 relative overflow-hidden group">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-50"></div>
+                            {Object.entries(selectedAI.metrics).map(([key, value]) => (
+                              <div key={key} className="flex flex-col group/item">
+                                <span className="text-[8px] font-black text-blue-400 uppercase tracking-tighter mb-1.5 group-hover/item:text-blue-300 transition-colors">
+                                  {key === 'roas' ? 'ROAS' : key === 'cpa' ? 'CPA' : key === 'ctr' ? 'CTR' : key === 'cpc' ? 'CPC' : key === 'cpm' ? 'CPM' : key === 'spend' ? 'SPEND' : key === 'revenue' ? 'REVENUE' : 'CONV'}
+                                </span>
+                                <span className="text-[15px] font-black text-white italic tracking-tight">
+                                  {key === 'roas' ? `${value}x` :
+                                    key === 'ctr' ? `${value}%` :
+                                      (key === 'spend' || key === 'revenue' || key === 'cpa' || key === 'cpc' || key === 'cpm') ? Number(value).toLocaleString() : value}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Summary Description & Structural Audit */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          <div className="lg:col-span-2">
+                            <p className="text-sm sm:text-base leading-relaxed text-blue-50 font-medium whitespace-pre-line bg-white/5 p-5 rounded-2xl border border-white/5">
+                              {typeof selectedAI?.ai_recommendation === 'string'
+                                ? selectedAI.ai_recommendation
+                                : selectedAI?.ai_recommendation?.description}
+                            </p>
+                          </div>
+
+                          {/* Metadata & Audit */}
+                          <div className="space-y-4">
+                            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+                              <span className="text-[9px] font-bold text-blue-400 uppercase mb-2 tracking-widest">Confidence Score</span>
+                              <div className="flex items-end gap-2">
+                                <span className="text-3xl font-black text-white italic">{(selectedAI?.ai_recommendation?.confidence * 100).toFixed(0)}%</span>
+                                <div className="flex-1 h-2 bg-white/10 rounded-full mb-2 overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-400 transition-all duration-1000"
+                                    style={{ width: `${selectedAI?.ai_recommendation?.confidence * 100}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {selectedAI?.ai_recommendation?.structural_audit && (
+                              <div className={`p-4 rounded-2xl border ${selectedAI.ai_recommendation.structural_audit.is_aligned ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
+                                <div className="flex items-center gap-2 mb-1">
+                                  {selectedAI.ai_recommendation.structural_audit.is_aligned ? (
+                                    <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                  ) : (
+                                    <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                  )}
+                                  <span className="text-xs font-black uppercase tracking-tight">Setup Audit</span>
+                                </div>
+                                <p className="text-[11px] text-blue-100/70 font-medium">
+                                  {selectedAI.ai_recommendation.structural_audit.is_aligned ? "Infrastructure Alignment Optimized" : selectedAI.ai_recommendation.structural_audit.issue}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 4-Factor Strategic Breakdown */}
+                        {selectedAI?.ai_recommendation?.factors && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {Object.entries(selectedAI.ai_recommendation.factors).map(([key, value]) => (
+                              <div key={key} className="bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-white/10 transition-all group">
+                                <h5 className="text-[9px] font-black text-blue-400 uppercase mb-2 tracking-widest border-b border-white/5 pb-2 group-hover:text-blue-300">
+                                  {key.replace(/_/g, ' ')}
+                                </h5>
+                                <p className="text-xs text-blue-100/80 leading-relaxed font-medium line-clamp-4 group-hover:line-clamp-none transition-all">
+                                  {value}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Actionable Recommendations Roadmap */}
+                        {selectedAI?.ai_recommendation?.recommendations?.length > 0 && (
+                          <div className="bg-white/5 p-6 rounded-[24px] border border-white/5">
+                            <h5 className="text-[11px] font-black text-blue-300 uppercase mb-6 tracking-[0.3em] flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                              Execution Roadmap
+                            </h5>
+                            <div className="space-y-4">
+                              {selectedAI.ai_recommendation.recommendations.map((rec, i) => (
+                                <div key={i} className="flex gap-4 items-start p-4 bg-[#0f172a]/40 rounded-xl border border-white/5 hover:bg-[#0f172a]/60 transition-colors">
+                                  <div className="px-2.5 py-1 bg-blue-500/20 text-blue-300 text-[10px] font-black rounded-lg uppercase tracking-tight shrink-0 border border-blue-500/20">
+                                    {rec.type}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h6 className="text-[13px] font-bold text-white mb-1">{rec.action}</h6>
+                                    <p className="text-[11px] text-blue-200/60 font-medium italic">{rec.reason}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Rule Based Verdict Line */}
+                        {selectedAI?.rule_assessment && (
+                          <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div className="flex flex-col text-center sm:text-left">
+                              <span className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mb-1">Algorithmic Verdict</span>
+                              <p className="text-xs font-bold text-blue-100">{selectedAI.rule_assessment.assessment}</p>
+                            </div>
+                            <div className={`px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.1em] border-2 shadow-xl ${selectedAI.rule_assessment.status_color === 'green' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                              selectedAI.rule_assessment.status_color === 'yellow' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                'bg-red-500/20 text-red-400 border-red-500/30'
+                              }`}>
+                              {selectedAI.rule_assessment.action}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Health Radar Grid */}
+                        {selectedAI?.health_indicators && (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-white/10">
+                            <div className="text-center sm:text-left">
+                              <span className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mb-1 block">Frequency Control</span>
+                              <div className="text-xl font-black italic">{selectedAI.health_indicators.frequency?.frequency}x</div>
+                              <span className="text-[10px] font-bold text-blue-300/50 uppercase">{selectedAI.health_indicators.frequency?.status}</span>
+                            </div>
+                            <div className="text-center sm:text-left">
+                              <span className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mb-1 block">CTR Fatigue Trend</span>
+                              <div className={`text-xl font-black italic ${selectedAI.health_indicators.ctr_trend?.decline_percentage > 15 ? 'text-red-400' : 'text-green-400'}`}>
+                                {selectedAI.health_indicators.ctr_trend?.decline_percentage > 0 ? '-' : ''}{Math.abs(selectedAI.health_indicators.ctr_trend?.decline_percentage)}%
+                              </div>
+                              <span className="text-[10px] font-bold text-blue-300/50 uppercase">{selectedAI.health_indicators.ctr_trend?.status}</span>
+                            </div>
+                            <div className="text-center sm:text-left">
+                              <span className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mb-1 block">Delivery Phase</span>
+                              <div className="text-xl font-black italic uppercase">{selectedAI.health_indicators.learning_phase?.learning_status}</div>
+                              <span className="text-[10px] font-bold text-blue-300/50 uppercase">
+                                {selectedAI.health_indicators.learning_phase?.is_in_learning ? 'Learning Active' : 'Stable Delivery'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedAssessment.assessment ? (
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Check if it's an Ad (has format field) */}
+                    {selectedAssessment.format ? (
+                      // AD ASSESSMENT STRUCTURE
+                      <>
+                        {/* Creative Performance Metrics Section */}
+                        {selectedAssessment.assessment.performance?.creative_performance && (
+                          <div className="bg-gradient-to-r from-[#f8fafc] to-[#f0f4f8] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Creative Performance</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3 sm:gap-4">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CTR</span>
+                                <span className="text-base sm:text-lg font-bold text-gray-800">
+                                  {selectedAssessment.assessment.performance.creative_performance.ctr ? `${selectedAssessment.assessment.performance.creative_performance.ctr}%` : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPC</span>
+                                <span className="text-base sm:text-lg font-bold text-gray-800">
+                                  {selectedAssessment.assessment.performance.creative_performance.cpc ? selectedAssessment.assessment.performance.creative_performance.cpc.toFixed(2) : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPM</span>
+                                <span className="text-base sm:text-lg font-bold text-gray-800">
+                                  {selectedAssessment.assessment.performance.creative_performance.cpm ? selectedAssessment.assessment.performance.creative_performance.cpm.toFixed(2) : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Spend</span>
+                                <span className="text-base sm:text-lg font-bold text-gray-800">
+                                  {selectedAssessment.assessment.performance.creative_performance.spend ? selectedAssessment.assessment.performance.creative_performance.spend.toLocaleString() : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Impressions</span>
+                                <span className="text-base sm:text-lg font-bold text-gray-800">
+                                  {selectedAssessment.assessment.performance.creative_performance.impressions ? selectedAssessment.assessment.performance.creative_performance.impressions.toLocaleString() : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Clicks</span>
+                                <span className="text-base sm:text-lg font-bold text-gray-800">
+                                  {selectedAssessment.assessment.performance.creative_performance.clicks ? selectedAssessment.assessment.performance.creative_performance.clicks.toLocaleString() : 'N/A'}
+                                </span>
+                              </div>
+                              {(selectedAssessment.unique_clicks !== null && selectedAssessment.unique_clicks !== undefined) && (
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Unique Clicks</span>
+                                  <span className="text-base sm:text-lg font-bold text-gray-800">
+                                    {selectedAssessment.unique_clicks ? selectedAssessment.unique_clicks.toLocaleString() : 'N/A'}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            {selectedAssessment.assessment.performance.creative_performance.summary && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <p className="text-xs sm:text-sm text-gray-700 italic">
+                                  {selectedAssessment.assessment.performance.creative_performance.summary}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Informational KPIs (ROAS/CPA) */}
+                        {selectedAssessment.assessment.performance?.kpis && (
+                          <div className="bg-gray-50 p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-gray-200">
+                            <h4 className="text-xs sm:text-sm font-bold text-gray-600 mb-2 sm:mb-3 uppercase tracking-wide">Conversion Metrics (Informational)</h4>
+                            {selectedAssessment.assessment.performance.kpis.note && (
+                              <p className="text-[10px] sm:text-xs text-gray-500 italic mb-3">{selectedAssessment.assessment.performance.kpis.note}</p>
+                            )}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                              {selectedAssessment.assessment.performance.kpis.roas !== null && selectedAssessment.assessment.performance.kpis.roas !== undefined && (
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">ROAS</span>
+                                  <span className="text-sm sm:text-base font-bold text-gray-600">
+                                    {selectedAssessment.assessment.performance.kpis.roas}x
+                                  </span>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.performance.kpis.cpa !== null && selectedAssessment.assessment.performance.kpis.cpa !== undefined && (
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPA</span>
+                                  <span className="text-sm sm:text-base font-bold text-gray-600">
+                                    {selectedAssessment.assessment.performance.kpis.cpa.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.performance.kpis.revenue !== null && selectedAssessment.assessment.performance.kpis.revenue !== undefined && (
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Revenue</span>
+                                  <span className="text-sm sm:text-base font-bold text-gray-600">
+                                    {selectedAssessment.assessment.performance.kpis.revenue.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.performance.kpis.purchases !== null && selectedAssessment.assessment.performance.kpis.purchases !== undefined && (
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Purchases</span>
+                                  <span className="text-sm sm:text-base font-bold text-gray-600">
+                                    {selectedAssessment.assessment.performance.kpis.purchases.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Summary Section */}
+                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-2 sm:mb-3 uppercase tracking-wide">Summary</h4>
+                          <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line break-words">
+                            {selectedAssessment.assessment.summary || 'No summary available'}
+                          </p>
+                        </div>
+
+                        {/* Status - Based on Creative Performance */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Status</span>
+                            <div className="mt-1">
+                              <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-sm inline-block ${getAdStatusClasses(selectedAssessment.assessment.performance?.creative_performance?.status || selectedAssessment.assessment.status)}`}>
+                                {(selectedAssessment.assessment.performance?.creative_performance?.status || selectedAssessment.assessment.status)?.toUpperCase() || 'FAIR'}
+                              </span>
+                            </div>
+                            {selectedAssessment.assessment.performance?.creative_performance?.status && (
+                              <p className="text-[10px] text-gray-500 italic mt-1">Based on creative performance metrics</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Creative Health Section */}
+                        {selectedAssessment.assessment.creative && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Creative Health</h4>
+
+                            {/* Format & Frequency */}
+                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                                <div className="flex flex-col sm:flex-row sm:items-center">
+                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Format:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.creative.format || selectedAssessment.format || 'N/A'}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center">
+                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Frequency:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.creative.frequency ? `${selectedAssessment.assessment.creative.frequency}x` : 'N/A'}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center">
+                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Fatigue Score:</span>
+                                  <span className={`font-bold ${selectedAssessment.assessment.creative.fatigue_score > 70 ? 'text-red-600' : selectedAssessment.assessment.creative.fatigue_score > 40 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                    {selectedAssessment.assessment.creative.fatigue_score || 'N/A'}%
+                                  </span>
+                                </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center">
+                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Fatigue Level:</span>
+                                  <span className={`font-bold uppercase ${selectedAssessment.assessment.creative.fatigue_level === 'critical' ? 'text-red-600' : selectedAssessment.assessment.creative.fatigue_level === 'high' ? 'text-yellow-600' : 'text-green-600'}`}>
+                                    {selectedAssessment.assessment.creative.fatigue_level || 'NORMAL'}
+                                  </span>
+                                </div>
+                              </div>
+                              {selectedAssessment.assessment.creative.frequency_status && (
+                                <div className="mt-2 text-xs text-gray-600 italic">
+                                  {selectedAssessment.assessment.creative.frequency_status}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* CTR Trend */}
+                            {selectedAssessment.assessment.creative_health?.ctr_trend && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">CTR Trend</h5>
+                                <div className="text-xs sm:text-sm space-y-2">
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CTR Decline:</span>
+                                    <span className={`font-bold ${selectedAssessment.assessment.creative_health.ctr_trend.ctr_decline_percent > 30 ? 'text-red-600' : selectedAssessment.assessment.creative_health.ctr_trend.ctr_decline_percent > 15 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                      {selectedAssessment.assessment.creative_health.ctr_trend.ctr_decline_percent.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] sm:text-xs text-gray-600 italic">
+                                    {selectedAssessment.assessment.creative_health.ctr_trend.status}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Quality Rankings */}
+                            {selectedAssessment.assessment.creative_health?.quality_rankings && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Quality Rankings</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
+                                  <div>
+                                    <span className="text-gray-600">Quality:</span>
+                                    <span className="ml-2 font-bold text-gray-800">
+                                      {selectedAssessment.assessment.creative_health.quality_rankings.quality?.replace('_', ' ') || 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Engagement:</span>
+                                    <span className="ml-2 font-bold text-gray-800">
+                                      {selectedAssessment.assessment.creative_health.quality_rankings.engagement?.replace('_', ' ') || 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Conversion:</span>
+                                    <span className="ml-2 font-bold text-gray-800">
+                                      {selectedAssessment.assessment.creative_health.quality_rankings.conversion?.replace('_', ' ') || 'N/A'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Engagement Quality (including Video metrics) */}
+                            {selectedAssessment.assessment.creative_health?.engagement_quality && (
+                              <div>
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Engagement Quality</h5>
+                                <div className="space-y-2 text-xs sm:text-sm">
+                                  {selectedAssessment.assessment.creative_health.engagement_quality.link_clicks && (
+                                    <div className="text-gray-700">
+                                      <span className="font-semibold">Link Clicks: </span>
+                                      {selectedAssessment.assessment.creative_health.engagement_quality.link_clicks}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.creative_health.engagement_quality.engagement_rate && (
+                                    <div className="text-gray-700">
+                                      <span className="font-semibold">Engagement Rate: </span>
+                                      {selectedAssessment.assessment.creative_health.engagement_quality.engagement_rate}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.creative_health.engagement_quality.social && (
+                                    <div className="text-gray-700">
+                                      <span className="font-semibold">Social Engagement: </span>
+                                      {selectedAssessment.assessment.creative_health.engagement_quality.social}
+                                    </div>
+                                  )}
+                                  {/* Video Metrics (only for Video format) */}
+                                  {selectedAssessment.format === 'Video' && selectedAssessment.assessment.creative_health.engagement_quality.video && (
+                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                      <span className="text-[10px] font-bold text-blue-600 mb-2 block">Video Performance</span>
+                                      <div className="space-y-1.5">
+                                        {selectedAssessment.assessment.creative_health.engagement_quality.video.play_rate && (
+                                          <div className="text-gray-700">
+                                            <span className="font-semibold">Play Rate: </span>
+                                            {selectedAssessment.assessment.creative_health.engagement_quality.video.play_rate}
+                                          </div>
+                                        )}
+                                        {selectedAssessment.assessment.creative_health.engagement_quality.video.completion && (
+                                          <div className="text-gray-700">
+                                            <span className="font-semibold">Completion Rate: </span>
+                                            {selectedAssessment.assessment.creative_health.engagement_quality.video.completion}
+                                          </div>
+                                        )}
+                                        {selectedAssessment.assessment.creative_health.engagement_quality.video['30_sec_rate'] && (
+                                          <div className="text-gray-700">
+                                            <span className="font-semibold">30+ Sec Watch Rate: </span>
+                                            {selectedAssessment.assessment.creative_health.engagement_quality.video['30_sec_rate']}
+                                          </div>
+                                        )}
+                                        {selectedAssessment.assessment.creative_health.engagement_quality.video.avg_watch_time && (
+                                          <div className="text-gray-700">
+                                            <span className="font-semibold">Avg Watch Time: </span>
+                                            {selectedAssessment.assessment.creative_health.engagement_quality.video.avg_watch_time}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Performance Section - Creative Performance, CTR Assessment, Relative Performance, Cost Efficiency, Conversion Funnel, Click Quality, Ad Recall */}
+                        {selectedAssessment.assessment.performance && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Performance Analysis</h4>
+
+                            {/* Creative Performance Summary */}
+                            {selectedAssessment.assessment.performance.creative_performance && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Creative Performance</h5>
+                                <div className="text-xs sm:text-sm space-y-2">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <span className="text-gray-600">Status:</span>
+                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${getAdStatusClasses(selectedAssessment.assessment.performance.creative_performance.status)}`}>
+                                      {selectedAssessment.assessment.performance.creative_performance.status?.toUpperCase() || 'FAIR'}
+                                    </span>
+                                  </div>
+                                  {selectedAssessment.assessment.performance.creative_performance.summary && (
+                                    <div className="text-gray-700 italic">
+                                      {selectedAssessment.assessment.performance.creative_performance.summary}
+                                    </div>
+                                  )}
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mt-2">
+                                    <div>
+                                      <span className="text-gray-600 text-[10px]">CTR:</span>
+                                      <span className="ml-1 font-bold text-gray-800">
+                                        {selectedAssessment.assessment.performance.creative_performance.ctr}%
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-600 text-[10px]">CPC:</span>
+                                      <span className="ml-1 font-bold text-gray-800">
+                                        {selectedAssessment.assessment.performance.creative_performance.cpc.toFixed(2)}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-gray-600 text-[10px]">CPM:</span>
+                                      <span className="ml-1 font-bold text-gray-800">
+                                        {selectedAssessment.assessment.performance.creative_performance.cpm.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* CTR Assessment */}
+                            {selectedAssessment.assessment.performance.ctr_assessment && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">CTR Assessment</h5>
+                                <div className="text-xs sm:text-sm space-y-2">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <span className="text-gray-600">CTR:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.ctr_assessment.ctr}%
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <span className="text-gray-600">Format Benchmark:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.ctr_assessment.format_benchmark}%
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <span className="text-gray-600">vs Benchmark:</span>
+                                    <span className={`font-bold ${selectedAssessment.assessment.performance.ctr_assessment.vs_benchmark_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      {selectedAssessment.assessment.performance.ctr_assessment.vs_benchmark_pct >= 0 ? '+' : ''}{selectedAssessment.assessment.performance.ctr_assessment.vs_benchmark_pct.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  {selectedAssessment.assessment.performance.ctr_assessment.status && (
+                                    <div className="text-[10px] text-gray-600 italic">
+                                      {selectedAssessment.assessment.performance.ctr_assessment.status}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Relative Performance */}
+                            {selectedAssessment.assessment.performance.relative_performance && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Relative to AdSet</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                    <span className="text-gray-600">ROAS vs AdSet:</span>
+                                    <span className={`font-bold ${selectedAssessment.assessment.performance.relative_performance.vs_adset_roas_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      {selectedAssessment.assessment.performance.relative_performance.vs_adset_roas_pct >= 0 ? '+' : ''}{selectedAssessment.assessment.performance.relative_performance.vs_adset_roas_pct.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                    <span className="text-gray-600">CTR vs AdSet:</span>
+                                    <span className={`font-bold ${selectedAssessment.assessment.performance.relative_performance.vs_adset_ctr_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      {selectedAssessment.assessment.performance.relative_performance.vs_adset_ctr_pct >= 0 ? '+' : ''}{selectedAssessment.assessment.performance.relative_performance.vs_adset_ctr_pct.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  {selectedAssessment.assessment.performance.relative_performance.underdelivery_detected && (
+                                    <div className="col-span-full mt-2 pt-2 border-t border-yellow-200 bg-yellow-50 px-2 py-1 rounded text-[10px] text-yellow-800 font-semibold">
+                                      ⚠️ Underdelivery detected
+                                    </div>
+                                  )}
+                                </div>
+                                {selectedAssessment.assessment.performance.relative_insights && (
+                                  <div className="mt-2 text-[10px] text-gray-600 italic">
+                                    {selectedAssessment.assessment.performance.relative_insights}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Cost Efficiency */}
+                            {selectedAssessment.assessment.performance.cost_efficiency && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Cost Efficiency</h5>
+                                <div className="space-y-1.5 text-xs sm:text-sm text-gray-700">
+                                  {selectedAssessment.assessment.performance.cost_efficiency.cpc && (
+                                    <div>
+                                      <span className="font-semibold">CPC: </span>
+                                      {selectedAssessment.assessment.performance.cost_efficiency.cpc}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.cost_efficiency.cpm && (
+                                    <div>
+                                      <span className="font-semibold">CPM: </span>
+                                      {selectedAssessment.assessment.performance.cost_efficiency.cpm}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Conversion Funnel */}
+                            {selectedAssessment.assessment.performance.conversion_funnel && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Conversion Funnel</h5>
+                                <div className="space-y-1.5 text-xs sm:text-sm text-gray-700">
+                                  {selectedAssessment.assessment.performance.conversion_funnel.click_to_purchase && (
+                                    <div>
+                                      <span className="font-semibold">Click to Purchase: </span>
+                                      {selectedAssessment.assessment.performance.conversion_funnel.click_to_purchase}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.conversion_funnel.add_to_cart && (
+                                    <div>
+                                      <span className="font-semibold">Add to Cart: </span>
+                                      {selectedAssessment.assessment.performance.conversion_funnel.add_to_cart}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.conversion_funnel.cost_per_link_click !== null && (
+                                    <div>
+                                      <span className="font-semibold">Cost per Link Click: </span>
+                                      {selectedAssessment.assessment.performance.conversion_funnel.cost_per_link_click.toFixed(2)}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.conversion_funnel.cost_per_add_to_cart !== null && (
+                                    <div>
+                                      <span className="font-semibold">Cost per Add to Cart: </span>
+                                      {selectedAssessment.assessment.performance.conversion_funnel.cost_per_add_to_cart.toFixed(2)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Click Quality */}
+                            {selectedAssessment.assessment.performance.click_quality && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Click Quality</h5>
+                                <div className="space-y-1.5 text-xs sm:text-sm text-gray-700">
+                                  {selectedAssessment.assessment.performance.click_quality.quality_score && (
+                                    <div>
+                                      <span className="font-semibold">Quality Score: </span>
+                                      {selectedAssessment.assessment.performance.click_quality.quality_score}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.click_quality.unique_ctr !== null && selectedAssessment.assessment.performance.click_quality.unique_ctr !== undefined && (
+                                    <div>
+                                      <span className="font-semibold">Unique CTR: </span>
+                                      {selectedAssessment.assessment.performance.click_quality.unique_ctr.toFixed(2)}%
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.click_quality.website_ctr && (
+                                    <div>
+                                      <span className="font-semibold">Website CTR: </span>
+                                      {selectedAssessment.assessment.performance.click_quality.website_ctr}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Ad Recall */}
+                            {selectedAssessment.assessment.performance.ad_recall && (
+                              <div>
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Ad Recall</h5>
+                                <div className="space-y-1.5 text-xs sm:text-sm text-gray-700">
+                                  {selectedAssessment.assessment.performance.ad_recall.recall_rate && (
+                                    <div>
+                                      <span className="font-semibold">Recall Rate: </span>
+                                      {selectedAssessment.assessment.performance.ad_recall.recall_rate}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.ad_recall.cost_per_recall && (
+                                    <div>
+                                      <span className="font-semibold">Cost per Recall: </span>
+                                      {selectedAssessment.assessment.performance.ad_recall.cost_per_recall}
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.ad_recall.estimated_recallers !== null && selectedAssessment.assessment.performance.ad_recall.estimated_recallers !== undefined && (
+                                    <div>
+                                      <span className="font-semibold">Estimated Recallers: </span>
+                                      {selectedAssessment.assessment.performance.ad_recall.estimated_recallers.toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Delivery Section */}
+                        {selectedAssessment.assessment.delivery && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Delivery Status</h4>
+                            <div className="space-y-2 text-xs sm:text-sm">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="text-gray-600">Effective Status:</span>
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${selectedAssessment.assessment.delivery.effective_status === 'ACTIVE'
+                                  ? 'bg-green-100 text-green-800'
+                                  : selectedAssessment.assessment.delivery.effective_status === 'PAUSED'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                                  }`}>
+                                  {selectedAssessment.assessment.delivery.effective_status}
+                                </span>
+                              </div>
+                              {selectedAssessment.assessment.delivery.configured_status && (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                  <span className="text-gray-600">Configured Status:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.delivery.configured_status}
+                                  </span>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.delivery.issues && selectedAssessment.assessment.delivery.issues.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-red-200">
+                                  <span className="text-[10px] font-bold text-red-600 mb-1 block">Delivery Issues:</span>
+                                  <ul className="list-disc list-inside space-y-1 text-[10px] text-red-700">
+                                    {selectedAssessment.assessment.delivery.issues.map((issue, idx) => (
+                                      <li key={idx}>{issue}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Recommendations */}
+                        {selectedAssessment.assessment.recommendations && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Recommendations</h4>
+                            <div className="space-y-3">
+                              {selectedAssessment.assessment.recommendations.primary && (
+                                <div className="text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center">
+                                  <span className="text-gray-600 font-semibold mb-1 sm:mb-0 sm:mr-2">Primary:</span>
+                                  <span className="font-bold text-[#1e4a79] break-words">
+                                    {selectedAssessment.assessment.recommendations.primary}
+                                  </span>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.recommendations.all && selectedAssessment.assessment.recommendations.all.length > 0 && (
+                                <div>
+                                  <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wide block mb-2">All Recommendations</span>
+                                  <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-gray-700 pl-2">
+                                    {selectedAssessment.assessment.recommendations.all.map((action, idx) => (
+                                      <li key={idx} className="break-words">{action}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : selectedAssessment.role ? (
+                      // AUDIENCE ASSESSMENT STRUCTURE
+                      <>
+                        {/* Metrics Section */}
                         <div className="bg-gradient-to-r from-[#f8fafc] to-[#f0f4f8] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Creative Performance</h4>
+                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Key Metrics</h4>
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3 sm:gap-4">
+                            <div className="flex flex-col">
+                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">ROAS</span>
+                              <span className="text-base sm:text-lg font-bold text-gray-800">
+                                {selectedAssessment.assessment.performance?.roas ? `${selectedAssessment.assessment.performance.roas}x` : selectedAssessment.roas ? `${selectedAssessment.roas}x` : 'N/A'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPA</span>
+                              <span className="text-base sm:text-lg font-bold text-gray-800">
+                                {selectedAssessment.assessment.performance?.cpa !== null && selectedAssessment.assessment.performance?.cpa !== undefined
+                                  ? selectedAssessment.assessment.performance.cpa.toLocaleString()
+                                  : selectedAssessment.cpa !== null && selectedAssessment.cpa !== undefined
+                                    ? selectedAssessment.cpa.toLocaleString()
+                                    : 'N/A'}
+                              </span>
+                            </div>
                             <div className="flex flex-col">
                               <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CTR</span>
                               <span className="text-base sm:text-lg font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.creative_performance.ctr ? `${selectedAssessment.assessment.performance.creative_performance.ctr}%` : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPC</span>
-                              <span className="text-base sm:text-lg font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.creative_performance.cpc ? selectedAssessment.assessment.performance.creative_performance.cpc.toFixed(2) : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPM</span>
-                              <span className="text-base sm:text-lg font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.creative_performance.cpm ? selectedAssessment.assessment.performance.creative_performance.cpm.toFixed(2) : 'N/A'}
+                                {selectedAssessment.assessment.performance?.ctr ? `${selectedAssessment.assessment.performance.ctr}%` : selectedAssessment.ctr ? `${selectedAssessment.ctr}%` : 'N/A'}
                               </span>
                             </div>
                             <div className="flex flex-col">
                               <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Spend</span>
                               <span className="text-base sm:text-lg font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.creative_performance.spend ? selectedAssessment.assessment.performance.creative_performance.spend.toLocaleString() : 'N/A'}
+                                {selectedAssessment.assessment.performance?.spend ? selectedAssessment.assessment.performance.spend.toLocaleString() : selectedAssessment.spend ? selectedAssessment.spend.toLocaleString() : 'N/A'}
                               </span>
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Impressions</span>
+                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Revenue</span>
                               <span className="text-base sm:text-lg font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.creative_performance.impressions ? selectedAssessment.assessment.performance.creative_performance.impressions.toLocaleString() : 'N/A'}
+                                {selectedAssessment.assessment.performance?.revenue ? selectedAssessment.assessment.performance.revenue.toLocaleString() : selectedAssessment.revenue ? selectedAssessment.revenue.toLocaleString() : 'N/A'}
                               </span>
                             </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Clicks</span>
-                              <span className="text-base sm:text-lg font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.creative_performance.clicks ? selectedAssessment.assessment.performance.creative_performance.clicks.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            {(selectedAssessment.unique_clicks !== null && selectedAssessment.unique_clicks !== undefined) && (
+                            {(selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) && (
                               <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Unique Clicks</span>
-                                <span className="text-base sm:text-lg font-bold text-gray-800">
-                                  {selectedAssessment.unique_clicks ? selectedAssessment.unique_clicks.toLocaleString() : 'N/A'}
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Reaction Quality</span>
+                                <span className={`text-sm sm:text-base font-bold px-2 py-1 rounded ${(selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'highly_engaged' ? 'bg-green-100 text-green-800' :
+                                  (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'engaged' ? 'bg-blue-100 text-blue-800' :
+                                    (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'passive' ? 'bg-gray-100 text-gray-700' :
+                                      (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'disengaged' ? 'bg-red-100 text-red-800' :
+                                        'bg-gray-100 text-gray-700'
+                                  }`}>
+                                  {(selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality)?.replace(/_/g, ' ').toUpperCase() || 'N/A'}
                                 </span>
                               </div>
                             )}
-                          </div>
-                          {selectedAssessment.assessment.performance.creative_performance.summary && (
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <p className="text-xs sm:text-sm text-gray-700 italic">
-                                {selectedAssessment.assessment.performance.creative_performance.summary}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Informational KPIs (ROAS/CPA) */}
-                      {selectedAssessment.assessment.performance?.kpis && (
-                        <div className="bg-gray-50 p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-gray-200">
-                          <h4 className="text-xs sm:text-sm font-bold text-gray-600 mb-2 sm:mb-3 uppercase tracking-wide">Conversion Metrics (Informational)</h4>
-                          {selectedAssessment.assessment.performance.kpis.note && (
-                            <p className="text-[10px] sm:text-xs text-gray-500 italic mb-3">{selectedAssessment.assessment.performance.kpis.note}</p>
-                          )}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                            {selectedAssessment.assessment.performance.kpis.roas !== null && selectedAssessment.assessment.performance.kpis.roas !== undefined && (
+                            {(selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) && (
                               <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">ROAS</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-600">
-                                  {selectedAssessment.assessment.performance.kpis.roas}x
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.performance.kpis.cpa !== null && selectedAssessment.assessment.performance.kpis.cpa !== undefined && (
-                              <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPA</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-600">
-                                  {selectedAssessment.assessment.performance.kpis.cpa.toLocaleString()}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.performance.kpis.revenue !== null && selectedAssessment.assessment.performance.kpis.revenue !== undefined && (
-                              <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Revenue</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-600">
-                                  {selectedAssessment.assessment.performance.kpis.revenue.toLocaleString()}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.performance.kpis.purchases !== null && selectedAssessment.assessment.performance.kpis.purchases !== undefined && (
-                              <div className="flex flex-col">
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Purchases</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-600">
-                                  {selectedAssessment.assessment.performance.kpis.purchases.toLocaleString()}
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Sway Level</span>
+                                <span className={`text-sm sm:text-base font-bold px-2 py-1 rounded ${(selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'strong' ? 'bg-green-100 text-green-800' :
+                                  (selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
+                                    (selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'weak' ? 'bg-red-100 text-red-800' :
+                                      'bg-gray-100 text-gray-700'
+                                  }`}>
+                                  {(selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level)?.toUpperCase() || 'N/A'}
                                 </span>
                               </div>
                             )}
                           </div>
                         </div>
-                      )}
 
-                      {/* Summary Section */}
-                      <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                        <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-2 sm:mb-3 uppercase tracking-wide">Summary</h4>
-                        <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line break-words">
-                          {selectedAssessment.assessment.summary || 'No summary available'}
-                        </p>
-                      </div>
-
-                      {/* Status - Based on Creative Performance */}
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
-                        <div className="flex-1 flex flex-col">
-                          <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Status</span>
-                          <div className="mt-1">
-                            <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-sm inline-block ${getAdStatusClasses(selectedAssessment.assessment.performance?.creative_performance?.status || selectedAssessment.assessment.status)}`}>
-                              {(selectedAssessment.assessment.performance?.creative_performance?.status || selectedAssessment.assessment.status)?.toUpperCase() || 'FAIR'}
-                            </span>
-                          </div>
-                          {selectedAssessment.assessment.performance?.creative_performance?.status && (
-                            <p className="text-[10px] text-gray-500 italic mt-1">Based on creative performance metrics</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Creative Health Section */}
-                      {selectedAssessment.assessment.creative && (
+                        {/* Summary Section */}
                         <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Creative Health</h4>
-                          
-                          {/* Format & Frequency */}
-                          <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-2 sm:mb-3 uppercase tracking-wide">Summary</h4>
+                          <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line break-words">
+                            {selectedAssessment.assessment.summary || 'No summary available'}
+                          </p>
+                        </div>
+
+                        {/* Readiness Level */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Readiness Level</span>
+                            <div className="mt-1">
+                              <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-xs sm:text-sm font-bold shadow-sm inline-block ${getReadinessLevelClasses(selectedAssessment.assessment.readiness_level)}`}>
+                                {selectedAssessment.assessment.readiness_level?.replace(/_/g, ' ').toUpperCase() || 'OPTIMIZING'}
+                              </span>
+                            </div>
+                            {selectedAssessment.assessment.readiness_reason && (
+                              <p className="text-[10px] sm:text-xs text-gray-600 italic mt-2">
+                                {selectedAssessment.assessment.readiness_reason}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Audience Characteristics */}
+                        {selectedAssessment.assessment.audience_characteristics && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Audience Characteristics</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                               <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Format:</span>
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Type:</span>
                                 <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.creative.format || selectedAssessment.format || 'N/A'}
+                                  {selectedAssessment.assessment.audience_characteristics.type || 'N/A'}
                                 </span>
                               </div>
                               <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Frequency:</span>
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Expected Stage:</span>
+                                <span className="font-bold text-gray-800 uppercase">
+                                  {selectedAssessment.assessment.audience_characteristics.expected_stage || 'N/A'}
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">AVG Size:</span>
                                 <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.creative.frequency ? `${selectedAssessment.assessment.creative.frequency}x` : 'N/A'}
+                                  {selectedAssessment.audience_size !== null && selectedAssessment.audience_size !== undefined
+                                    ? formatAudienceSize(selectedAssessment.audience_size)
+                                    : selectedAssessment.assessment?.audience_characteristics?.size !== null && selectedAssessment.assessment?.audience_characteristics?.size !== undefined
+                                      ? formatAudienceSize(selectedAssessment.assessment.audience_characteristics.size)
+                                      : selectedAssessment.size || 'N/A'}
                                 </span>
                               </div>
                               <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Fatigue Score:</span>
-                                <span className={`font-bold ${selectedAssessment.assessment.creative.fatigue_score > 70 ? 'text-red-600' : selectedAssessment.assessment.creative.fatigue_score > 40 ? 'text-yellow-600' : 'text-green-600'}`}>
-                                  {selectedAssessment.assessment.creative.fatigue_score || 'N/A'}%
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current Reach:</span>
+                                <span className="font-bold text-gray-800">
+                                  {(() => {
+                                    const reach = selectedAssessment.assessment.audience_characteristics?.current_reach ||
+                                      selectedAssessment.assessment.audience_characteristics?.reach_value ||
+                                      (selectedAssessment.assessment.performance?.cost_efficiency?.reach) ||
+                                      (selectedAssessment.impressions && selectedAssessment.impressions > 0 ? selectedAssessment.impressions : null);
+                                    return reach ? reach.toLocaleString() : 'N/A';
+                                  })()}
                                 </span>
                               </div>
                               <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Fatigue Level:</span>
-                                <span className={`font-bold uppercase ${selectedAssessment.assessment.creative.fatigue_level === 'critical' ? 'text-red-600' : selectedAssessment.assessment.creative.fatigue_level === 'high' ? 'text-yellow-600' : 'text-green-600'}`}>
-                                  {selectedAssessment.assessment.creative.fatigue_level || 'NORMAL'}
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Saturation:</span>
+                                <span className={`font-bold ${selectedAssessment.assessment.audience_characteristics?.saturation_percent != null && selectedAssessment.assessment.audience_characteristics.saturation_percent > 80 ? 'text-red-600' :
+                                  selectedAssessment.assessment.audience_characteristics?.saturation_percent != null && selectedAssessment.assessment.audience_characteristics.saturation_percent > 60 ? 'text-yellow-600' :
+                                    selectedAssessment.assessment.audience_characteristics?.saturation_percent != null ? 'text-green-600' : 'text-gray-600'
+                                  }`}>
+                                  {selectedAssessment.assessment.audience_characteristics?.saturation_percent != null ? `${selectedAssessment.assessment.audience_characteristics.saturation_percent.toFixed(1)}%` : 'N/A'}
                                 </span>
                               </div>
-                            </div>
-                            {selectedAssessment.assessment.creative.frequency_status && (
-                              <div className="mt-2 text-xs text-gray-600 italic">
-                                {selectedAssessment.assessment.creative.frequency_status}
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Saturation Level:</span>
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${selectedAssessment.assessment.audience_characteristics.saturation_level === 'saturated' ? 'bg-red-100 text-red-800' :
+                                  selectedAssessment.assessment.audience_characteristics.saturation_level === 'high' ? 'bg-yellow-100 text-yellow-800' :
+                                    selectedAssessment.assessment.audience_characteristics.saturation_level === 'healthy' ? 'bg-blue-100 text-blue-800' :
+                                      selectedAssessment.assessment.audience_characteristics.saturation_level === 'low' ? 'bg-green-100 text-green-800' :
+                                        'text-gray-600'
+                                  }`}>
+                                  {selectedAssessment.assessment.audience_characteristics.saturation_level || 'N/A'}
+                                </span>
                               </div>
-                            )}
-                          </div>
-
-                          {/* CTR Trend */}
-                          {selectedAssessment.assessment.creative_health?.ctr_trend && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">CTR Trend</h5>
-                              <div className="text-xs sm:text-sm space-y-2">
+                              {selectedAssessment.assessment.audience_characteristics.retention_days && (
                                 <div className="flex flex-col sm:flex-row sm:items-center">
-                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CTR Decline:</span>
-                                  <span className={`font-bold ${selectedAssessment.assessment.creative_health.ctr_trend.ctr_decline_percent > 30 ? 'text-red-600' : selectedAssessment.assessment.creative_health.ctr_trend.ctr_decline_percent > 15 ? 'text-yellow-600' : 'text-green-600'}`}>
-                                    {selectedAssessment.assessment.creative_health.ctr_trend.ctr_decline_percent.toFixed(1)}%
-                                  </span>
-                                </div>
-                                <div className="text-[10px] sm:text-xs text-gray-600 italic">
-                                  {selectedAssessment.assessment.creative_health.ctr_trend.status}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Quality Rankings */}
-                          {selectedAssessment.assessment.creative_health?.quality_rankings && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Quality Rankings</h5>
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
-                                <div>
-                                  <span className="text-gray-600">Quality:</span>
-                                  <span className="ml-2 font-bold text-gray-800">
-                                    {selectedAssessment.assessment.creative_health.quality_rankings.quality?.replace('_', ' ') || 'N/A'}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600">Engagement:</span>
-                                  <span className="ml-2 font-bold text-gray-800">
-                                    {selectedAssessment.assessment.creative_health.quality_rankings.engagement?.replace('_', ' ') || 'N/A'}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600">Conversion:</span>
-                                  <span className="ml-2 font-bold text-gray-800">
-                                    {selectedAssessment.assessment.creative_health.quality_rankings.conversion?.replace('_', ' ') || 'N/A'}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Engagement Quality (including Video metrics) */}
-                          {selectedAssessment.assessment.creative_health?.engagement_quality && (
-                            <div>
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Engagement Quality</h5>
-                              <div className="space-y-2 text-xs sm:text-sm">
-                                {selectedAssessment.assessment.creative_health.engagement_quality.link_clicks && (
-                                  <div className="text-gray-700">
-                                    <span className="font-semibold">Link Clicks: </span>
-                                    {selectedAssessment.assessment.creative_health.engagement_quality.link_clicks}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.creative_health.engagement_quality.engagement_rate && (
-                                  <div className="text-gray-700">
-                                    <span className="font-semibold">Engagement Rate: </span>
-                                    {selectedAssessment.assessment.creative_health.engagement_quality.engagement_rate}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.creative_health.engagement_quality.social && (
-                                  <div className="text-gray-700">
-                                    <span className="font-semibold">Social Engagement: </span>
-                                    {selectedAssessment.assessment.creative_health.engagement_quality.social}
-                                  </div>
-                                )}
-                                {/* Video Metrics (only for Video format) */}
-                                {selectedAssessment.format === 'Video' && selectedAssessment.assessment.creative_health.engagement_quality.video && (
-                                  <div className="mt-3 pt-3 border-t border-gray-200">
-                                    <span className="text-[10px] font-bold text-blue-600 mb-2 block">Video Performance</span>
-                                    <div className="space-y-1.5">
-                                      {selectedAssessment.assessment.creative_health.engagement_quality.video.play_rate && (
-                                        <div className="text-gray-700">
-                                          <span className="font-semibold">Play Rate: </span>
-                                          {selectedAssessment.assessment.creative_health.engagement_quality.video.play_rate}
-                                        </div>
-                                      )}
-                                      {selectedAssessment.assessment.creative_health.engagement_quality.video.completion && (
-                                        <div className="text-gray-700">
-                                          <span className="font-semibold">Completion Rate: </span>
-                                          {selectedAssessment.assessment.creative_health.engagement_quality.video.completion}
-                                        </div>
-                                      )}
-                                      {selectedAssessment.assessment.creative_health.engagement_quality.video['30_sec_rate'] && (
-                                        <div className="text-gray-700">
-                                          <span className="font-semibold">30+ Sec Watch Rate: </span>
-                                          {selectedAssessment.assessment.creative_health.engagement_quality.video['30_sec_rate']}
-                                        </div>
-                                      )}
-                                      {selectedAssessment.assessment.creative_health.engagement_quality.video.avg_watch_time && (
-                                        <div className="text-gray-700">
-                                          <span className="font-semibold">Avg Watch Time: </span>
-                                          {selectedAssessment.assessment.creative_health.engagement_quality.video.avg_watch_time}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Performance Section - Creative Performance, CTR Assessment, Relative Performance, Cost Efficiency, Conversion Funnel, Click Quality, Ad Recall */}
-                      {selectedAssessment.assessment.performance && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Performance Analysis</h4>
-                          
-                          {/* Creative Performance Summary */}
-                          {selectedAssessment.assessment.performance.creative_performance && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Creative Performance</h5>
-                              <div className="text-xs sm:text-sm space-y-2">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                  <span className="text-gray-600">Status:</span>
-                                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${getAdStatusClasses(selectedAssessment.assessment.performance.creative_performance.status)}`}>
-                                    {selectedAssessment.assessment.performance.creative_performance.status?.toUpperCase() || 'FAIR'}
-                                  </span>
-                                </div>
-                                {selectedAssessment.assessment.performance.creative_performance.summary && (
-                                  <div className="text-gray-700 italic">
-                                    {selectedAssessment.assessment.performance.creative_performance.summary}
-                                  </div>
-                                )}
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mt-2">
-                                  <div>
-                                    <span className="text-gray-600 text-[10px]">CTR:</span>
-                                    <span className="ml-1 font-bold text-gray-800">
-                                      {selectedAssessment.assessment.performance.creative_performance.ctr}%
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600 text-[10px]">CPC:</span>
-                                    <span className="ml-1 font-bold text-gray-800">
-                                      {selectedAssessment.assessment.performance.creative_performance.cpc.toFixed(2)}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600 text-[10px]">CPM:</span>
-                                    <span className="ml-1 font-bold text-gray-800">
-                                      {selectedAssessment.assessment.performance.creative_performance.cpm.toFixed(2)}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* CTR Assessment */}
-                          {selectedAssessment.assessment.performance.ctr_assessment && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">CTR Assessment</h5>
-                              <div className="text-xs sm:text-sm space-y-2">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                  <span className="text-gray-600">CTR:</span>
+                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Retention Days:</span>
                                   <span className="font-bold text-gray-800">
-                                    {selectedAssessment.assessment.performance.ctr_assessment.ctr}%
+                                    {selectedAssessment.assessment.audience_characteristics.retention_days} days
                                   </span>
                                 </div>
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                  <span className="text-gray-600">Format Benchmark:</span>
+                              )}
+                              {selectedAssessment.assessment.audience_characteristics.lookalike_ratio && (
+                                <div className="flex flex-col sm:flex-row sm:items-center">
+                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Lookalike Ratio:</span>
                                   <span className="font-bold text-gray-800">
-                                    {selectedAssessment.assessment.performance.ctr_assessment.format_benchmark}%
+                                    {selectedAssessment.assessment.audience_characteristics.lookalike_ratio}%
                                   </span>
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                  <span className="text-gray-600">vs Benchmark:</span>
-                                  <span className={`font-bold ${selectedAssessment.assessment.performance.ctr_assessment.vs_benchmark_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {selectedAssessment.assessment.performance.ctr_assessment.vs_benchmark_pct >= 0 ? '+' : ''}{selectedAssessment.assessment.performance.ctr_assessment.vs_benchmark_pct.toFixed(1)}%
-                                  </span>
-                                </div>
-                                {selectedAssessment.assessment.performance.ctr_assessment.status && (
-                                  <div className="text-[10px] text-gray-600 italic">
-                                    {selectedAssessment.assessment.performance.ctr_assessment.status}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Relative Performance */}
-                          {selectedAssessment.assessment.performance.relative_performance && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Relative to AdSet</h5>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                                  <span className="text-gray-600">ROAS vs AdSet:</span>
-                                  <span className={`font-bold ${selectedAssessment.assessment.performance.relative_performance.vs_adset_roas_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {selectedAssessment.assessment.performance.relative_performance.vs_adset_roas_pct >= 0 ? '+' : ''}{selectedAssessment.assessment.performance.relative_performance.vs_adset_roas_pct.toFixed(1)}%
-                                  </span>
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                                  <span className="text-gray-600">CTR vs AdSet:</span>
-                                  <span className={`font-bold ${selectedAssessment.assessment.performance.relative_performance.vs_adset_ctr_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {selectedAssessment.assessment.performance.relative_performance.vs_adset_ctr_pct >= 0 ? '+' : ''}{selectedAssessment.assessment.performance.relative_performance.vs_adset_ctr_pct.toFixed(1)}%
-                                  </span>
-                                </div>
-                                {selectedAssessment.assessment.performance.relative_performance.underdelivery_detected && (
-                                  <div className="col-span-full mt-2 pt-2 border-t border-yellow-200 bg-yellow-50 px-2 py-1 rounded text-[10px] text-yellow-800 font-semibold">
-                                    ⚠️ Underdelivery detected
-                                  </div>
-                                )}
-                              </div>
-                              {selectedAssessment.assessment.performance.relative_insights && (
-                                <div className="mt-2 text-[10px] text-gray-600 italic">
-                                  {selectedAssessment.assessment.performance.relative_insights}
                                 </div>
                               )}
                             </div>
-                          )}
-
-                          {/* Cost Efficiency */}
-                          {selectedAssessment.assessment.performance.cost_efficiency && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Cost Efficiency</h5>
-                              <div className="space-y-1.5 text-xs sm:text-sm text-gray-700">
-                                {selectedAssessment.assessment.performance.cost_efficiency.cpc && (
-                                  <div>
-                                    <span className="font-semibold">CPC: </span>
-                                    {selectedAssessment.assessment.performance.cost_efficiency.cpc}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.performance.cost_efficiency.cpm && (
-                                  <div>
-                                    <span className="font-semibold">CPM: </span>
-                                    {selectedAssessment.assessment.performance.cost_efficiency.cpm}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Conversion Funnel */}
-                          {selectedAssessment.assessment.performance.conversion_funnel && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Conversion Funnel</h5>
-                              <div className="space-y-1.5 text-xs sm:text-sm text-gray-700">
-                                {selectedAssessment.assessment.performance.conversion_funnel.click_to_purchase && (
-                                  <div>
-                                    <span className="font-semibold">Click to Purchase: </span>
-                                    {selectedAssessment.assessment.performance.conversion_funnel.click_to_purchase}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.performance.conversion_funnel.add_to_cart && (
-                                  <div>
-                                    <span className="font-semibold">Add to Cart: </span>
-                                    {selectedAssessment.assessment.performance.conversion_funnel.add_to_cart}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.performance.conversion_funnel.cost_per_link_click !== null && (
-                                  <div>
-                                    <span className="font-semibold">Cost per Link Click: </span>
-                                    {selectedAssessment.assessment.performance.conversion_funnel.cost_per_link_click.toFixed(2)}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.performance.conversion_funnel.cost_per_add_to_cart !== null && (
-                                  <div>
-                                    <span className="font-semibold">Cost per Add to Cart: </span>
-                                    {selectedAssessment.assessment.performance.conversion_funnel.cost_per_add_to_cart.toFixed(2)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Click Quality */}
-                          {selectedAssessment.assessment.performance.click_quality && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Click Quality</h5>
-                              <div className="space-y-1.5 text-xs sm:text-sm text-gray-700">
-                                {selectedAssessment.assessment.performance.click_quality.quality_score && (
-                                  <div>
-                                    <span className="font-semibold">Quality Score: </span>
-                                    {selectedAssessment.assessment.performance.click_quality.quality_score}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.performance.click_quality.unique_ctr !== null && selectedAssessment.assessment.performance.click_quality.unique_ctr !== undefined && (
-                                  <div>
-                                    <span className="font-semibold">Unique CTR: </span>
-                                    {selectedAssessment.assessment.performance.click_quality.unique_ctr.toFixed(2)}%
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.performance.click_quality.website_ctr && (
-                                  <div>
-                                    <span className="font-semibold">Website CTR: </span>
-                                    {selectedAssessment.assessment.performance.click_quality.website_ctr}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Ad Recall */}
-                          {selectedAssessment.assessment.performance.ad_recall && (
-                            <div>
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Ad Recall</h5>
-                              <div className="space-y-1.5 text-xs sm:text-sm text-gray-700">
-                                {selectedAssessment.assessment.performance.ad_recall.recall_rate && (
-                                  <div>
-                                    <span className="font-semibold">Recall Rate: </span>
-                                    {selectedAssessment.assessment.performance.ad_recall.recall_rate}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.performance.ad_recall.cost_per_recall && (
-                                  <div>
-                                    <span className="font-semibold">Cost per Recall: </span>
-                                    {selectedAssessment.assessment.performance.ad_recall.cost_per_recall}
-                                  </div>
-                                )}
-                                {selectedAssessment.assessment.performance.ad_recall.estimated_recallers !== null && selectedAssessment.assessment.performance.ad_recall.estimated_recallers !== undefined && (
-                                  <div>
-                                    <span className="font-semibold">Estimated Recallers: </span>
-                                    {selectedAssessment.assessment.performance.ad_recall.estimated_recallers.toLocaleString()}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Delivery Section */}
-                      {selectedAssessment.assessment.delivery && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Delivery Status</h4>
-                          <div className="space-y-2 text-xs sm:text-sm">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <span className="text-gray-600">Effective Status:</span>
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                selectedAssessment.assessment.delivery.effective_status === 'ACTIVE' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : selectedAssessment.assessment.delivery.effective_status === 'PAUSED'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {selectedAssessment.assessment.delivery.effective_status}
-                              </span>
-                            </div>
-                            {selectedAssessment.assessment.delivery.configured_status && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <span className="text-gray-600">Configured Status:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.delivery.configured_status}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.delivery.issues && selectedAssessment.assessment.delivery.issues.length > 0 && (
-                              <div className="mt-2 pt-2 border-t border-red-200">
-                                <span className="text-[10px] font-bold text-red-600 mb-1 block">Delivery Issues:</span>
-                                <ul className="list-disc list-inside space-y-1 text-[10px] text-red-700">
-                                  {selectedAssessment.assessment.delivery.issues.map((issue, idx) => (
-                                    <li key={idx}>{issue}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Recommendations */}
-                      {selectedAssessment.assessment.recommendations && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Recommendations</h4>
-                          <div className="space-y-3">
-                            {selectedAssessment.assessment.recommendations.primary && (
-                              <div className="text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 font-semibold mb-1 sm:mb-0 sm:mr-2">Primary:</span>
-                                <span className="font-bold text-[#1e4a79] break-words">
-                                  {selectedAssessment.assessment.recommendations.primary}
-                                </span>
+                        {/* Health Section */}
+                        {selectedAssessment.assessment.health && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Health Metrics</h4>
+
+                            {/* Frequency */}
+                            {selectedAssessment.assessment.health.frequency && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Frequency</h5>
+                                <div className="text-xs sm:text-sm">
+                                  <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Value:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.health.frequency.value}x
+                                    </span>
+                                  </div>
+                                  <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Status:</span>
+                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${selectedAssessment.assessment.health.frequency.status === 'critical' ? 'bg-red-100 text-red-800' :
+                                      selectedAssessment.assessment.health.frequency.status === 'high' ? 'bg-yellow-100 text-yellow-800' :
+                                        selectedAssessment.assessment.health.frequency.status === 'normal' ? 'bg-green-100 text-green-800' :
+                                          'bg-green-100 text-green-800'
+                                      }`}>
+                                      {selectedAssessment.assessment.health.frequency.status || 'NORMAL'}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
                             )}
-                            {selectedAssessment.assessment.recommendations.all && selectedAssessment.assessment.recommendations.all.length > 0 && (
+
+                            {/* CTR */}
+                            {selectedAssessment.assessment.health.ctr !== undefined && (
                               <div>
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wide block mb-2">All Recommendations</span>
-                                <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-gray-700 pl-2">
-                                  {selectedAssessment.assessment.recommendations.all.map((action, idx) => (
-                                    <li key={idx} className="break-words">{action}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : selectedAssessment.role ? (
-                    // AUDIENCE ASSESSMENT STRUCTURE
-                    <>
-                      {/* Metrics Section */}
-                      <div className="bg-gradient-to-r from-[#f8fafc] to-[#f0f4f8] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                        <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Key Metrics</h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3 sm:gap-4">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">ROAS</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.assessment.performance?.roas ? `${selectedAssessment.assessment.performance.roas}x` : selectedAssessment.roas ? `${selectedAssessment.roas}x` : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPA</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.assessment.performance?.cpa !== null && selectedAssessment.assessment.performance?.cpa !== undefined 
-                                ? selectedAssessment.assessment.performance.cpa.toLocaleString() 
-                                : selectedAssessment.cpa !== null && selectedAssessment.cpa !== undefined 
-                                  ? selectedAssessment.cpa.toLocaleString() 
-                                  : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CTR</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.assessment.performance?.ctr ? `${selectedAssessment.assessment.performance.ctr}%` : selectedAssessment.ctr ? `${selectedAssessment.ctr}%` : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Spend</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.assessment.performance?.spend ? selectedAssessment.assessment.performance.spend.toLocaleString() : selectedAssessment.spend ? selectedAssessment.spend.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Revenue</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.assessment.performance?.revenue ? selectedAssessment.assessment.performance.revenue.toLocaleString() : selectedAssessment.revenue ? selectedAssessment.revenue.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          {(selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) && (
-                            <div className="flex flex-col">
-                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Reaction Quality</span>
-                              <span className={`text-sm sm:text-base font-bold px-2 py-1 rounded ${
-                                (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'highly_engaged' ? 'bg-green-100 text-green-800' :
-                                (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'engaged' ? 'bg-blue-100 text-blue-800' :
-                                (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'passive' ? 'bg-gray-100 text-gray-700' :
-                                (selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality) === 'disengaged' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                {(selectedAssessment.reaction_quality || selectedAssessment.assessment?.audience_reaction?.reaction_quality)?.replace(/_/g, ' ').toUpperCase() || 'N/A'}
-                              </span>
-                            </div>
-                          )}
-                          {(selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) && (
-                            <div className="flex flex-col">
-                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Sway Level</span>
-                              <span className={`text-sm sm:text-base font-bold px-2 py-1 rounded ${
-                                (selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'strong' ? 'bg-green-100 text-green-800' :
-                                (selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                (selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level) === 'weak' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                {(selectedAssessment.sway_level || selectedAssessment.assessment?.sway_analysis?.sway_level)?.toUpperCase() || 'N/A'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Summary Section */}
-                      <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                        <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-2 sm:mb-3 uppercase tracking-wide">Summary</h4>
-                        <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line break-words">
-                          {selectedAssessment.assessment.summary || 'No summary available'}
-                        </p>
-                      </div>
-
-                      {/* Readiness Level */}
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
-                        <div className="flex-1 flex flex-col">
-                          <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Readiness Level</span>
-                          <div className="mt-1">
-                            <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-xs sm:text-sm font-bold shadow-sm inline-block ${getReadinessLevelClasses(selectedAssessment.assessment.readiness_level)}`}>
-                              {selectedAssessment.assessment.readiness_level?.replace(/_/g, ' ').toUpperCase() || 'OPTIMIZING'}
-                            </span>
-                          </div>
-                          {selectedAssessment.assessment.readiness_reason && (
-                            <p className="text-[10px] sm:text-xs text-gray-600 italic mt-2">
-                              {selectedAssessment.assessment.readiness_reason}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Audience Characteristics */}
-                      {selectedAssessment.assessment.audience_characteristics && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Audience Characteristics</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Type:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.audience_characteristics.type || 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Expected Stage:</span>
-                              <span className="font-bold text-gray-800 uppercase">
-                                {selectedAssessment.assessment.audience_characteristics.expected_stage || 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">AVG Size:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.audience_size !== null && selectedAssessment.audience_size !== undefined
-                                  ? formatAudienceSize(selectedAssessment.audience_size)
-                                  : selectedAssessment.assessment?.audience_characteristics?.size !== null && selectedAssessment.assessment?.audience_characteristics?.size !== undefined
-                                    ? formatAudienceSize(selectedAssessment.assessment.audience_characteristics.size)
-                                    : selectedAssessment.size || 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current Reach:</span>
-                              <span className="font-bold text-gray-800">
-                                {(() => {
-                                  const reach = selectedAssessment.assessment.audience_characteristics?.current_reach || 
-                                                selectedAssessment.assessment.audience_characteristics?.reach_value ||
-                                                (selectedAssessment.assessment.performance?.cost_efficiency?.reach) ||
-                                                (selectedAssessment.impressions && selectedAssessment.impressions > 0 ? selectedAssessment.impressions : null);
-                                  return reach ? reach.toLocaleString() : 'N/A';
-                                })()}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Saturation:</span>
-                              <span className={`font-bold ${
-                                selectedAssessment.assessment.audience_characteristics?.saturation_percent != null && selectedAssessment.assessment.audience_characteristics.saturation_percent > 80 ? 'text-red-600' : 
-                                selectedAssessment.assessment.audience_characteristics?.saturation_percent != null && selectedAssessment.assessment.audience_characteristics.saturation_percent > 60 ? 'text-yellow-600' : 
-                                selectedAssessment.assessment.audience_characteristics?.saturation_percent != null ? 'text-green-600' : 'text-gray-600'
-                              }`}>
-                                {selectedAssessment.assessment.audience_characteristics?.saturation_percent != null ? `${selectedAssessment.assessment.audience_characteristics.saturation_percent.toFixed(1)}%` : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Saturation Level:</span>
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                selectedAssessment.assessment.audience_characteristics.saturation_level === 'saturated' ? 'bg-red-100 text-red-800' :
-                                selectedAssessment.assessment.audience_characteristics.saturation_level === 'high' ? 'bg-yellow-100 text-yellow-800' :
-                                selectedAssessment.assessment.audience_characteristics.saturation_level === 'healthy' ? 'bg-blue-100 text-blue-800' :
-                                selectedAssessment.assessment.audience_characteristics.saturation_level === 'low' ? 'bg-green-100 text-green-800' :
-                                'text-gray-600'
-                              }`}>
-                                {selectedAssessment.assessment.audience_characteristics.saturation_level || 'N/A'}
-                              </span>
-                            </div>
-                            {selectedAssessment.assessment.audience_characteristics.retention_days && (
-                              <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Retention Days:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.audience_characteristics.retention_days} days
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.audience_characteristics.lookalike_ratio && (
-                              <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Lookalike Ratio:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.audience_characteristics.lookalike_ratio}%
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Health Section */}
-                      {selectedAssessment.assessment.health && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Health Metrics</h4>
-                          
-                          {/* Frequency */}
-                          {selectedAssessment.assessment.health.frequency && (
-                            <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Frequency</h5>
-                              <div className="text-xs sm:text-sm">
-                                <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
-                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Value:</span>
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">CTR</h5>
+                                <div className="text-xs sm:text-sm">
                                   <span className="font-bold text-gray-800">
-                                    {selectedAssessment.assessment.health.frequency.value}x
+                                    {selectedAssessment.assessment.health.ctr}%
                                   </span>
                                 </div>
-                                <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
-                                  <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Status:</span>
-                                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                    selectedAssessment.assessment.health.frequency.status === 'critical' ? 'bg-red-100 text-red-800' :
-                                    selectedAssessment.assessment.health.frequency.status === 'high' ? 'bg-yellow-100 text-yellow-800' :
-                                    selectedAssessment.assessment.health.frequency.status === 'normal' ? 'bg-green-100 text-green-800' :
-                                    'bg-green-100 text-green-800'
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Targets */}
+                        {selectedAssessment.assessment.targets && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Targets</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Stage:</span>
+                                <span className="font-bold text-gray-800 uppercase">
+                                  {selectedAssessment.assessment.targets.stage || 'N/A'}
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">ROAS Target:</span>
+                                <span className="font-bold text-gray-800">
+                                  {selectedAssessment.assessment.targets.roas_target}x
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current ROAS:</span>
+                                <span className="font-bold text-gray-800">
+                                  {selectedAssessment.assessment.targets.current_roas}x
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPA Cap:</span>
+                                <span className="font-bold text-gray-800">
+                                  {selectedAssessment.assessment.targets.cpa_cap}
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current CPA:</span>
+                                <span className="font-bold text-gray-800">
+                                  {selectedAssessment.assessment.targets.current_cpa !== null && selectedAssessment.assessment.targets.current_cpa !== undefined
+                                    ? selectedAssessment.assessment.targets.current_cpa.toLocaleString()
+                                    : 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Scaling */}
+                        {selectedAssessment.assessment.scaling && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Scaling Potential</h4>
+                            <div className="space-y-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="text-gray-600 text-xs sm:text-sm">Potential:</span>
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${selectedAssessment.assessment.scaling.potential === 'high' ? 'bg-green-100 text-green-800' :
+                                  selectedAssessment.assessment.scaling.potential === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
+                                    selectedAssessment.assessment.scaling.potential === 'low' ? 'bg-red-100 text-red-800' :
+                                      'text-gray-600'
                                   }`}>
-                                    {selectedAssessment.assessment.health.frequency.status || 'NORMAL'}
+                                  {selectedAssessment.assessment.scaling.potential || 'N/A'}
+                                </span>
+                              </div>
+                              {selectedAssessment.assessment.scaling.reason && (
+                                <div className="text-xs sm:text-sm text-gray-600 italic">
+                                  {selectedAssessment.assessment.scaling.reason}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Audience Reaction */}
+                        {selectedAssessment.assessment.audience_reaction && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Audience Reaction</h4>
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs sm:text-sm">
+                                <div className="flex flex-col">
+                                  <span className="text-gray-600 mb-1">Engagement Rate:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.audience_reaction.engagement_rate}%
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-600 mb-1">Reaction Rate:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.audience_reaction.reaction_rate}%
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-600 mb-1">Comment Rate:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.audience_reaction.comment_rate}%
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-600 mb-1">Share Rate:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.audience_reaction.share_rate}%
                                   </span>
                                 </div>
                               </div>
-                            </div>
-                          )}
-
-                          {/* CTR */}
-                          {selectedAssessment.assessment.health.ctr !== undefined && (
-                            <div>
-                              <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">CTR</h5>
-                              <div className="text-xs sm:text-sm">
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.health.ctr}%
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Targets */}
-                      {selectedAssessment.assessment.targets && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Targets</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Stage:</span>
-                              <span className="font-bold text-gray-800 uppercase">
-                                {selectedAssessment.assessment.targets.stage || 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">ROAS Target:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.targets.roas_target}x
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current ROAS:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.targets.current_roas}x
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPA Cap:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.targets.cpa_cap}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current CPA:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.targets.current_cpa !== null && selectedAssessment.assessment.targets.current_cpa !== undefined 
-                                  ? selectedAssessment.assessment.targets.current_cpa.toLocaleString() 
-                                  : 'N/A'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Scaling */}
-                      {selectedAssessment.assessment.scaling && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Scaling Potential</h4>
-                          <div className="space-y-2">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <span className="text-gray-600 text-xs sm:text-sm">Potential:</span>
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                selectedAssessment.assessment.scaling.potential === 'high' ? 'bg-green-100 text-green-800' :
-                                selectedAssessment.assessment.scaling.potential === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                selectedAssessment.assessment.scaling.potential === 'low' ? 'bg-red-100 text-red-800' :
-                                'text-gray-600'
-                              }`}>
-                                {selectedAssessment.assessment.scaling.potential || 'N/A'}
-                              </span>
-                            </div>
-                            {selectedAssessment.assessment.scaling.reason && (
-                              <div className="text-xs sm:text-sm text-gray-600 italic">
-                                {selectedAssessment.assessment.scaling.reason}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Audience Reaction */}
-                      {selectedAssessment.assessment.audience_reaction && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Audience Reaction</h4>
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs sm:text-sm">
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Engagement Rate:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.audience_reaction.engagement_rate}%
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Reaction Rate:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.audience_reaction.reaction_rate}%
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Comment Rate:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.audience_reaction.comment_rate}%
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Share Rate:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.audience_reaction.share_rate}%
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <span className="text-gray-600">Reaction Quality:</span>
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                selectedAssessment.assessment.audience_reaction.reaction_quality === 'highly_engaged' ? 'bg-green-100 text-green-800' :
-                                selectedAssessment.assessment.audience_reaction.reaction_quality === 'engaged' ? 'bg-blue-100 text-blue-800' :
-                                selectedAssessment.assessment.audience_reaction.reaction_quality === 'passive' ? 'bg-gray-100 text-gray-700' :
-                                selectedAssessment.assessment.audience_reaction.reaction_quality === 'disengaged' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                {selectedAssessment.assessment.audience_reaction.reaction_quality?.replace(/_/g, ' ').toUpperCase() || 'N/A'}
-                              </span>
-                            </div>
-                            {selectedAssessment.assessment.audience_reaction.insights && selectedAssessment.assessment.audience_reaction.insights.length > 0 && (
-                              <div className="mt-3 pt-3 border-t border-gray-200">
-                                <span className="text-[10px] font-bold text-gray-600 mb-2 block">Insights:</span>
-                                <ul className="list-disc list-inside space-y-1 text-xs text-gray-700">
-                                  {selectedAssessment.assessment.audience_reaction.insights.map((insight, idx) => (
-                                    <li key={idx}>{insight}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.audience_reaction.social_signals && selectedAssessment.assessment.audience_reaction.social_signals.length > 0 && (
-                              <div className="mt-2">
-                                <span className="text-[10px] font-bold text-gray-600 mb-2 block">Social Signals:</span>
-                                <ul className="list-disc list-inside space-y-1 text-xs text-gray-700">
-                                  {selectedAssessment.assessment.audience_reaction.social_signals.map((signal, idx) => (
-                                    <li key={idx}>{signal}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Video Behavior */}
-                      {selectedAssessment.assessment.video_behavior && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Video Behavior</h4>
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs sm:text-sm">
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Play Rate:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.video_behavior.play_rate}%
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Completion Rate:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.video_behavior.completion_rate}%
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">30+ Sec Rate:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.video_behavior['30_sec_rate']}%
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Avg Watch Time:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.video_behavior.avg_watch_time}s
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <span className="text-gray-600">Behavior:</span>
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                selectedAssessment.assessment.video_behavior.behavior === 'highly_engaged' ? 'bg-green-100 text-green-800' :
-                                selectedAssessment.assessment.video_behavior.behavior === 'engaged' ? 'bg-blue-100 text-blue-800' :
-                                selectedAssessment.assessment.video_behavior.behavior === 'disengaged' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {selectedAssessment.assessment.video_behavior.behavior?.replace(/_/g, ' ').toUpperCase() || 'UNKNOWN'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Intent Signals */}
-                      {selectedAssessment.assessment.intent_signals && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Intent Signals</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs sm:text-sm">
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Link Click Rate:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.intent_signals.link_click_rate}%
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Add to Cart Rate:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.intent_signals.add_to_cart_rate}%
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Purchase Intent Score:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.intent_signals.purchase_intent_score}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Click Quality Ratio:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.intent_signals.click_quality_ratio.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Sway Analysis */}
-                      {selectedAssessment.assessment.sway_analysis && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Sway Analysis</h4>
-                          <div className="space-y-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <span className="text-gray-600">Sway Score:</span>
-                              <span className="text-lg sm:text-xl font-bold text-gray-800">
-                                {selectedAssessment.assessment.sway_analysis.sway_score}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <span className="text-gray-600">Sway Level:</span>
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                selectedAssessment.assessment.sway_analysis.sway_level === 'strong' ? 'bg-green-100 text-green-800' :
-                                selectedAssessment.assessment.sway_analysis.sway_level === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                selectedAssessment.assessment.sway_analysis.sway_level === 'weak' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                {selectedAssessment.assessment.sway_analysis.sway_level?.toUpperCase() || 'N/A'}
-                              </span>
-                            </div>
-                            {selectedAssessment.assessment.sway_analysis.factors && selectedAssessment.assessment.sway_analysis.factors.length > 0 && (
-                              <div className="mt-3 pt-3 border-t border-gray-200">
-                                <span className="text-[10px] font-bold text-gray-600 mb-2 block">Factors:</span>
-                                <ul className="list-disc list-inside space-y-1 text-xs text-gray-700">
-                                  {selectedAssessment.assessment.sway_analysis.factors.map((factor, idx) => (
-                                    <li key={idx}>{factor}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.sway_analysis.interpretation && (
-                              <div className="mt-2 text-xs text-gray-600 italic">
-                                {selectedAssessment.assessment.sway_analysis.interpretation}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Optimization Strategies */}
-                      {selectedAssessment.assessment.optimization_strategies && selectedAssessment.assessment.optimization_strategies.length > 0 && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Optimization Strategies</h4>
-                          <div className="space-y-4">
-                            {selectedAssessment.assessment.optimization_strategies.map((strategy, idx) => (
-                              <div key={idx} className="border-l-4 border-blue-500 pl-3 sm:pl-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                                  <span className={`px-2 py-1 rounded text-[9px] font-bold ${
-                                    strategy.priority === 'high' ? 'bg-red-100 text-red-800' :
-                                    strategy.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-blue-100 text-blue-800'
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="text-gray-600">Reaction Quality:</span>
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${selectedAssessment.assessment.audience_reaction.reaction_quality === 'highly_engaged' ? 'bg-green-100 text-green-800' :
+                                  selectedAssessment.assessment.audience_reaction.reaction_quality === 'engaged' ? 'bg-blue-100 text-blue-800' :
+                                    selectedAssessment.assessment.audience_reaction.reaction_quality === 'passive' ? 'bg-gray-100 text-gray-700' :
+                                      selectedAssessment.assessment.audience_reaction.reaction_quality === 'disengaged' ? 'bg-red-100 text-red-800' :
+                                        'bg-gray-100 text-gray-700'
                                   }`}>
-                                    {strategy.priority?.toUpperCase() || 'MEDIUM'} PRIORITY
-                                  </span>
-                                  <span className="font-bold text-gray-800 text-xs sm:text-sm">
-                                    {strategy.action}
-                                  </span>
-                                </div>
-                                {strategy.reason && (
-                                  <p className="text-xs text-gray-600 mb-2">{strategy.reason}</p>
-                                )}
-                                {strategy.suggestions && strategy.suggestions.length > 0 && (
-                                  <ul className="list-disc list-inside space-y-1 text-xs text-gray-700 ml-2">
-                                    {strategy.suggestions.map((suggestion, sIdx) => (
-                                      <li key={sIdx}>{suggestion}</li>
+                                  {selectedAssessment.assessment.audience_reaction.reaction_quality?.replace(/_/g, ' ').toUpperCase() || 'N/A'}
+                                </span>
+                              </div>
+                              {selectedAssessment.assessment.audience_reaction.insights && selectedAssessment.assessment.audience_reaction.insights.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                  <span className="text-[10px] font-bold text-gray-600 mb-2 block">Insights:</span>
+                                  <ul className="list-disc list-inside space-y-1 text-xs text-gray-700">
+                                    {selectedAssessment.assessment.audience_reaction.insights.map((insight, idx) => (
+                                      <li key={idx}>{insight}</li>
                                     ))}
                                   </ul>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.audience_reaction.social_signals && selectedAssessment.assessment.audience_reaction.social_signals.length > 0 && (
+                                <div className="mt-2">
+                                  <span className="text-[10px] font-bold text-gray-600 mb-2 block">Social Signals:</span>
+                                  <ul className="list-disc list-inside space-y-1 text-xs text-gray-700">
+                                    {selectedAssessment.assessment.audience_reaction.social_signals.map((signal, idx) => (
+                                      <li key={idx}>{signal}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Video Behavior */}
+                        {selectedAssessment.assessment.video_behavior && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Video Behavior</h4>
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs sm:text-sm">
+                                <div className="flex flex-col">
+                                  <span className="text-gray-600 mb-1">Play Rate:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.video_behavior.play_rate}%
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-600 mb-1">Completion Rate:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.video_behavior.completion_rate}%
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-600 mb-1">30+ Sec Rate:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.video_behavior['30_sec_rate']}%
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-600 mb-1">Avg Watch Time:</span>
+                                  <span className="font-bold text-gray-800">
+                                    {selectedAssessment.assessment.video_behavior.avg_watch_time}s
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="text-gray-600">Behavior:</span>
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${selectedAssessment.assessment.video_behavior.behavior === 'highly_engaged' ? 'bg-green-100 text-green-800' :
+                                  selectedAssessment.assessment.video_behavior.behavior === 'engaged' ? 'bg-blue-100 text-blue-800' :
+                                    selectedAssessment.assessment.video_behavior.behavior === 'disengaged' ? 'bg-red-100 text-red-800' :
+                                      'bg-gray-100 text-gray-800'
+                                  }`}>
+                                  {selectedAssessment.assessment.video_behavior.behavior?.replace(/_/g, ' ').toUpperCase() || 'UNKNOWN'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Intent Signals */}
+                        {selectedAssessment.assessment.intent_signals && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Intent Signals</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs sm:text-sm">
+                              <div className="flex flex-col">
+                                <span className="text-gray-600 mb-1">Link Click Rate:</span>
+                                <span className="font-bold text-gray-800">
+                                  {selectedAssessment.assessment.intent_signals.link_click_rate}%
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-gray-600 mb-1">Add to Cart Rate:</span>
+                                <span className="font-bold text-gray-800">
+                                  {selectedAssessment.assessment.intent_signals.add_to_cart_rate}%
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-gray-600 mb-1">Purchase Intent Score:</span>
+                                <span className="font-bold text-gray-800">
+                                  {selectedAssessment.assessment.intent_signals.purchase_intent_score}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-gray-600 mb-1">Click Quality Ratio:</span>
+                                <span className="font-bold text-gray-800">
+                                  {selectedAssessment.assessment.intent_signals.click_quality_ratio.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Sway Analysis */}
+                        {selectedAssessment.assessment.sway_analysis && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Sway Analysis</h4>
+                            <div className="space-y-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="text-gray-600">Sway Score:</span>
+                                <span className="text-lg sm:text-xl font-bold text-gray-800">
+                                  {selectedAssessment.assessment.sway_analysis.sway_score}
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="text-gray-600">Sway Level:</span>
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${selectedAssessment.assessment.sway_analysis.sway_level === 'strong' ? 'bg-green-100 text-green-800' :
+                                  selectedAssessment.assessment.sway_analysis.sway_level === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
+                                    selectedAssessment.assessment.sway_analysis.sway_level === 'weak' ? 'bg-red-100 text-red-800' :
+                                      'bg-gray-100 text-gray-700'
+                                  }`}>
+                                  {selectedAssessment.assessment.sway_analysis.sway_level?.toUpperCase() || 'N/A'}
+                                </span>
+                              </div>
+                              {selectedAssessment.assessment.sway_analysis.factors && selectedAssessment.assessment.sway_analysis.factors.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                  <span className="text-[10px] font-bold text-gray-600 mb-2 block">Factors:</span>
+                                  <ul className="list-disc list-inside space-y-1 text-xs text-gray-700">
+                                    {selectedAssessment.assessment.sway_analysis.factors.map((factor, idx) => (
+                                      <li key={idx}>{factor}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.sway_analysis.interpretation && (
+                                <div className="mt-2 text-xs text-gray-600 italic">
+                                  {selectedAssessment.assessment.sway_analysis.interpretation}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Optimization Strategies */}
+                        {selectedAssessment.assessment.optimization_strategies && selectedAssessment.assessment.optimization_strategies.length > 0 && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Optimization Strategies</h4>
+                            <div className="space-y-4">
+                              {selectedAssessment.assessment.optimization_strategies.map((strategy, idx) => (
+                                <div key={idx} className="border-l-4 border-blue-500 pl-3 sm:pl-4">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                                    <span className={`px-2 py-1 rounded text-[9px] font-bold ${strategy.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                      strategy.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                        'bg-blue-100 text-blue-800'
+                                      }`}>
+                                      {strategy.priority?.toUpperCase() || 'MEDIUM'} PRIORITY
+                                    </span>
+                                    <span className="font-bold text-gray-800 text-xs sm:text-sm">
+                                      {strategy.action}
+                                    </span>
+                                  </div>
+                                  {strategy.reason && (
+                                    <p className="text-xs text-gray-600 mb-2">{strategy.reason}</p>
+                                  )}
+                                  {strategy.suggestions && strategy.suggestions.length > 0 && (
+                                    <ul className="list-disc list-inside space-y-1 text-xs text-gray-700 ml-2">
+                                      {strategy.suggestions.map((suggestion, sIdx) => (
+                                        <li key={sIdx}>{suggestion}</li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Recommendations */}
+                        {selectedAssessment.assessment.recommendations && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Recommendations</h4>
+                            <div className="space-y-3">
+                              {selectedAssessment.assessment.recommendations.primary && (
+                                <div className="text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center">
+                                  <span className="text-gray-600 font-semibold mb-1 sm:mb-0 sm:mr-2">Primary:</span>
+                                  <span className="font-bold text-[#1e4a79] break-words">
+                                    {selectedAssessment.assessment.recommendations.primary}
+                                  </span>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.recommendations.all && selectedAssessment.assessment.recommendations.all.length > 0 && (
+                                <div>
+                                  <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wide block mb-2">All Recommendations</span>
+                                  <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-gray-700 pl-2">
+                                    {selectedAssessment.assessment.recommendations.all.map((action, idx) => (
+                                      <li key={idx} className="break-words">{action}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      // CAMPAIGN/ADSET ASSESSMENT STRUCTURE (existing code)
+                      <>
+                        {/* Metrics Section */}
+                        <div className="bg-gradient-to-r from-[#f8fafc] to-[#f0f4f8] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Key Metrics</h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3 sm:gap-4">
+                            <div className="flex flex-col">
+                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">ROAS</span>
+                              <span className="text-base sm:text-lg font-bold text-gray-800">
+                                {selectedAssessment.roas ? `${selectedAssessment.roas}x` : 'N/A'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPA</span>
+                              <span className="text-base sm:text-lg font-bold text-gray-800">
+                                {selectedAssessment.cpa !== null && selectedAssessment.cpa !== undefined ? selectedAssessment.cpa.toLocaleString() : 'N/A'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Spend</span>
+                              <span className="text-base sm:text-lg font-bold text-gray-800">
+                                {selectedAssessment.spend ? selectedAssessment.spend.toLocaleString() : 'N/A'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Revenue</span>
+                              <span className="text-base sm:text-lg font-bold text-gray-800">
+                                {selectedAssessment.revenue ? selectedAssessment.revenue.toLocaleString() : 'N/A'}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Purchases</span>
+                              <span className="text-base sm:text-lg font-bold text-gray-800">
+                                {selectedAssessment.purchases != null ? Number(selectedAssessment.purchases).toLocaleString() : 'N/A'}
+                              </span>
+                            </div>
+                            {(selectedAssessment.ctr !== null && selectedAssessment.ctr !== undefined) && (
+                              <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CTR</span>
+                                <span className="text-base sm:text-lg font-bold text-gray-800">
+                                  {selectedAssessment.ctr != null ? `${Number(selectedAssessment.ctr).toFixed(2)}%` : 'N/A'}
+                                </span>
+                              </div>
+                            )}
+                            {(selectedAssessment.impressions !== null && selectedAssessment.impressions !== undefined) && (
+                              <div className="flex flex-col">
+                                <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Impressions</span>
+                                <span className="text-base sm:text-lg font-bold text-gray-800">
+                                  {selectedAssessment.impressions != null ? Number(selectedAssessment.impressions).toLocaleString() : 'N/A'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Summary Section */}
+                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-2 sm:mb-3 uppercase tracking-wide">Summary</h4>
+                          <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line break-words">
+                            {selectedAssessment.assessment.summary || 'No summary available'}
+                          </p>
+                        </div>
+
+                        {/* Action & Status */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Action</span>
+                            <div className="mt-1">
+                              <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-sm inline-block ${getStatusClasses(selectedAssessment.assessment.status || selectedAssessment.assessment.action)}`}>
+                                {selectedAssessment.assessment.action}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Status</span>
+                            <div className="mt-1">
+                              <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-sm inline-block ${getStatusClasses(selectedAssessment.assessment.status)}`}>
+                                {selectedAssessment.assessment.status?.toUpperCase() || 'UNKNOWN'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Performance Section */}
+                        {selectedAssessment.assessment.performance && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-4 sm:mb-5 uppercase tracking-wide">Performance vs Industry</h4>
+
+                            {/* VS Industry */}
+                            {selectedAssessment.assessment.performance.vs_industry && (
+                              <div className="space-y-4">
+                                {/* ROAS Comparison */}
+                                <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
+                                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">ROAS</span>
+                                  </div>
+                                  <div className="p-4">
+                                    <div className="grid grid-cols-2 gap-4 mb-3">
+                                      {/* Current */}
+                                      <div className="text-center sm:text-left">
+                                        <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Your Campaign</div>
+                                        <div className="text-xl sm:text-2xl font-bold text-[#1e4a79]">
+                                          {selectedAssessment.roas ? `${selectedAssessment.roas}x` : 'N/A'}
+                                        </div>
+                                      </div>
+                                      {/* Industry */}
+                                      <div className="text-center sm:text-left border-l border-gray-200 pl-4">
+                                        <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Industry Avg</div>
+                                        <div className="text-xl sm:text-2xl font-bold text-gray-600">
+                                          {selectedAssessment.assessment.performance.vs_industry.industry_roas_benchmark}x
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {/* Difference */}
+                                    <div className="pt-3 border-t border-gray-100 flex items-center justify-center sm:justify-start gap-2">
+                                      <span className="text-xs text-gray-600">Difference:</span>
+                                      <span className={`text-sm font-bold ${selectedAssessment.assessment.performance.vs_industry.roas_vs_benchmark >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {selectedAssessment.assessment.performance.vs_industry.roas_vs_benchmark != null
+                                          ? `${selectedAssessment.assessment.performance.vs_industry.roas_vs_benchmark >= 0 ? '+' : ''}${Number(selectedAssessment.assessment.performance.vs_industry.roas_vs_benchmark).toFixed(1)}%`
+                                          : 'N/A'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* CPA Comparison */}
+                                <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
+                                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">CPA</span>
+                                  </div>
+                                  <div className="p-4">
+                                    <div className="grid grid-cols-2 gap-4 mb-3">
+                                      {/* Current */}
+                                      <div className="text-center sm:text-left">
+                                        <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Your Campaign</div>
+                                        <div className="text-xl sm:text-2xl font-bold text-[#1e4a79]">
+                                          {selectedAssessment.cpa !== null && selectedAssessment.cpa !== undefined ? selectedAssessment.cpa.toLocaleString() : 'N/A'}
+                                        </div>
+                                      </div>
+                                      {/* Industry */}
+                                      <div className="text-center sm:text-left border-l border-gray-200 pl-4">
+                                        <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Industry Avg</div>
+                                        <div className="text-xl sm:text-2xl font-bold text-gray-600">
+                                          {selectedAssessment.assessment.performance.vs_industry.industry_cpa_benchmark}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {/* Difference */}
+                                    <div className="pt-3 border-t border-gray-100 flex items-center justify-center sm:justify-start gap-2">
+                                      <span className="text-xs text-gray-600">Difference:</span>
+                                      <span className={`text-sm font-bold ${selectedAssessment.assessment.performance.vs_industry.cpa_vs_benchmark >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {selectedAssessment.assessment.performance.vs_industry.cpa_vs_benchmark != null
+                                          ? `${selectedAssessment.assessment.performance.vs_industry.cpa_vs_benchmark >= 0 ? '+' : ''}${Number(selectedAssessment.assessment.performance.vs_industry.cpa_vs_benchmark).toFixed(1)}%`
+                                          : 'N/A'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Profitability */}
+                            {selectedAssessment.assessment.performance.profitability && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Profitability</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Profit Margin:</span>
+                                    <span className="font-bold text-gray-800 break-words">
+                                      {selectedAssessment.assessment.performance.profitability.estimated_net_profit_margin_percent != null
+                                        ? `${Number(selectedAssessment.assessment.performance.profitability.estimated_net_profit_margin_percent).toFixed(1)}%`
+                                        : selectedAssessment.assessment.performance.profitability.profit_margin_percent != null
+                                          ? `${Number(selectedAssessment.assessment.performance.profitability.profit_margin_percent).toFixed(1)}%`
+                                          : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Net Profit:</span>
+                                    <span className={`font-bold break-words ${(selectedAssessment.assessment.performance.profitability.estimated_net_profit ?? selectedAssessment.assessment.performance.profitability.net_profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      {selectedAssessment.assessment.performance.profitability.estimated_net_profit != null
+                                        ? Number(selectedAssessment.assessment.performance.profitability.estimated_net_profit).toLocaleString()
+                                        : selectedAssessment.assessment.performance.profitability.net_profit != null
+                                          ? Number(selectedAssessment.assessment.performance.profitability.net_profit).toLocaleString()
+                                          : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Revenue:</span>
+                                    <span className="font-bold text-gray-800 break-words">
+                                      {selectedAssessment.assessment.performance.profitability.revenue != null ? Number(selectedAssessment.assessment.performance.profitability.revenue).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Gross Profit:</span>
+                                    <span className="font-bold text-gray-800 break-words">
+                                      {selectedAssessment.assessment.performance.profitability.estimated_gross_profit != null
+                                        ? Number(selectedAssessment.assessment.performance.profitability.estimated_gross_profit).toLocaleString()
+                                        : selectedAssessment.assessment.performance.profitability.gross_profit != null
+                                          ? Number(selectedAssessment.assessment.performance.profitability.gross_profit).toLocaleString()
+                                          : 'N/A'}
+                                    </span>
+                                  </div>
+                                </div>
+                                {selectedAssessment.assessment.performance.profitability.estimation_note && (
+                                  <div className="mt-2 text-[10px] text-gray-500 italic">
+                                    Note: {selectedAssessment.assessment.performance.profitability.estimation_note}
+                                  </div>
                                 )}
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                            )}
 
-                      {/* Recommendations */}
-                      {selectedAssessment.assessment.recommendations && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Recommendations</h4>
-                          <div className="space-y-3">
-                            {selectedAssessment.assessment.recommendations.primary && (
-                              <div className="text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 font-semibold mb-1 sm:mb-0 sm:mr-2">Primary:</span>
-                                <span className="font-bold text-[#1e4a79] break-words">
-                                  {selectedAssessment.assessment.recommendations.primary}
-                                </span>
+                            {/* Cost Efficiency */}
+                            {selectedAssessment.assessment.performance.cost_efficiency && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Cost Efficiency</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">CTR:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.cost_efficiency.ctr != null ? `${Number(selectedAssessment.assessment.performance.cost_efficiency.ctr).toFixed(2)}%` : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">CPC:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.cost_efficiency.cpc != null ? Number(selectedAssessment.assessment.performance.cost_efficiency.cpc).toFixed(2) : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">CPM:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.cost_efficiency.cpm != null ? Number(selectedAssessment.assessment.performance.cost_efficiency.cpm).toFixed(2) : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Unique CTR:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.cost_efficiency.unique_ctr != null ? `${Number(selectedAssessment.assessment.performance.cost_efficiency.unique_ctr).toFixed(2)}%` : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Impressions:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.cost_efficiency.impressions != null ? Number(selectedAssessment.assessment.performance.cost_efficiency.impressions).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Clicks:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.cost_efficiency.clicks != null ? Number(selectedAssessment.assessment.performance.cost_efficiency.clicks).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Reach:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {(() => {
+                                        const reach = selectedAssessment.assessment.performance?.cost_efficiency?.reach ||
+                                          selectedAssessment.assessment.audience_characteristics?.current_reach ||
+                                          selectedAssessment.assessment.audience_characteristics?.reach_value ||
+                                          (selectedAssessment.assessment.performance?.cost_efficiency?.impressions && selectedAssessment.assessment.performance.cost_efficiency.impressions > 0 ? selectedAssessment.assessment.performance.cost_efficiency.impressions : null);
+                                        return reach != null ? Number(reach).toLocaleString() : 'N/A';
+                                      })()}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Unique Clicks:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.cost_efficiency.unique_clicks != null ? Number(selectedAssessment.assessment.performance.cost_efficiency.unique_clicks).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
                             )}
-                            {selectedAssessment.assessment.recommendations.all && selectedAssessment.assessment.recommendations.all.length > 0 && (
+
+                            {/* Engagement */}
+                            {selectedAssessment.assessment.performance.engagement && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Engagement</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Link Clicks:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.link_clicks != null ? Number(selectedAssessment.assessment.performance.engagement.link_clicks).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Add to Cart:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.add_to_cart != null ? Number(selectedAssessment.assessment.performance.engagement.add_to_cart).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Leads:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.leads != null ? Number(selectedAssessment.assessment.performance.engagement.leads).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Video Views:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.video_views != null ? Number(selectedAssessment.assessment.performance.engagement.video_views).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Post Engagements:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.post_engagements != null ? Number(selectedAssessment.assessment.performance.engagement.post_engagements).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Post Reactions:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.post_reactions != null ? Number(selectedAssessment.assessment.performance.engagement.post_reactions).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Post Comments:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.post_comments != null ? Number(selectedAssessment.assessment.performance.engagement.post_comments).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Post Shares:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.post_shares != null ? Number(selectedAssessment.assessment.performance.engagement.post_shares).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Page Engagements:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.engagement.page_engagements != null ? Number(selectedAssessment.assessment.performance.engagement.page_engagements).toLocaleString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Cost Per Action */}
+                            {selectedAssessment.assessment.performance.cost_per_action && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Cost Per Action</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
+                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_link_click !== null && (
+                                    <div className="flex flex-col">
+                                      <span className="text-gray-600 mb-1">Cost per Link Click:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {Number(selectedAssessment.assessment.performance.cost_per_action.cost_per_link_click).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_add_to_cart !== null && (
+                                    <div className="flex flex-col">
+                                      <span className="text-gray-600 mb-1">Cost per Add to Cart:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {Number(selectedAssessment.assessment.performance.cost_per_action.cost_per_add_to_cart).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_lead !== null && (
+                                    <div className="flex flex-col">
+                                      <span className="text-gray-600 mb-1">Cost per Lead:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {Number(selectedAssessment.assessment.performance.cost_per_action.cost_per_lead).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_video_view !== null && (
+                                    <div className="flex flex-col">
+                                      <span className="text-gray-600 mb-1">Cost per Video View:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {Number(selectedAssessment.assessment.performance.cost_per_action.cost_per_video_view).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_engagement !== null && (
+                                    <div className="flex flex-col">
+                                      <span className="text-gray-600 mb-1">Cost per Engagement:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {Number(selectedAssessment.assessment.performance.cost_per_action.cost_per_engagement).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Conversion Rates */}
+                            {selectedAssessment.assessment.performance.conversion_rates && (
                               <div>
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wide block mb-2">All Recommendations</span>
-                                <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-gray-700 pl-2">
-                                  {selectedAssessment.assessment.recommendations.all.map((action, idx) => (
-                                    <li key={idx} className="break-words">{action}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    // CAMPAIGN/ADSET ASSESSMENT STRUCTURE (existing code)
-                    <>
-                      {/* Metrics Section */}
-                      <div className="bg-gradient-to-r from-[#f8fafc] to-[#f0f4f8] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                        <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Key Metrics</h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3 sm:gap-4">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">ROAS</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.roas ? `${selectedAssessment.roas}x` : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CPA</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.cpa !== null && selectedAssessment.cpa !== undefined ? selectedAssessment.cpa.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Spend</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.spend ? selectedAssessment.spend.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Revenue</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.revenue ? selectedAssessment.revenue.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Purchases</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.purchases ? selectedAssessment.purchases.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          {(selectedAssessment.ctr !== null && selectedAssessment.ctr !== undefined) && (
-                            <div className="flex flex-col">
-                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">CTR</span>
-                              <span className="text-base sm:text-lg font-bold text-gray-800">
-                                {selectedAssessment.ctr ? `${selectedAssessment.ctr.toFixed(2)}%` : 'N/A'}
-                              </span>
-                            </div>
-                          )}
-                          {(selectedAssessment.impressions !== null && selectedAssessment.impressions !== undefined) && (
-                            <div className="flex flex-col">
-                              <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Impressions</span>
-                              <span className="text-base sm:text-lg font-bold text-gray-800">
-                                {selectedAssessment.impressions ? selectedAssessment.impressions.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                  {/* Summary Section */}
-                  <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                    <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-2 sm:mb-3 uppercase tracking-wide">Summary</h4>
-                    <p className="text-xs sm:text-sm text-gray-700 leading-relaxed whitespace-pre-line break-words">
-                      {selectedAssessment.assessment.summary || 'No summary available'}
-                    </p>
-                  </div>
-
-                  {/* Action & Status */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
-                    <div className="flex-1 flex flex-col">
-                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Action</span>
-                      <div className="mt-1">
-                        <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-sm inline-block ${getStatusClasses(selectedAssessment.assessment.status || selectedAssessment.assessment.action)}`}>
-                          {selectedAssessment.assessment.action}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex flex-col">
-                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Status</span>
-                      <div className="mt-1">
-                        <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-sm inline-block ${getStatusClasses(selectedAssessment.assessment.status)}`}>
-                          {selectedAssessment.assessment.status?.toUpperCase() || 'UNKNOWN'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Performance Section */}
-                  {selectedAssessment.assessment.performance && (
-                    <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                      <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-4 sm:mb-5 uppercase tracking-wide">Performance vs Industry</h4>
-                      
-                      {/* VS Industry */}
-                      {selectedAssessment.assessment.performance.vs_industry && (
-                        <div className="space-y-4">
-                          {/* ROAS Comparison */}
-                          <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
-                            <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                              <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">ROAS</span>
-                            </div>
-                            <div className="p-4">
-                              <div className="grid grid-cols-2 gap-4 mb-3">
-                                {/* Current */}
-                                <div className="text-center sm:text-left">
-                                  <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Your Campaign</div>
-                                  <div className="text-xl sm:text-2xl font-bold text-[#1e4a79]">
-                                    {selectedAssessment.roas ? `${selectedAssessment.roas}x` : 'N/A'}
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Conversion Rates</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Click to Purchase Rate:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.conversion_rates.click_to_purchase_rate !== null && selectedAssessment.assessment.performance.conversion_rates.click_to_purchase_rate !== undefined
+                                        ? `${Number(selectedAssessment.assessment.performance.conversion_rates.click_to_purchase_rate).toFixed(2)}%`
+                                        : 'N/A'}
+                                    </span>
                                   </div>
-                                </div>
-                                {/* Industry */}
-                                <div className="text-center sm:text-left border-l border-gray-200 pl-4">
-                                  <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Industry Avg</div>
-                                  <div className="text-xl sm:text-2xl font-bold text-gray-600">
-                                    {selectedAssessment.assessment.performance.vs_industry.industry_roas_benchmark}x
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-600 mb-1">Add to Cart Rate:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.performance.conversion_rates.add_to_cart_rate !== null && selectedAssessment.assessment.performance.conversion_rates.add_to_cart_rate !== undefined
+                                        ? `${Number(selectedAssessment.assessment.performance.conversion_rates.add_to_cart_rate).toFixed(2)}%`
+                                        : 'N/A'}
+                                    </span>
                                   </div>
-                                </div>
-                              </div>
-                              {/* Difference */}
-                              <div className="pt-3 border-t border-gray-100 flex items-center justify-center sm:justify-start gap-2">
-                                <span className="text-xs text-gray-600">Difference:</span>
-                                <span className={`text-sm font-bold ${selectedAssessment.assessment.performance.vs_industry.roas_vs_benchmark >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  {selectedAssessment.assessment.performance.vs_industry.roas_vs_benchmark !== null 
-                                    ? `${selectedAssessment.assessment.performance.vs_industry.roas_vs_benchmark >= 0 ? '+' : ''}${selectedAssessment.assessment.performance.vs_industry.roas_vs_benchmark.toFixed(1)}%`
-                                    : 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* CPA Comparison */}
-                          <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
-                            <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                              <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">CPA</span>
-                            </div>
-                            <div className="p-4">
-                              <div className="grid grid-cols-2 gap-4 mb-3">
-                                {/* Current */}
-                                <div className="text-center sm:text-left">
-                                  <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Your Campaign</div>
-                                  <div className="text-xl sm:text-2xl font-bold text-[#1e4a79]">
-                                    {selectedAssessment.cpa !== null && selectedAssessment.cpa !== undefined ? selectedAssessment.cpa.toLocaleString() : 'N/A'}
-                                  </div>
-                                </div>
-                                {/* Industry */}
-                                <div className="text-center sm:text-left border-l border-gray-200 pl-4">
-                                  <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Industry Avg</div>
-                                  <div className="text-xl sm:text-2xl font-bold text-gray-600">
-                                    {selectedAssessment.assessment.performance.vs_industry.industry_cpa_benchmark}
-                                  </div>
-                                </div>
-                              </div>
-                              {/* Difference */}
-                              <div className="pt-3 border-t border-gray-100 flex items-center justify-center sm:justify-start gap-2">
-                                <span className="text-xs text-gray-600">Difference:</span>
-                                <span className={`text-sm font-bold ${selectedAssessment.assessment.performance.vs_industry.cpa_vs_benchmark >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  {selectedAssessment.assessment.performance.vs_industry.cpa_vs_benchmark !== null 
-                                    ? `${selectedAssessment.assessment.performance.vs_industry.cpa_vs_benchmark >= 0 ? '+' : ''}${selectedAssessment.assessment.performance.vs_industry.cpa_vs_benchmark.toFixed(1)}%`
-                                    : 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Profitability */}
-                      {selectedAssessment.assessment.performance.profitability && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Profitability</h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Profit Margin:</span>
-                              <span className="font-bold text-gray-800 break-words">
-                                {selectedAssessment.assessment.performance.profitability.profit_margin_percent !== null 
-                                  ? `${selectedAssessment.assessment.performance.profitability.profit_margin_percent.toFixed(1)}%`
-                                  : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Net Profit:</span>
-                              <span className={`font-bold break-words ${selectedAssessment.assessment.performance.profitability.net_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {selectedAssessment.assessment.performance.profitability.net_profit.toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Revenue:</span>
-                              <span className="font-bold text-gray-800 break-words">
-                                {selectedAssessment.assessment.performance.profitability.revenue.toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Spend:</span>
-                              <span className="font-bold text-gray-800 break-words">
-                                {selectedAssessment.assessment.performance.profitability.spend.toLocaleString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Cost Efficiency */}
-                      {selectedAssessment.assessment.performance.cost_efficiency && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Cost Efficiency</h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">CTR:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.cost_efficiency.ctr ? `${selectedAssessment.assessment.performance.cost_efficiency.ctr.toFixed(2)}%` : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">CPC:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.cost_efficiency.cpc ? selectedAssessment.assessment.performance.cost_efficiency.cpc.toFixed(2) : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">CPM:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.cost_efficiency.cpm ? selectedAssessment.assessment.performance.cost_efficiency.cpm.toFixed(2) : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Unique CTR:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.cost_efficiency.unique_ctr ? `${selectedAssessment.assessment.performance.cost_efficiency.unique_ctr.toFixed(2)}%` : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Impressions:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.cost_efficiency.impressions ? selectedAssessment.assessment.performance.cost_efficiency.impressions.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Clicks:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.cost_efficiency.clicks ? selectedAssessment.assessment.performance.cost_efficiency.clicks.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Reach:</span>
-                              <span className="font-bold text-gray-800">
-                                {(() => {
-                                  const reach = selectedAssessment.assessment.performance?.cost_efficiency?.reach ||
-                                                selectedAssessment.assessment.audience_characteristics?.current_reach ||
-                                                selectedAssessment.assessment.audience_characteristics?.reach_value ||
-                                                (selectedAssessment.assessment.performance?.cost_efficiency?.impressions && selectedAssessment.assessment.performance.cost_efficiency.impressions > 0 ? selectedAssessment.assessment.performance.cost_efficiency.impressions : null);
-                                  return reach ? reach.toLocaleString() : 'N/A';
-                                })()}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Unique Clicks:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.cost_efficiency.unique_clicks ? selectedAssessment.assessment.performance.cost_efficiency.unique_clicks.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Engagement */}
-                      {selectedAssessment.assessment.performance.engagement && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Engagement</h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Link Clicks:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.link_clicks ? selectedAssessment.assessment.performance.engagement.link_clicks.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Add to Cart:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.add_to_cart ? selectedAssessment.assessment.performance.engagement.add_to_cart.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Leads:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.leads ? selectedAssessment.assessment.performance.engagement.leads.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Video Views:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.video_views ? selectedAssessment.assessment.performance.engagement.video_views.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Post Engagements:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.post_engagements ? selectedAssessment.assessment.performance.engagement.post_engagements.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Post Reactions:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.post_reactions ? selectedAssessment.assessment.performance.engagement.post_reactions.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Post Comments:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.post_comments ? selectedAssessment.assessment.performance.engagement.post_comments.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Post Shares:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.post_shares ? selectedAssessment.assessment.performance.engagement.post_shares.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Page Engagements:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.engagement.page_engagements ? selectedAssessment.assessment.performance.engagement.page_engagements.toLocaleString() : 'N/A'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Cost Per Action */}
-                      {selectedAssessment.assessment.performance.cost_per_action && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Cost Per Action</h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
-                            {selectedAssessment.assessment.performance.cost_per_action.cost_per_link_click !== null && (
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Cost per Link Click:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_link_click.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.performance.cost_per_action.cost_per_add_to_cart !== null && (
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Cost per Add to Cart:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_add_to_cart.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.performance.cost_per_action.cost_per_lead !== null && (
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Cost per Lead:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_lead.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.performance.cost_per_action.cost_per_video_view !== null && (
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Cost per Video View:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_video_view.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.performance.cost_per_action.cost_per_engagement !== null && (
-                              <div className="flex flex-col">
-                                <span className="text-gray-600 mb-1">Cost per Engagement:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.performance.cost_per_action.cost_per_engagement.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Conversion Rates */}
-                      {selectedAssessment.assessment.performance.conversion_rates && (
-                        <div>
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Conversion Rates</h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Click to Purchase Rate:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.conversion_rates.click_to_purchase_rate !== null && selectedAssessment.assessment.performance.conversion_rates.click_to_purchase_rate !== undefined
-                                  ? `${selectedAssessment.assessment.performance.conversion_rates.click_to_purchase_rate.toFixed(2)}%`
-                                  : 'N/A'}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-gray-600 mb-1">Add to Cart Rate:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.performance.conversion_rates.add_to_cart_rate !== null && selectedAssessment.assessment.performance.conversion_rates.add_to_cart_rate !== undefined
-                                  ? `${selectedAssessment.assessment.performance.conversion_rates.add_to_cart_rate.toFixed(2)}%`
-                                  : 'N/A'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Health Section */}
-                  {selectedAssessment.assessment.health && (
-                    <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                      <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Health Metrics</h4>
-                      
-                      {/* Frequency */}
-                      {selectedAssessment.assessment.health.frequency && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Frequency</h5>
-                          <div className="text-xs sm:text-sm">
-                            <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Value:</span>
-                              <span className="font-bold text-gray-800">
-                                {selectedAssessment.assessment.health.frequency.value}x
-                              </span>
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-gray-600 italic break-words">
-                              {selectedAssessment.assessment.health.frequency.status}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Creative Fatigue */}
-                      {selectedAssessment.assessment.health.creative_fatigue && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Creative Fatigue</h5>
-                          <div className="text-xs sm:text-sm space-y-2">
-                            <div className="flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CTR Decline:</span>
-                              <span className={`font-bold break-words ${selectedAssessment.assessment.health.creative_fatigue.ctr_decline_percent > 15 ? 'text-yellow-600' : 'text-green-600'}`}>
-                                {selectedAssessment.assessment.health.creative_fatigue.ctr_decline_percent.toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-gray-600 italic break-words">
-                              {selectedAssessment.assessment.health.creative_fatigue.status}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Learning Phase */}
-                      {selectedAssessment.assessment.health.learning_phase && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Learning Phase</h5>
-                          <div className="text-xs sm:text-sm">
-                            <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">In Learning:</span>
-                              <span className={`font-bold ${selectedAssessment.assessment.health.learning_phase.is_in_learning ? 'text-yellow-600' : 'text-green-600'}`}>
-                                {selectedAssessment.assessment.health.learning_phase.is_in_learning ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-gray-600 break-words">
-                              Status: {selectedAssessment.assessment.health.learning_phase.status_display || selectedAssessment.assessment.health.learning_phase.status}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Delivery Status */}
-                      {(selectedAssessment.assessment.health.delivery_status || selectedAssessment.effective_status || selectedAssessment.configured_status || (selectedAssessment.delivery_issues && selectedAssessment.delivery_issues.length > 0)) && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Delivery Status</h5>
-                          <div className="text-xs sm:text-sm space-y-2">
-                            {(selectedAssessment.assessment.health.delivery_status?.effective_status || selectedAssessment.effective_status) && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Effective Status:</span>
-                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                  (selectedAssessment.assessment.health.delivery_status?.effective_status || selectedAssessment.effective_status) === 'ACTIVE' 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : (selectedAssessment.assessment.health.delivery_status?.effective_status || selectedAssessment.effective_status) === 'PAUSED'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {selectedAssessment.assessment.health.delivery_status?.effective_status || selectedAssessment.effective_status}
-                                </span>
-                              </div>
-                            )}
-                            {(selectedAssessment.assessment.health.delivery_status?.configured_status || selectedAssessment.configured_status) && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Configured Status:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.health.delivery_status?.configured_status || selectedAssessment.configured_status}
-                                </span>
-                              </div>
-                            )}
-                            {((selectedAssessment.assessment.health.delivery_status?.has_issues && selectedAssessment.assessment.health.delivery_status.issues && selectedAssessment.assessment.health.delivery_status.issues.length > 0) || 
-                              (selectedAssessment.delivery_issues && selectedAssessment.delivery_issues.length > 0)) && (
-                              <div className="mt-2 pt-2 border-t border-gray-200">
-                                <span className="text-[10px] font-bold text-red-600 mb-1 block">
-                                  Delivery Issues ({selectedAssessment.assessment.health.delivery_status?.issues?.length || selectedAssessment.delivery_issues?.length || 0}):
-                                </span>
-                                <div className="space-y-1">
-                                  {(selectedAssessment.assessment.health.delivery_status?.issues || selectedAssessment.delivery_issues || []).slice(0, 5).map((issue, idx) => (
-                                    <div key={idx} className="text-[10px] text-red-700 bg-red-50 px-2 py-1 rounded">
-                                      {issue.error_code || issue.error_message || issue.error_title || issue.error_subcode || JSON.stringify(issue)}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Quality Rankings */}
-                      {selectedAssessment.assessment.health.quality_rankings && (
-                        <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Quality Rankings</h5>
-                          <div className="text-xs sm:text-sm space-y-2">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Quality Status:</span>
-                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                selectedAssessment.assessment.health.quality_rankings.quality_status === 'GOOD' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : selectedAssessment.assessment.health.quality_rankings.quality_status === 'WARNING'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {selectedAssessment.assessment.health.quality_rankings.quality_status}
-                              </span>
-                            </div>
-                            {selectedAssessment.assessment.health.quality_rankings.total_ads !== null && selectedAssessment.assessment.health.quality_rankings.total_ads !== undefined && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Total Ads:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.health.quality_rankings.total_ads}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.health.quality_rankings.average_quality_score !== null && selectedAssessment.assessment.health.quality_rankings.average_quality_score !== undefined && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Average Quality Score:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.health.quality_rankings.average_quality_score.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.health.quality_rankings.distribution && (
-                              <div className="mt-2 pt-2 border-t border-gray-200">
-                                <span className="text-[10px] font-bold text-gray-600 mb-1 block">Distribution:</span>
-                                <div className="grid grid-cols-3 gap-2 text-[10px]">
-                                  {selectedAssessment.assessment.health.quality_rankings.distribution.ABOVE_AVERAGE !== undefined && (
-                                    <div className="text-center">
-                                      <div className="font-bold text-green-700">{selectedAssessment.assessment.health.quality_rankings.distribution.ABOVE_AVERAGE || 0}</div>
-                                      <div className="text-gray-600">Above Avg</div>
-                                    </div>
-                                  )}
-                                  {selectedAssessment.assessment.health.quality_rankings.distribution.AVERAGE !== undefined && (
-                                    <div className="text-center">
-                                      <div className="font-bold text-yellow-700">{selectedAssessment.assessment.health.quality_rankings.distribution.AVERAGE || 0}</div>
-                                      <div className="text-gray-600">Average</div>
-                                    </div>
-                                  )}
-                                  {selectedAssessment.assessment.health.quality_rankings.distribution.BELOW_AVERAGE !== undefined && (
-                                    <div className="text-center">
-                                      <div className="font-bold text-red-700">{selectedAssessment.assessment.health.quality_rankings.distribution.BELOW_AVERAGE || 0}</div>
-                                      <div className="text-gray-600">Below Avg</div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Age Fields */}
-                      {(selectedAssessment.assessment.health.adset_age_days !== null && selectedAssessment.assessment.health.adset_age_days !== undefined) || 
-                       (selectedAssessment.assessment.health.data_age_days !== null && selectedAssessment.assessment.health.data_age_days !== undefined) ? (
-                        <div>
-                          <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Age Information</h5>
-                          <div className="text-xs sm:text-sm space-y-2">
-                            {selectedAssessment.assessment.health.adset_age_days !== null && selectedAssessment.assessment.health.adset_age_days !== undefined && (
-                              <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">AdSet Age:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.health.adset_age_days} days
-                                </span>
-                              </div>
-                            )}
-                            {selectedAssessment.assessment.health.data_age_days !== null && selectedAssessment.assessment.health.data_age_days !== undefined && (
-                              <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Data Age:</span>
-                                <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.health.data_age_days} days
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
-
-                  {/* Top/Bottom Ads Section */}
-                  {(selectedAssessment.top_ads && selectedAssessment.top_ads.length > 0) || (selectedAssessment.bottom_ads && selectedAssessment.bottom_ads.length > 0) ? (
-                    <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                      <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Ad Performance Summary</h4>
-                      
-                      {/* Top Ads */}
-                      {selectedAssessment.top_ads && selectedAssessment.top_ads.length > 0 && (
-                        <div className="mb-4 sm:mb-6">
-                          <h5 className="text-[10px] sm:text-xs font-bold text-green-700 mb-2 sm:mb-3">Top Performing Ads ({selectedAssessment.top_ads.length})</h5>
-                          <div className="space-y-2 sm:space-y-3">
-                            {selectedAssessment.top_ads.map((ad, idx) => (
-                              <div key={ad.id || idx} className="bg-white border border-green-200 rounded-lg p-3 sm:p-4">
-                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-                                  <div className="flex-1">
-                                    <div className="font-bold text-xs sm:text-sm text-gray-800 mb-1">{ad.name || `Ad ${idx + 1}`}</div>
-                                    <div className="text-[10px] text-gray-500">ID: {ad.id}</div>
-                                  </div>
-                                  <div className="flex gap-2 flex-wrap">
-                                    {ad.quality_ranking && (
-                                      <span className={`px-2 py-1 rounded text-[9px] font-bold ${
-                                        ad.quality_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
-                                        ad.quality_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-red-100 text-red-800'
-                                      }`}>
-                                        Quality: {ad.quality_ranking.replace(/_/g, ' ')}
-                                      </span>
-                                    )}
-                                    {ad.engagement_rate_ranking && (
-                                      <span className={`px-2 py-1 rounded text-[9px] font-bold ${
-                                        ad.engagement_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
-                                        ad.engagement_rate_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-red-100 text-red-800'
-                                      }`}>
-                                        Engagement: {ad.engagement_rate_ranking.replace(/_/g, ' ')}
-                                      </span>
-                                    )}
-                                    {ad.conversion_rate_ranking && (
-                                      <span className={`px-2 py-1 rounded text-[9px] font-bold ${
-                                        ad.conversion_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
-                                        ad.conversion_rate_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-red-100 text-red-800'
-                                      }`}>
-                                        Conversion: {ad.conversion_rate_ranking.replace(/_/g, ' ')}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 text-xs">
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">ROAS</div>
-                                    <div className="font-bold text-gray-800">{ad.roas ? `${ad.roas}x` : 'N/A'}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">Spend</div>
-                                    <div className="font-bold text-gray-800">{ad.spend ? ad.spend.toLocaleString() : 'N/A'}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">Revenue</div>
-                                    <div className="font-bold text-gray-800">{ad.revenue ? ad.revenue.toLocaleString() : 'N/A'}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">Purchases</div>
-                                    <div className="font-bold text-gray-800">{ad.purchases ? ad.purchases.toLocaleString() : 'N/A'}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">CTR</div>
-                                    <div className="font-bold text-gray-800">{ad.ctr ? `${ad.ctr}%` : 'N/A'}</div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Bottom Ads */}
-                      {selectedAssessment.bottom_ads && selectedAssessment.bottom_ads.length > 0 && (
-                        <div>
-                          <h5 className="text-[10px] sm:text-xs font-bold text-red-700 mb-2 sm:mb-3">Underperforming Ads ({selectedAssessment.bottom_ads.length})</h5>
-                          <div className="space-y-2 sm:space-y-3">
-                            {selectedAssessment.bottom_ads.map((ad, idx) => (
-                              <div key={ad.id || idx} className="bg-white border border-red-200 rounded-lg p-3 sm:p-4">
-                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-                                  <div className="flex-1">
-                                    <div className="font-bold text-xs sm:text-sm text-gray-800 mb-1">{ad.name || `Ad ${idx + 1}`}</div>
-                                    <div className="text-[10px] text-gray-500">ID: {ad.id}</div>
-                                  </div>
-                                  <div className="flex gap-2 flex-wrap">
-                                    {ad.quality_ranking && (
-                                      <span className={`px-2 py-1 rounded text-[9px] font-bold ${
-                                        ad.quality_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
-                                        ad.quality_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-red-100 text-red-800'
-                                      }`}>
-                                        Quality: {ad.quality_ranking.replace(/_/g, ' ')}
-                                      </span>
-                                    )}
-                                    {ad.engagement_rate_ranking && (
-                                      <span className={`px-2 py-1 rounded text-[9px] font-bold ${
-                                        ad.engagement_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
-                                        ad.engagement_rate_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-red-100 text-red-800'
-                                      }`}>
-                                        Engagement: {ad.engagement_rate_ranking.replace(/_/g, ' ')}
-                                      </span>
-                                    )}
-                                    {ad.conversion_rate_ranking && (
-                                      <span className={`px-2 py-1 rounded text-[9px] font-bold ${
-                                        ad.conversion_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
-                                        ad.conversion_rate_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-red-100 text-red-800'
-                                      }`}>
-                                        Conversion: {ad.conversion_rate_ranking.replace(/_/g, ' ')}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 text-xs">
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">ROAS</div>
-                                    <div className="font-bold text-gray-800">{ad.roas ? `${ad.roas}x` : 'N/A'}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">Spend</div>
-                                    <div className="font-bold text-gray-800">{ad.spend ? ad.spend.toLocaleString() : 'N/A'}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">Revenue</div>
-                                    <div className="font-bold text-gray-800">{ad.revenue ? ad.revenue.toLocaleString() : 'N/A'}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">Purchases</div>
-                                    <div className="font-bold text-gray-800">{ad.purchases ? ad.purchases.toLocaleString() : 'N/A'}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] text-gray-500 mb-0.5">CTR</div>
-                                    <div className="font-bold text-gray-800">{ad.ctr ? `${ad.ctr}%` : 'N/A'}</div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-
-                  {/* Trend Section */}
-                  {selectedAssessment.assessment.trend && (
-                    <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                      <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Performance Trend</h4>
-                      <div className="space-y-3">
-                        {/* Period Comparison Info */}
-                        {selectedAssessment.assessment.trend.period_days && (
-                          <div className="mb-3 pb-3 border-b border-gray-200">
-                            <p className="text-[10px] sm:text-xs text-gray-600 font-semibold mb-2">
-                              Comparing last {selectedAssessment.assessment.trend.period_days} days vs previous {selectedAssessment.assessment.trend.period_days} days
-                            </p>
-                            {selectedAssessment.assessment.trend.current_period && selectedAssessment.assessment.trend.previous_period && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] sm:text-xs text-gray-500">
-                                <div>
-                                  <span className="font-semibold text-gray-600">Current Period: </span>
-                                  {(() => {
-                                    const start = new Date(selectedAssessment.assessment.trend.current_period.start_date);
-                                    const end = new Date(selectedAssessment.assessment.trend.current_period.end_date);
-                                    const startFormatted = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                    const endFormatted = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: start.getFullYear() !== end.getFullYear() ? 'numeric' : undefined });
-                                    return `${startFormatted} - ${endFormatted}`;
-                                  })()}
-                                </div>
-                                <div>
-                                  <span className="font-semibold text-gray-600">Previous Period: </span>
-                                  {(() => {
-                                    const start = new Date(selectedAssessment.assessment.trend.previous_period.start_date);
-                                    const end = new Date(selectedAssessment.assessment.trend.previous_period.end_date);
-                                    const startFormatted = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                    const endFormatted = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: start.getFullYear() !== end.getFullYear() ? 'numeric' : undefined });
-                                    return `${startFormatted} - ${endFormatted}`;
-                                  })()}
                                 </div>
                               </div>
                             )}
                           </div>
                         )}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                          <span className="text-gray-600 text-xs sm:text-sm font-semibold">Trend:</span>
-                          <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold ${selectedAssessment.assessment.trend.trend === 'improving' ? 'bg-green-100 text-green-800' : selectedAssessment.assessment.trend.trend === 'declining' ? 'bg-red-100 text-red-800' : selectedAssessment.assessment.trend.trend === 'stable' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {selectedAssessment.assessment.trend.trend?.toUpperCase() || 'INSUFFICIENT_DATA'}
-                          </span>
-                        </div>
-                        {selectedAssessment.assessment.trend.change_pct !== null && selectedAssessment.assessment.trend.change_pct !== undefined && (
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <span className="text-gray-600 text-xs sm:text-sm">Change:</span>
-                            <span className={`text-sm sm:text-base font-bold ${selectedAssessment.assessment.trend.change_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {selectedAssessment.assessment.trend.change_pct >= 0 ? '+' : ''}{selectedAssessment.assessment.trend.change_pct.toFixed(1)}%
-                            </span>
+
+                        {/* Health Section */}
+                        {selectedAssessment.assessment.health && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Health Metrics</h4>
+
+                            {/* Frequency */}
+                            {selectedAssessment.assessment.health.frequency && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Frequency</h5>
+                                <div className="text-xs sm:text-sm">
+                                  <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Value:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.health.frequency.value}x
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] sm:text-xs text-gray-600 italic break-words">
+                                    {selectedAssessment.assessment.health.frequency.status}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Creative Fatigue */}
+                            {selectedAssessment.assessment.health.creative_fatigue && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Creative Fatigue</h5>
+                                <div className="text-xs sm:text-sm space-y-2">
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CTR Decline:</span>
+                                    <span className={`font-bold break-words ${selectedAssessment.assessment.health.creative_fatigue.ctr_decline_percent > 15 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                      {Number(selectedAssessment.assessment.health.creative_fatigue.ctr_decline_percent).toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] sm:text-xs text-gray-600 italic break-words">
+                                    {selectedAssessment.assessment.health.creative_fatigue.status}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Learning Phase */}
+                            {selectedAssessment.assessment.health.learning_phase && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Learning Phase</h5>
+                                <div className="text-xs sm:text-sm">
+                                  <div className="mb-2 flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">In Learning:</span>
+                                    <span className={`font-bold ${selectedAssessment.assessment.health.learning_phase.is_in_learning ? 'text-yellow-600' : 'text-green-600'}`}>
+                                      {selectedAssessment.assessment.health.learning_phase.is_in_learning ? 'Yes' : 'No'}
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] sm:text-xs text-gray-600 break-words">
+                                    Status: {selectedAssessment.assessment.health.learning_phase.status_display || selectedAssessment.assessment.health.learning_phase.status}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Delivery Status */}
+                            {(selectedAssessment.assessment.health.delivery_status || selectedAssessment.effective_status || selectedAssessment.configured_status || (selectedAssessment.delivery_issues && selectedAssessment.delivery_issues.length > 0)) && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Delivery Status</h5>
+                                <div className="text-xs sm:text-sm space-y-2">
+                                  {(selectedAssessment.assessment.health.delivery_status?.effective_status || selectedAssessment.effective_status) && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                      <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Effective Status:</span>
+                                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${(selectedAssessment.assessment.health.delivery_status?.effective_status || selectedAssessment.effective_status) === 'ACTIVE'
+                                        ? 'bg-green-100 text-green-800'
+                                        : (selectedAssessment.assessment.health.delivery_status?.effective_status || selectedAssessment.effective_status) === 'PAUSED'
+                                          ? 'bg-yellow-100 text-yellow-800'
+                                          : 'bg-red-100 text-red-800'
+                                        }`}>
+                                        {selectedAssessment.assessment.health.delivery_status?.effective_status || selectedAssessment.effective_status}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {(selectedAssessment.assessment.health.delivery_status?.configured_status || selectedAssessment.configured_status) && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                      <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Configured Status:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {selectedAssessment.assessment.health.delivery_status?.configured_status || selectedAssessment.configured_status}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {((selectedAssessment.assessment.health.delivery_status?.has_issues && selectedAssessment.assessment.health.delivery_status.issues && selectedAssessment.assessment.health.delivery_status.issues.length > 0) ||
+                                    (selectedAssessment.delivery_issues && selectedAssessment.delivery_issues.length > 0)) && (
+                                      <div className="mt-2 pt-2 border-t border-gray-200">
+                                        <span className="text-[10px] font-bold text-red-600 mb-1 block">
+                                          Delivery Issues ({selectedAssessment.assessment.health.delivery_status?.issues?.length || selectedAssessment.delivery_issues?.length || 0}):
+                                        </span>
+                                        <div className="space-y-1">
+                                          {(selectedAssessment.assessment.health.delivery_status?.issues || selectedAssessment.delivery_issues || []).slice(0, 5).map((issue, idx) => (
+                                            <div key={idx} className="text-[10px] text-red-700 bg-red-50 px-2 py-1 rounded">
+                                              {issue.error_code || issue.error_message || issue.error_title || issue.error_subcode || JSON.stringify(issue)}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Quality Rankings */}
+                            {selectedAssessment.assessment.health.quality_rankings && (
+                              <div className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-[#e2e8f0]">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Quality Rankings</h5>
+                                <div className="text-xs sm:text-sm space-y-2">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Quality Status:</span>
+                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${selectedAssessment.assessment.health.quality_rankings.quality_status === 'GOOD'
+                                      ? 'bg-green-100 text-green-800'
+                                      : selectedAssessment.assessment.health.quality_rankings.quality_status === 'WARNING'
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : 'bg-red-100 text-red-800'
+                                      }`}>
+                                      {selectedAssessment.assessment.health.quality_rankings.quality_status}
+                                    </span>
+                                  </div>
+                                  {selectedAssessment.assessment.health.quality_rankings.total_ads !== null && selectedAssessment.assessment.health.quality_rankings.total_ads !== undefined && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                      <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Total Ads:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {selectedAssessment.assessment.health.quality_rankings.total_ads}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.health.quality_rankings.average_quality_score !== null && selectedAssessment.assessment.health.quality_rankings.average_quality_score !== undefined && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                      <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Average Quality Score:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {Number(selectedAssessment.assessment.health.quality_rankings.average_quality_score).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.health.quality_rankings.distribution && (
+                                    <div className="mt-2 pt-2 border-t border-gray-200">
+                                      <span className="text-[10px] font-bold text-gray-600 mb-1 block">Distribution:</span>
+                                      <div className="grid grid-cols-3 gap-2 text-[10px]">
+                                        {selectedAssessment.assessment.health.quality_rankings.distribution.ABOVE_AVERAGE !== undefined && (
+                                          <div className="text-center">
+                                            <div className="font-bold text-green-700">{selectedAssessment.assessment.health.quality_rankings.distribution.ABOVE_AVERAGE || 0}</div>
+                                            <div className="text-gray-600">Above Avg</div>
+                                          </div>
+                                        )}
+                                        {selectedAssessment.assessment.health.quality_rankings.distribution.AVERAGE !== undefined && (
+                                          <div className="text-center">
+                                            <div className="font-bold text-yellow-700">{selectedAssessment.assessment.health.quality_rankings.distribution.AVERAGE || 0}</div>
+                                            <div className="text-gray-600">Average</div>
+                                          </div>
+                                        )}
+                                        {selectedAssessment.assessment.health.quality_rankings.distribution.BELOW_AVERAGE !== undefined && (
+                                          <div className="text-center">
+                                            <div className="font-bold text-red-700">{selectedAssessment.assessment.health.quality_rankings.distribution.BELOW_AVERAGE || 0}</div>
+                                            <div className="text-gray-600">Below Avg</div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Age Fields */}
+                            {(selectedAssessment.assessment.health.adset_age_days !== null && selectedAssessment.assessment.health.adset_age_days !== undefined) ||
+                              (selectedAssessment.assessment.health.data_age_days !== null && selectedAssessment.assessment.health.data_age_days !== undefined) ? (
+                              <div>
+                                <h5 className="text-[10px] sm:text-xs font-bold text-gray-600 mb-2">Age Information</h5>
+                                <div className="text-xs sm:text-sm space-y-2">
+                                  {selectedAssessment.assessment.health.adset_age_days !== null && selectedAssessment.assessment.health.adset_age_days !== undefined && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center">
+                                      <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">AdSet Age:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {selectedAssessment.assessment.health.adset_age_days} days
+                                      </span>
+                                    </div>
+                                  )}
+                                  {selectedAssessment.assessment.health.data_age_days !== null && selectedAssessment.assessment.health.data_age_days !== undefined && (
+                                    <div className="flex flex-col sm:flex-row sm:items-center">
+                                      <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Data Age:</span>
+                                      <span className="font-bold text-gray-800">
+                                        {selectedAssessment.assessment.health.data_age_days} days
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : null}
                           </div>
                         )}
-                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-200">
-                          <div>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Current ROAS</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-800">
-                              {selectedAssessment.assessment.trend.current_roas ? `${selectedAssessment.assessment.trend.current_roas}x` : 'N/A'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Previous ROAS</span>
-                            <span className="text-base sm:text-lg font-bold text-gray-600">
-                              {selectedAssessment.assessment.trend.previous_roas ? `${selectedAssessment.assessment.trend.previous_roas}x` : 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Budget Pacing Section */}
-                  {selectedAssessment.assessment.budget_pacing && (
-                    <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                      <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Budget Pacing</h4>
-                      <div className="space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                          <span className="text-gray-600 text-xs sm:text-sm font-semibold">Utilization:</span>
-                          <span className={`text-base sm:text-lg font-bold ${selectedAssessment.assessment.budget_pacing.utilization_percent > 100 ? 'text-red-600' : selectedAssessment.assessment.budget_pacing.utilization_percent > 90 ? 'text-yellow-600' : 'text-green-600'}`}>
-                            {selectedAssessment.assessment.budget_pacing.utilization_percent.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-200">
-                          <div>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Daily Budget</span>
-                            <span className="text-sm sm:text-base font-bold text-gray-800">
-                              {selectedAssessment.assessment.budget_pacing.daily_budget ? selectedAssessment.assessment.budget_pacing.daily_budget.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Expected Spend</span>
-                            <span className="text-sm sm:text-base font-bold text-gray-800">
-                              {selectedAssessment.assessment.budget_pacing.expected_spend ? selectedAssessment.assessment.budget_pacing.expected_spend.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Actual Spend</span>
-                            <span className={`text-sm sm:text-base font-bold ${selectedAssessment.assessment.budget_pacing.actual_spend > selectedAssessment.assessment.budget_pacing.expected_spend ? 'text-red-600' : selectedAssessment.assessment.budget_pacing.actual_spend < selectedAssessment.assessment.budget_pacing.expected_spend * 0.9 ? 'text-yellow-600' : 'text-green-600'}`}>
-                              {selectedAssessment.assessment.budget_pacing.actual_spend ? selectedAssessment.assessment.budget_pacing.actual_spend.toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Difference</span>
-                            <span className={`text-sm sm:text-base font-bold ${(selectedAssessment.assessment.budget_pacing.actual_spend - selectedAssessment.assessment.budget_pacing.expected_spend) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                              {selectedAssessment.assessment.budget_pacing.expected_spend && selectedAssessment.assessment.budget_pacing.actual_spend !== undefined 
-                                ? `${(selectedAssessment.assessment.budget_pacing.actual_spend - selectedAssessment.assessment.budget_pacing.expected_spend) >= 0 ? '+' : ''}${(selectedAssessment.assessment.budget_pacing.actual_spend - selectedAssessment.assessment.budget_pacing.expected_spend).toLocaleString()}`
-                                : 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                        {/* Top/Bottom Ads Section */}
+                        {(selectedAssessment.top_ads && selectedAssessment.top_ads.length > 0) || (selectedAssessment.bottom_ads && selectedAssessment.bottom_ads.length > 0) ? (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Ad Performance Summary</h4>
 
-                  {/* Targets Section */}
-                  {selectedAssessment.assessment.targets && (
-                    <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                      <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Targets</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                        <div className="flex flex-col sm:flex-row sm:items-center">
-                          <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Stage:</span>
-                          <span className="font-bold text-gray-800 uppercase break-words">
-                            {selectedAssessment.assessment.targets.stage}
-                          </span>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center">
-                          <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">ROAS Target:</span>
-                          <span className="font-bold text-gray-800 break-words">
-                            {selectedAssessment.assessment.targets.roas_target}x
-                          </span>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center">
-                          <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current ROAS:</span>
-                          <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.roas ? 'text-green-600' : 'text-red-600'}`}>
-                            {selectedAssessment.assessment.targets.current_roas}x
-                          </span>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center">
-                          <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPA Cap:</span>
-                          <span className="font-bold text-gray-800 break-words">
-                            {selectedAssessment.assessment.targets.cpa_cap}
-                          </span>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center">
-                          <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current CPA:</span>
-                          <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.cpa ? 'text-green-600' : 'text-red-600'}`}>
-                            {selectedAssessment.assessment.targets.current_cpa !== null && selectedAssessment.assessment.targets.current_cpa !== undefined 
-                              ? selectedAssessment.assessment.targets.current_cpa.toLocaleString() 
-                              : 'N/A'}
-                          </span>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center">
-                          <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Meets Target:</span>
-                          <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.overall ? 'text-green-600' : 'text-red-600'}`}>
-                            {selectedAssessment.assessment.targets.meets_target?.overall ? 'Yes' : 'No'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                            {/* Top Ads */}
+                            {selectedAssessment.top_ads && selectedAssessment.top_ads.length > 0 && (
+                              <div className="mb-4 sm:mb-6">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-green-700 mb-2 sm:mb-3">Top Performing Ads ({selectedAssessment.top_ads.length})</h5>
+                                <div className="space-y-2 sm:space-y-3">
+                                  {selectedAssessment.top_ads.map((ad, idx) => (
+                                    <div key={ad.id || idx} className="bg-white border border-green-200 rounded-lg p-3 sm:p-4">
+                                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                                        <div className="flex-1">
+                                          <div className="font-bold text-xs sm:text-sm text-gray-800 mb-1">{ad.name || `Ad ${idx + 1}`}</div>
+                                          <div className="text-[10px] text-gray-500">ID: {ad.id}</div>
+                                        </div>
+                                        <div className="flex gap-2 flex-wrap">
+                                          {ad.quality_ranking && (
+                                            <span className={`px-2 py-1 rounded text-[9px] font-bold ${ad.quality_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
+                                              ad.quality_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                              }`}>
+                                              Quality: {ad.quality_ranking.replace(/_/g, ' ')}
+                                            </span>
+                                          )}
+                                          {ad.engagement_rate_ranking && (
+                                            <span className={`px-2 py-1 rounded text-[9px] font-bold ${ad.engagement_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
+                                              ad.engagement_rate_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                              }`}>
+                                              Engagement: {ad.engagement_rate_ranking.replace(/_/g, ' ')}
+                                            </span>
+                                          )}
+                                          {ad.conversion_rate_ranking && (
+                                            <span className={`px-2 py-1 rounded text-[9px] font-bold ${ad.conversion_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
+                                              ad.conversion_rate_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                              }`}>
+                                              Conversion: {ad.conversion_rate_ranking.replace(/_/g, ' ')}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 text-xs">
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">ROAS</div>
+                                          <div className="font-bold text-gray-800">{ad.roas ? `${ad.roas}x` : 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">Spend</div>
+                                          <div className="font-bold text-gray-800">{ad.spend ? ad.spend.toLocaleString() : 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">Revenue</div>
+                                          <div className="font-bold text-gray-800">{ad.revenue ? ad.revenue.toLocaleString() : 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">Purchases</div>
+                                          <div className="font-bold text-gray-800">{ad.purchases ? ad.purchases.toLocaleString() : 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">CTR</div>
+                                          <div className="font-bold text-gray-800">{ad.ctr ? `${ad.ctr}%` : 'N/A'}</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
-                      {/* Recommendations Section */}
-                      {selectedAssessment.assessment.recommendations && (
-                        <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                          <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Recommendations</h4>
-                          <div className="space-y-3">
-                            {selectedAssessment.assessment.recommendations.scaling && (
-                              <div className="text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 font-semibold mb-1 sm:mb-0 sm:mr-2">Scaling:</span>
-                                <span className="font-bold text-[#1e4a79] break-words">
-                                  {selectedAssessment.assessment.recommendations.scaling}
+                            {/* Bottom Ads */}
+                            {selectedAssessment.bottom_ads && selectedAssessment.bottom_ads.length > 0 && (
+                              <div>
+                                <h5 className="text-[10px] sm:text-xs font-bold text-red-700 mb-2 sm:mb-3">Underperforming Ads ({selectedAssessment.bottom_ads.length})</h5>
+                                <div className="space-y-2 sm:space-y-3">
+                                  {selectedAssessment.bottom_ads.map((ad, idx) => (
+                                    <div key={ad.id || idx} className="bg-white border border-red-200 rounded-lg p-3 sm:p-4">
+                                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                                        <div className="flex-1">
+                                          <div className="font-bold text-xs sm:text-sm text-gray-800 mb-1">{ad.name || `Ad ${idx + 1}`}</div>
+                                          <div className="text-[10px] text-gray-500">ID: {ad.id}</div>
+                                        </div>
+                                        <div className="flex gap-2 flex-wrap">
+                                          {ad.quality_ranking && (
+                                            <span className={`px-2 py-1 rounded text-[9px] font-bold ${ad.quality_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
+                                              ad.quality_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                              }`}>
+                                              Quality: {ad.quality_ranking.replace(/_/g, ' ')}
+                                            </span>
+                                          )}
+                                          {ad.engagement_rate_ranking && (
+                                            <span className={`px-2 py-1 rounded text-[9px] font-bold ${ad.engagement_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
+                                              ad.engagement_rate_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                              }`}>
+                                              Engagement: {ad.engagement_rate_ranking.replace(/_/g, ' ')}
+                                            </span>
+                                          )}
+                                          {ad.conversion_rate_ranking && (
+                                            <span className={`px-2 py-1 rounded text-[9px] font-bold ${ad.conversion_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-800' :
+                                              ad.conversion_rate_ranking === 'AVERAGE' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                              }`}>
+                                              Conversion: {ad.conversion_rate_ranking.replace(/_/g, ' ')}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 text-xs">
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">ROAS</div>
+                                          <div className="font-bold text-gray-800">{ad.roas ? `${ad.roas}x` : 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">Spend</div>
+                                          <div className="font-bold text-gray-800">{ad.spend ? ad.spend.toLocaleString() : 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">Revenue</div>
+                                          <div className="font-bold text-gray-800">{ad.revenue ? ad.revenue.toLocaleString() : 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">Purchases</div>
+                                          <div className="font-bold text-gray-800">{ad.purchases ? ad.purchases.toLocaleString() : 'N/A'}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-500 mb-0.5">CTR</div>
+                                          <div className="font-bold text-gray-800">{ad.ctr ? `${ad.ctr}%` : 'N/A'}</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+
+                        {/* Trend Section */}
+                        {selectedAssessment.assessment.trend && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Performance Trend</h4>
+                            <div className="space-y-3">
+                              {/* Period Comparison Info */}
+                              {selectedAssessment.assessment.trend.period_days && (
+                                <div className="mb-3 pb-3 border-b border-gray-200">
+                                  <p className="text-[10px] sm:text-xs text-gray-600 font-semibold mb-2">
+                                    Comparing last {selectedAssessment.assessment.trend.period_days} days vs previous {selectedAssessment.assessment.trend.period_days} days
+                                  </p>
+                                  {selectedAssessment.assessment.trend.current_period && selectedAssessment.assessment.trend.previous_period && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] sm:text-xs text-gray-500">
+                                      <div>
+                                        <span className="font-semibold text-gray-600">Current Period: </span>
+                                        {(() => {
+                                          const start = new Date(selectedAssessment.assessment.trend.current_period.start_date);
+                                          const end = new Date(selectedAssessment.assessment.trend.current_period.end_date);
+                                          const startFormatted = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                          const endFormatted = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: start.getFullYear() !== end.getFullYear() ? 'numeric' : undefined });
+                                          return `${startFormatted} - ${endFormatted}`;
+                                        })()}
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-gray-600">Previous Period: </span>
+                                        {(() => {
+                                          const start = new Date(selectedAssessment.assessment.trend.previous_period.start_date);
+                                          const end = new Date(selectedAssessment.assessment.trend.previous_period.end_date);
+                                          const startFormatted = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                          const endFormatted = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: start.getFullYear() !== end.getFullYear() ? 'numeric' : undefined });
+                                          return `${startFormatted} - ${endFormatted}`;
+                                        })()}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <span className="text-gray-600 text-xs sm:text-sm font-semibold">Trend:</span>
+                                <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold ${selectedAssessment.assessment.trend.trend === 'improving' ? 'bg-green-100 text-green-800' : selectedAssessment.assessment.trend.trend === 'declining' ? 'bg-red-100 text-red-800' : selectedAssessment.assessment.trend.trend === 'stable' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                  {selectedAssessment.assessment.trend.trend?.toUpperCase() || 'INSUFFICIENT_DATA'}
                                 </span>
                               </div>
-                            )}
-                            {selectedAssessment.assessment.recommendations.detailed_actions && selectedAssessment.assessment.recommendations.detailed_actions.length > 0 && (
-                              <div>
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wide block mb-2">Detailed Actions</span>
-                                <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-gray-700 pl-2">
-                                  {selectedAssessment.assessment.recommendations.detailed_actions.map((action, idx) => (
-                                    <li key={idx} className="break-words">{action}</li>
-                                  ))}
-                                </ul>
+                              {selectedAssessment.assessment.trend.change_pct !== null && selectedAssessment.assessment.trend.change_pct !== undefined && (
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                  <span className="text-gray-600 text-xs sm:text-sm">Change:</span>
+                                  <span className={`text-sm sm:text-base font-bold ${selectedAssessment.assessment.trend.change_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {selectedAssessment.assessment.trend.change_pct != null ? `${selectedAssessment.assessment.trend.change_pct >= 0 ? '+' : ''}${Number(selectedAssessment.assessment.trend.change_pct).toFixed(1)}%` : 'N/A'}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-200">
+                                <div>
+                                  <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Current ROAS</span>
+                                  <span className="text-base sm:text-lg font-bold text-gray-800">
+                                    {selectedAssessment.assessment.trend.current_roas ? `${selectedAssessment.assessment.trend.current_roas}x` : 'N/A'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Previous ROAS</span>
+                                  <span className="text-base sm:text-lg font-bold text-gray-600">
+                                    {selectedAssessment.assessment.trend.previous_roas ? `${selectedAssessment.assessment.trend.previous_roas}x` : 'N/A'}
+                                  </span>
+                                </div>
                               </div>
-                            )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-6 sm:py-8 text-gray-500">
-                  <p className="text-xs sm:text-sm">No detailed assessment available for this campaign.</p>
-                  {getAssessment(selectedAssessment).summary && (
-                    <div className="mt-4 bg-[#f8fafc] p-3 sm:p-4 rounded-lg">
-                      <p className="text-xs sm:text-sm text-gray-700 break-words">{getAssessment(selectedAssessment).summary}</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                        )}
+
+                        {/* Budget Pacing Section */}
+                        {selectedAssessment.assessment.budget_pacing && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Budget Pacing</h4>
+                            <div className="space-y-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <span className="text-gray-600 text-xs sm:text-sm font-semibold">Utilization:</span>
+                                <span className={`text-base sm:text-lg font-bold ${(selectedAssessment.assessment.budget_pacing.utilization_percent || (selectedAssessment.assessment.budget_pacing.actual_spend / selectedAssessment.assessment.budget_pacing.daily_budget * 100)) > 100 ? 'text-red-600' : (selectedAssessment.assessment.budget_pacing.utilization_percent || (selectedAssessment.assessment.budget_pacing.actual_spend / selectedAssessment.assessment.budget_pacing.daily_budget * 100)) > 90 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                  {selectedAssessment.assessment.budget_pacing.utilization_percent != null
+                                    ? `${Number(selectedAssessment.assessment.budget_pacing.utilization_percent).toFixed(1)}%`
+                                    : selectedAssessment.assessment.budget_pacing.actual_spend != null && selectedAssessment.assessment.budget_pacing.daily_budget
+                                      ? `${(selectedAssessment.assessment.budget_pacing.actual_spend / selectedAssessment.assessment.budget_pacing.daily_budget * 100).toFixed(1)}%`
+                                      : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-200">
+                                <div>
+                                  <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Daily Budget</span>
+                                  <span className="text-sm sm:text-base font-bold text-gray-800">
+                                    {selectedAssessment.assessment.budget_pacing.daily_budget != null ? Number(selectedAssessment.assessment.budget_pacing.daily_budget).toLocaleString() : 'N/A'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Expected Spend</span>
+                                  <span className="text-sm sm:text-base font-bold text-gray-800">
+                                    {selectedAssessment.assessment.budget_pacing.expected_spend != null ? Number(selectedAssessment.assessment.budget_pacing.expected_spend).toLocaleString() : 'N/A'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Actual Spend</span>
+                                  <span className={`text-sm sm:text-base font-bold ${selectedAssessment.assessment.budget_pacing.actual_spend > selectedAssessment.assessment.budget_pacing.expected_spend ? 'text-red-600' : selectedAssessment.assessment.budget_pacing.actual_spend < selectedAssessment.assessment.budget_pacing.expected_spend * 0.9 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                    {selectedAssessment.assessment.budget_pacing.actual_spend != null ? Number(selectedAssessment.assessment.budget_pacing.actual_spend).toLocaleString() : 'N/A'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Difference</span>
+                                  <span className={`text-sm sm:text-base font-bold ${(selectedAssessment.assessment.budget_pacing.actual_spend - selectedAssessment.assessment.budget_pacing.expected_spend) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                    {selectedAssessment.assessment.budget_pacing.expected_spend != null && selectedAssessment.assessment.budget_pacing.actual_spend != null
+                                      ? `${(Number(selectedAssessment.assessment.budget_pacing.actual_spend) - Number(selectedAssessment.assessment.budget_pacing.expected_spend)) >= 0 ? '+' : ''}${Number(selectedAssessment.assessment.budget_pacing.actual_spend - selectedAssessment.assessment.budget_pacing.expected_spend).toLocaleString()}`
+                                      : 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Targets Section */}
+                        {selectedAssessment.assessment.targets && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Targets</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Stage:</span>
+                                <span className="font-bold text-gray-800 uppercase break-words">
+                                  {selectedAssessment.assessment.targets.stage}
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">ROAS Target:</span>
+                                <span className="font-bold text-gray-800 break-words">
+                                  {selectedAssessment.assessment.targets.roas_target}x
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current ROAS:</span>
+                                <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.roas ? 'text-green-600' : 'text-red-600'}`}>
+                                  {selectedAssessment.assessment.targets.current_roas}x
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPA Cap:</span>
+                                <span className="font-bold text-gray-800 break-words">
+                                  {selectedAssessment.assessment.targets.cpa_cap}
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current CPA:</span>
+                                <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.cpa ? 'text-green-600' : 'text-red-600'}`}>
+                                  {selectedAssessment.assessment.targets.current_cpa != null
+                                    ? Number(selectedAssessment.assessment.targets.current_cpa).toLocaleString()
+                                    : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:items-center">
+                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Meets Target:</span>
+                                <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.overall ? 'text-green-600' : 'text-red-600'}`}>
+                                  {selectedAssessment.assessment.targets.meets_target?.overall ? 'Yes' : 'No'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Recommendations Section */}
+                        {selectedAssessment.assessment.recommendations && (
+                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Recommendations</h4>
+                            <div className="space-y-3">
+                              {selectedAssessment.assessment.recommendations.scaling && (
+                                <div className="text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center">
+                                  <span className="text-gray-600 font-semibold mb-1 sm:mb-0 sm:mr-2">Scaling:</span>
+                                  <span className="font-bold text-[#1e4a79] break-words">
+                                    {selectedAssessment.assessment.recommendations.scaling}
+                                  </span>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.recommendations.detailed_actions && selectedAssessment.assessment.recommendations.detailed_actions.length > 0 && (
+                                <div>
+                                  <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wide block mb-2">Detailed Actions</span>
+                                  <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-gray-700 pl-2">
+                                    {selectedAssessment.assessment.recommendations.detailed_actions.map((action, idx) => (
+                                      <li key={idx} className="break-words">{action}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 sm:py-8 text-gray-500">
+                    <p className="text-xs sm:text-sm">No detailed assessment available for this campaign.</p>
+                    {getAssessment(selectedAssessment).summary && (
+                      <div className="mt-4 bg-[#f8fafc] p-3 sm:p-4 rounded-lg">
+                        <p className="text-xs sm:text-sm text-gray-700 break-words">{getAssessment(selectedAssessment).summary}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="mt-4 sm:mt-6 md:mt-8 flex justify-center sm:justify-end flex-shrink-0 pt-4 border-t border-gray-100">
               <button
-                onClick={() => setSelectedAssessment(null)}
+                onClick={() => {
+                  setSelectedAssessment(null);
+                  setSelectedAI(null);
+                  setAiLoading(false);
+                }}
                 className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-2 bg-[#1e4a79] text-white rounded-full text-sm sm:text-base font-bold shadow-lg hover:bg-[#2c6aa8] transition-all transform hover:scale-105 touch-manipulation"
               >
                 Close
@@ -3052,6 +3207,7 @@ function PerformanceExplorer() {
     </section>
   )
 }
+
 export default PerformanceExplorer
 
 
