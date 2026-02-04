@@ -128,6 +128,27 @@ class TrainingDataService {
 
         return await response.json();
     }
+
+    /**
+     * Execute SQL query
+     */
+    async execute(sql) {
+        const response = await fetch(`${API_BASE_URL}/api/training/execute`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...adminAuthService.getAuthHeader(),
+            },
+            body: JSON.stringify({ sql }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to execute SQL');
+        }
+
+        return await response.json();
+    }
 }
 
 export const trainingDataService = new TrainingDataService();
