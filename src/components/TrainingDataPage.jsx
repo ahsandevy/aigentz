@@ -5,7 +5,8 @@ import { adminAuthService } from '../services/adminAuth';
 import {
     Search, Plus, LogOut, Download, Loader2,
     Trash2, Edit2, Save, X, Database, Terminal,
-    CheckCircle, AlertCircle, AlertTriangle
+    CheckCircle, AlertCircle, AlertTriangle, Play,
+    ChevronDown, ChevronUp, Table
 } from 'lucide-react';
 
 const TrainingDataPage = () => {
@@ -20,6 +21,13 @@ const TrainingDataPage = () => {
     const [newSql, setNewSql] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [exporting, setExporting] = useState(false);
+
+    // SQL Execution state
+    const [executing, setExecuting] = useState(false);
+    const [executingRowId, setExecutingRowId] = useState(null);
+    const [testResults, setTestResults] = useState(null); // { success: bool, data: [], error: string, row_count: number }
+    const [resultsByRow, setResultsByRow] = useState({}); // { id: { success, data, error, row_count } }
+
     const navigate = useNavigate();
 
     // UI State for Modals and Toasts
@@ -67,21 +75,55 @@ const TrainingDataPage = () => {
         }
 
         try {
-            // Validate SQL first
-            const validation = await trainingDataService.validate(newSql);
-            if (!validation.valid) {
-                showNotification('error', validation.message);
-                return;
-            }
-
             await trainingDataService.create(newQuestion, newSql);
             setShowAddModal(false);
             setNewQuestion('');
             setNewSql('');
+            setTestResults(null);
             fetchExamples();
             showNotification('success', 'Training example added successfully');
         } catch (err) {
             showNotification('error', 'Failed to add: ' + err.message);
+        }
+    };
+
+    const handleRunQuery = async (sql, rowId = null) => {
+        if (!sql.trim()) {
+            showNotification('error', 'SQL query is empty');
+            return;
+        }
+
+        try {
+            if (rowId) {
+                setExecutingRowId(rowId);
+            } else {
+                setExecuting(true);
+            }
+
+            const result = await trainingDataService.execute(sql);
+
+            if (rowId) {
+                setResultsByRow(prev => ({ ...prev, [rowId]: result }));
+            } else {
+                setTestResults(result);
+            }
+
+            if (!result.success) {
+                showNotification('error', 'Execution Failed');
+            } else {
+                showNotification('success', `Success: ${result.row_count} rows found`);
+            }
+        } catch (err) {
+            const errorResult = { success: false, error: err.message };
+            if (rowId) {
+                setResultsByRow(prev => ({ ...prev, [rowId]: errorResult }));
+            } else {
+                setTestResults(errorResult);
+            }
+            showNotification('error', 'Execution Error: ' + err.message);
+        } finally {
+            setExecuting(false);
+            setExecutingRowId(null);
         }
     };
 
@@ -182,6 +224,75 @@ const TrainingDataPage = () => {
         ex.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ex.sql.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Helper component for results
+    const SQLResultsTable = ({ result }) => {
+        if (!result) return null;
+
+        if (!result.success) {
+            return (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4 animate-scale-in">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle size={20} className="text-red-500 mt-0.5 shrink-0" />
+                        <div>
+                            <p className="text-red-800 font-bold text-sm mb-1">SQL Error</p>
+                            <p className="text-red-600 text-xs font-mono break-all">{result.error}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (result.row_count === 0) {
+            return (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mt-4 text-center animate-scale-in">
+                    <p className="text-slate-500 text-sm">Query executed successfully but returned no results.</p>
+                </div>
+            );
+        }
+
+        const columns = Object.keys(result.data[0]);
+
+        return (
+            <div className="mt-4 border border-slate-200 rounded-lg overflow-hidden animate-scale-in bg-white">
+                <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex justify-between items-center">
+                    <span className="text-slate-600 text-xs font-bold uppercase flex items-center gap-2">
+                        <Table size={14} />
+                        Query Results ({result.row_count} rows)
+                    </span>
+                    {result.row_count > 100 && (
+                        <span className="text-amber-600 text-[10px] font-medium bg-amber-50 px-2 py-0.5 rounded-full">
+                            Showing first 100 rows
+                        </span>
+                    )}
+                </div>
+                <div className="overflow-auto max-h-[300px]">
+                    <table className="w-full text-left text-xs border-collapse">
+                        <thead className="sticky top-0 bg-slate-100 z-10 shadow-sm">
+                            <tr>
+                                {columns.map(col => (
+                                    <th key={col} className="px-3 py-2 border-b border-slate-200 font-bold text-slate-700 whitespace-nowrap">
+                                        {col}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 italic">
+                            {result.data.map((row, i) => (
+                                <tr key={i} className="hover:bg-blue-50/30 transition-colors">
+                                    {columns.map(col => (
+                                        <td key={col} className="px-3 py-2 text-slate-600 whitespace-nowrap max-w-[200px] truncate overflow-hidden">
+                                            {String(row[col])}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#f4f8fe] to-white p-6 relative">
@@ -330,17 +441,67 @@ const TrainingDataPage = () => {
                                         </td>
                                         <td className="px-6 py-4 align-top bg-slate-50/50">
                                             {editingId === ex.id ? (
-                                                <textarea
-                                                    value={editSql}
-                                                    onChange={(e) => setEditSql(e.target.value)}
-                                                    className="w-full min-h-[80px] p-3 bg-white border border-blue-300 rounded-lg text-blue-600 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-100"
-                                                />
+                                                <div className="relative group/edit">
+                                                    <textarea
+                                                        value={editSql}
+                                                        onChange={(e) => {
+                                                            setEditSql(e.target.value);
+                                                            if (testResults) setTestResults(null);
+                                                        }}
+                                                        className="w-full min-h-[100px] p-3 bg-white border border-blue-300 rounded-lg text-blue-600 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-100"
+                                                    />
+                                                    <button
+                                                        onClick={() => handleRunQuery(editSql)}
+                                                        disabled={executing || !editSql.trim()}
+                                                        className="absolute bottom-2 right-2 flex items-center gap-1.5 px-2 py-1 bg-slate-800 text-white text-[9px] font-bold uppercase rounded hover:bg-black transition-all disabled:opacity-50 group shadow-md"
+                                                    >
+                                                        {executing ? (
+                                                            <Loader2 size={10} className="animate-spin" />
+                                                        ) : (
+                                                            <Play size={10} />
+                                                        )}
+                                                    </button>
+                                                    {testResults && (
+                                                        <div className="mt-2">
+                                                            <SQLResultsTable result={testResults} />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             ) : (
-                                                <div className="flex gap-2">
-                                                    <Terminal size={14} className="text-slate-400 mt-1 shrink-0" />
-                                                    <code className="text-blue-600 font-mono text-xs leading-relaxed whitespace-pre-wrap">
-                                                        {ex.sql}
-                                                    </code>
+                                                <div className="space-y-3">
+                                                    <div className="flex gap-2 items-start justify-between group/row">
+                                                        <div className="flex gap-2">
+                                                            <Terminal size={14} className="text-slate-400 mt-1 shrink-0" />
+                                                            <code className="text-blue-600 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+                                                                {ex.sql}
+                                                            </code>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleRunQuery(ex.sql, ex.id)}
+                                                            disabled={executingRowId === ex.id}
+                                                            className="opacity-0 group-hover/row:opacity-100 transition-opacity p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 cursor-pointer flex items-center gap-1.5 text-[10px] font-bold"
+                                                            title="Execute Query"
+                                                        >
+                                                            {executingRowId === ex.id ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+                                                            TEST
+                                                        </button>
+                                                    </div>
+
+                                                    {resultsByRow[ex.id] && (
+                                                        <div className="relative">
+                                                            <button
+                                                                onClick={() => setResultsByRow(prev => {
+                                                                    const next = { ...prev };
+                                                                    delete next[ex.id];
+                                                                    return next;
+                                                                })}
+                                                                className="absolute -top-2 -right-2 z-20 p-1 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-red-500 shadow-sm transition-colors"
+                                                            >
+                                                                <X size={10} />
+                                                            </button>
+                                                            <SQLResultsTable result={resultsByRow[ex.id]} />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </td>
@@ -429,11 +590,27 @@ const TrainingDataPage = () => {
                                         </div>
                                         <textarea
                                             value={newSql}
-                                            onChange={(e) => setNewSql(e.target.value)}
+                                            onChange={(e) => {
+                                                setNewSql(e.target.value);
+                                                if (testResults) setTestResults(null);
+                                            }}
                                             placeholder="SELECT SUM(spend) FROM campaign_stats WHERE..."
                                             className="w-full min-h-[150px] p-4 pl-10 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400 leading-relaxed"
                                         />
+                                        <button
+                                            onClick={() => handleRunQuery(newSql)}
+                                            disabled={executing || !newSql.trim()}
+                                            className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider rounded-md hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed group shadow-lg"
+                                        >
+                                            {executing ? (
+                                                <Loader2 size={12} className="animate-spin" />
+                                            ) : (
+                                                <Play size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                                            )}
+                                            {executing ? 'Executing...' : 'Run Query'}
+                                        </button>
                                     </div>
+                                    <SQLResultsTable result={testResults} />
                                 </div>
                             </div>
 
