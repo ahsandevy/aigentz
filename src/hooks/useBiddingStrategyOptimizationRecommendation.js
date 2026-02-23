@@ -4,8 +4,8 @@ import { analyticsAPI } from '../services/api'
 export const useBiddingStrategyOptimizationRecommendation = (days = 7) => {
   return useQuery({
     queryKey: ['bidding-strategy-optimization', days],
-    queryFn: async () => {
-      const response = await analyticsAPI.getBiddingStrategyOptimizationRecommendation(days)
+    queryFn: async ({ signal }) => {
+      const response = await analyticsAPI.getBiddingStrategyOptimizationRecommendation(days, signal)
       return response
     },
     staleTime: 10 * 60 * 1000, // 10 minutes

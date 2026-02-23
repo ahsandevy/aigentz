@@ -4,8 +4,8 @@ import { analyticsAPI } from '../services/api'
 export const useCreativeAnalysisRecommendation = (days = 7) => {
   return useQuery({
     queryKey: ['creative-analysis', days],
-    queryFn: async () => {
-      const response = await analyticsAPI.getCreativeAnalysisRecommendation(days)
+    queryFn: async ({ signal }) => {
+      const response = await analyticsAPI.getCreativeAnalysisRecommendation(days, signal)
       return response
     },
     staleTime: 10 * 60 * 1000, // 10 minutes

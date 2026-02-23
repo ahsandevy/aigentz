@@ -4,8 +4,8 @@ import { analyticsAPI } from '../services/api'
 export const useBudgetRecommendation = (days = 7) => {
   return useQuery({
     queryKey: ['budget-reallocation', days],
-    queryFn: async () => {
-      const response = await analyticsAPI.getBudgetReallocationRecommendation(days)
+    queryFn: async ({ signal }) => {
+      const response = await analyticsAPI.getBudgetReallocationRecommendation(days, signal)
       return response
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
