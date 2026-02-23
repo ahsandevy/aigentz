@@ -4,8 +4,8 @@ import { analyticsAPI } from '../services/api'
 export const usePlacementOptimizationRecommendation = (days = 7) => {
   return useQuery({
     queryKey: ['placement-optimization', days],
-    queryFn: async () => {
-      const response = await analyticsAPI.getPlacementOptimizationRecommendation(days)
+    queryFn: async ({ signal }) => {
+      const response = await analyticsAPI.getPlacementOptimizationRecommendation(days, signal)
       return response
     },
     staleTime: 10 * 60 * 1000, // 10 minutes

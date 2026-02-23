@@ -13,10 +13,12 @@ function AIExecutiveBrief() {
   const [showBoardSummary, setShowBoardSummary] = useState(false)
 
   useEffect(() => {
-    fetchExecutiveBrief()
+    const controller = new AbortController();
+    fetchExecutiveBrief(false, controller.signal);
+    return () => controller.abort();
   }, [days])
 
-  const fetchExecutiveBrief = async (forceRefresh = false) => {
+  const fetchExecutiveBrief = async (forceRefresh = false, signal) => {
     try {
       if (forceRefresh) {
         setRefreshing(true)
@@ -24,9 +26,10 @@ function AIExecutiveBrief() {
         setLoading(true)
       }
       setError(null)
-      const data = await analyticsAPI.getExecutiveBrief(days, forceRefresh)
-      setBrief(data)
+      const data = await analyticsAPI.getExecutiveBrief(days, forceRefresh, signal)
+      if (data) setBrief(data)
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('Error fetching executive brief:', err)
       setError('Failed to generate executive brief. Please try again.')
     } finally {
@@ -44,9 +47,12 @@ function AIExecutiveBrief() {
       setGeneratingSummary(true)
       setSummaryError(null)
       const data = await analyticsAPI.getBoardReadySummary(days, forceRefresh)
-      setBoardSummary(data)
-      setShowBoardSummary(true)
+      if (data) {
+        setBoardSummary(data)
+        setShowBoardSummary(true)
+      }
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('Error generating board-ready summary:', err)
       setSummaryError('Failed to generate board-ready summary. Please try again.')
     } finally {
@@ -491,8 +497,8 @@ function AIExecutiveBrief() {
                       <div key={index} className="border border-gray-200 rounded-lg p-5 bg-gray-50">
                         <div className="flex items-start gap-3 mb-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${rec.priority === 1 ? 'bg-red-100 text-red-800' :
-                              rec.priority === 2 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-blue-100 text-blue-800'
+                            rec.priority === 2 ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-blue-100 text-blue-800'
                             }`}>
                             Priority {rec.priority}
                           </span>
