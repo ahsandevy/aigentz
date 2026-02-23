@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import MetricsGrid from './MetricsGrid'
 import { analyticsAPI } from '../services/api'
 
 function Header() {
+  const navigate = useNavigate()
   const [days, setDays] = useState(1)
   const [isSyncing, setIsSyncing] = useState(false)
 
@@ -90,6 +92,15 @@ function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
+            <button
+              onClick={() => navigate('/')}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#1e4a79] text-white px-4 md:px-6 py-2.5 rounded-full text-xs md:text-sm font-medium shadow-sm hover:bg-[#2c6aa8] transition-colors whitespace-nowrap"
+            >
+              <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              <span>Chat with Agent</span>
+            </button>
             <button
               onClick={handleSync}
               disabled={isSyncing}

@@ -52,6 +52,32 @@ function PerformanceExplorer() {
     }
   }
 
+  const handleAdSetAIRequest = async (adsetId) => {
+    try {
+      setAiLoading(true)
+      setSelectedAI(null)
+      const response = await analyticsAPI.getAdSetAIRecommendation(adsetId, 7)
+      setSelectedAI(response)
+    } catch (error) {
+      console.error('Error fetching AdSet AI recommendation:', error)
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const handleAdAIRequest = async (adId) => {
+    try {
+      setAiLoading(true)
+      setSelectedAI(null)
+      const response = await analyticsAPI.getAdAIAnalysis(adId, 7)
+      setSelectedAI(response)
+    } catch (error) {
+      console.error('Error fetching Ad AI analysis:', error)
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   // Handle refresh with selected assessment update
   const handleRefreshAudienceLLM = (audienceId) => {
     refreshAudienceLLM(audienceId)
@@ -495,7 +521,7 @@ function PerformanceExplorer() {
                           <button
                             onClick={() => {
                               setSelectedScalingItem(as);
-                              handleAIRequest(as.id);
+                              handleAdSetAIRequest(as.id);
                             }}
                             className={`px-4 py-1.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap transition-all transform hover:scale-105 active:scale-95 cursor-pointer ${getStatusClasses(assessment.status || assessment.action)}`}
                           >
@@ -638,6 +664,15 @@ function PerformanceExplorer() {
                             <span className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-[9px] sm:text-[10px] font-bold shadow-sm whitespace-nowrap ${getAdStatusClasses(adAssessment.status)}`}>
                               {adAssessment.status?.toUpperCase() || 'FAIR'}
                             </span>
+                            <button
+                              onClick={() => {
+                                setSelectedScalingItem(ad);
+                                handleAdAIRequest(ad.id);
+                              }}
+                              className="mt-1 px-2 sm:px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-[9px] sm:text-[10px] font-bold shadow-sm transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap"
+                            >
+                              AI Growth
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -3009,23 +3044,9 @@ function PerformanceExplorer() {
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Expected Spend</span>
-                                  <span className="text-sm sm:text-base font-bold text-gray-800">
-                                    {selectedAssessment.assessment.budget_pacing.expected_spend != null ? Number(selectedAssessment.assessment.budget_pacing.expected_spend).toLocaleString() : 'N/A'}
-                                  </span>
-                                </div>
-                                <div>
                                   <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Actual Spend</span>
                                   <span className={`text-sm sm:text-base font-bold ${selectedAssessment.assessment.budget_pacing.actual_spend > selectedAssessment.assessment.budget_pacing.expected_spend ? 'text-red-600' : selectedAssessment.assessment.budget_pacing.actual_spend < selectedAssessment.assessment.budget_pacing.expected_spend * 0.9 ? 'text-yellow-600' : 'text-green-600'}`}>
                                     {selectedAssessment.assessment.budget_pacing.actual_spend != null ? Number(selectedAssessment.assessment.budget_pacing.actual_spend).toLocaleString() : 'N/A'}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-[10px] text-gray-500 uppercase tracking-wide block mb-1">Difference</span>
-                                  <span className={`text-sm sm:text-base font-bold ${(selectedAssessment.assessment.budget_pacing.actual_spend - selectedAssessment.assessment.budget_pacing.expected_spend) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                    {selectedAssessment.assessment.budget_pacing.expected_spend != null && selectedAssessment.assessment.budget_pacing.actual_spend != null
-                                      ? `${(Number(selectedAssessment.assessment.budget_pacing.actual_spend) - Number(selectedAssessment.assessment.budget_pacing.expected_spend)) >= 0 ? '+' : ''}${Number(selectedAssessment.assessment.budget_pacing.actual_spend - selectedAssessment.assessment.budget_pacing.expected_spend).toLocaleString()}`
-                                      : 'N/A'}
                                   </span>
                                 </div>
                               </div>
@@ -3059,68 +3080,82 @@ function PerformanceExplorer() {
                                   {selectedAssessment.assessment.targets.stage}
                                 </span>
                               </div>
-                              <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">ROAS Target:</span>
-                                <span className="font-bold text-gray-800 break-words">
-                                  {selectedAssessment.assessment.targets.roas_target}x
-                                </span>
-                              </div>
-                              <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current ROAS:</span>
-                                <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.roas ? 'text-green-600' : 'text-red-600'}`}>
-                                  {selectedAssessment.assessment.targets.current_roas}x
-                                </span>
-                              </div>
-                              <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPA Cap:</span>
-                                <span className="font-bold text-gray-800 break-words">
-                                  {selectedAssessment.assessment.targets.cpa_cap}
-                                </span>
-                              </div>
-                              <div className="flex flex-col sm:flex-row sm:items-center">
-                                <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current CPA:</span>
-                                <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.cpa ? 'text-green-600' : 'text-red-600'}`}>
-                                  {selectedAssessment.assessment.targets.current_cpa != null
-                                    ? Number(selectedAssessment.assessment.targets.current_cpa).toLocaleString()
-                                    : 'N/A'}
-                                </span>
-                              </div>
+
+                              {selectedAssessment.assessment.targets.stage === 'TOFU' ? (
+                                <>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPC Target:</span>
+                                    <span className="font-bold text-gray-800">
+                                      ${selectedAssessment.assessment.targets.explorer_config?.tofu_cpc_target || '1.5'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current CPC:</span>
+                                    <span className={`font-bold ${(selectedAssessment.cpc ?? selectedAssessment.assessment.performance?.cost_efficiency?.cpc) <= (selectedAssessment.assessment.targets.explorer_config?.tofu_cpc_target || 1.5) ? 'text-green-600' : 'text-red-600'}`}>
+                                      ${(Number(selectedAssessment.cpc ?? selectedAssessment.assessment.performance?.cost_efficiency?.cpc)).toFixed(2) || 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CTR Target:</span>
+                                    <span className="font-bold text-gray-800">
+                                      {selectedAssessment.assessment.targets.explorer_config?.tofu_ctr_target || '1.0'}%
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current CTR:</span>
+                                    <span className={`font-bold ${(selectedAssessment.ctr ?? selectedAssessment.assessment.performance?.cost_efficiency?.ctr) >= (selectedAssessment.assessment.targets.explorer_config?.tofu_ctr_target || 1.0) ? 'text-green-600' : 'text-red-600'}`}>
+                                      {(Number(selectedAssessment.ctr ?? selectedAssessment.assessment.performance?.cost_efficiency?.ctr)).toFixed(2) || 'N/A'}%
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">ROAS Target:</span>
+                                    <span className="font-bold text-gray-800 break-words">
+                                      {selectedAssessment.assessment.targets.roas_target}x
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current ROAS:</span>
+                                    <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.roas ? 'text-green-600' : 'text-red-600'}`}>
+                                      {selectedAssessment.assessment.targets.current_roas}x
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPA Cap:</span>
+                                    <span className="font-bold text-gray-800 break-words">
+                                      {selectedAssessment.assessment.targets.cpa_cap}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Current CPA:</span>
+                                    <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.cpa ? 'text-green-600' : 'text-red-600'}`}>
+                                      {selectedAssessment.assessment.targets.current_cpa != null
+                                        ? Number(selectedAssessment.assessment.targets.current_cpa).toLocaleString()
+                                        : 'N/A'}
+                                    </span>
+                                  </div>
+                                </>
+                              )}
+
                               <div className="flex flex-col sm:flex-row sm:items-center">
                                 <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Meets Target:</span>
-                                <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.overall ? 'text-green-600' : 'text-red-600'}`}>
-                                  {selectedAssessment.assessment.targets.meets_target?.overall ? 'Yes' : 'No'}
+                                <span className={`font-bold break-words ${selectedAssessment.assessment.targets.meets_target?.overall === true ? 'text-green-600' : selectedAssessment.assessment.targets.meets_target?.overall === false ? 'text-red-600' : 'text-gray-500'}`}>
+                                  {selectedAssessment.assessment.targets.meets_target?.overall === true ? 'Yes' : selectedAssessment.assessment.targets.meets_target?.overall === false ? 'No' : 'N/A'}
                                 </span>
                               </div>
                             </div>
+
+                            {selectedAssessment.assessment.targets.stage === 'TOFU' && (
+                              <div className="mt-4 pt-3 border-t border-gray-100 text-[10px] text-gray-500 leading-relaxed italic">
+                                <span className="font-bold text-[#1e4a79]">ROAS/CPA Exemption:</span> TOFU campaigns are optimized for engagement (CTR/CPC) rather than raw conversions. Overall status reflects efficiency in reaching new audiences cheaply.
+                              </div>
+                            )}
                           </div>
                         )}
 
-                        {/* Recommendations Section */}
-                        {selectedAssessment.assessment.recommendations && (
-                          <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
-                            <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Recommendations</h4>
-                            <div className="space-y-3">
-                              {selectedAssessment.assessment.recommendations.scaling && (
-                                <div className="text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center">
-                                  <span className="text-gray-600 font-semibold mb-1 sm:mb-0 sm:mr-2">Scaling:</span>
-                                  <span className="font-bold text-[#1e4a79] break-words">
-                                    {selectedAssessment.assessment.recommendations.scaling}
-                                  </span>
-                                </div>
-                              )}
-                              {selectedAssessment.assessment.recommendations.detailed_actions && selectedAssessment.assessment.recommendations.detailed_actions.length > 0 && (
-                                <div>
-                                  <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wide block mb-2">Detailed Actions</span>
-                                  <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-gray-700 pl-2">
-                                    {selectedAssessment.assessment.recommendations.detailed_actions.map((action, idx) => (
-                                      <li key={idx} className="break-words">{action}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
+
                       </>
                     )}
                   </div>
@@ -3170,9 +3205,9 @@ function PerformanceExplorer() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#1e4a79] flex items-center gap-2 mb-1 sm:mb-2">
-                      <span className="truncate">AI Growth Analysis</span>
+                      <span className="truncate">{selectedScalingItem.name}</span>
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 font-semibold truncate">{selectedScalingItem.name}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wider truncate">AI Growth Analysis</p>
                   </div>
                 </div>
               </div>
@@ -3246,7 +3281,7 @@ function PerformanceExplorer() {
                       <span className="px-3 py-1.5 bg-purple-100 text-purple-600 rounded-full text-xs font-bold">{selectedAI.budget_mode}</span>
                     )}
                     {selectedAI.daily_budget && (
-                      <span className="px-3 py-1.5 bg-green-100 text-green-600 rounded-full text-xs font-bold">${selectedAI.daily_budget}/day</span>
+                      <span className="px-3 py-1.5 bg-green-100 text-green-600 rounded-full text-xs font-bold">Daily Budget: ${selectedAI.daily_budget}</span>
                     )}
                   </div>
 
@@ -3292,7 +3327,7 @@ function PerformanceExplorer() {
                         <p className="text-sm font-bold text-gray-800">
                           {selectedAI.ai_recommendation.structural_health?.score === 'MISALIGNED' ? 'Structural Misalignment Detected' :
                             selectedAI.ai_recommendation.structural_health?.score === 'NAMING_MISMATCH' ? 'Naming Convention Issue' :
-                              selectedAI.ai_recommendation.structural_audit?.is_aligned ? 'Setup is Properly Aligned' : 'Setup Issue Detected'}
+                              selectedAI.ai_recommendation.structural_audit?.is_aligned ? 'Setup is Properly Aligned' : 'Setup Issues'}
                         </p>
                         {(selectedAI.ai_recommendation.structural_audit?.issue || selectedAI.ai_recommendation.structural_health?.issue_detected) && (
                           <p className={`text-sm mt-0.5 ${selectedAI.ai_recommendation.structural_health?.score === 'NAMING_MISMATCH' ? 'text-orange-800' : 'text-red-700'}`}>
@@ -3350,6 +3385,228 @@ function PerformanceExplorer() {
                     </div>
                   )}
 
+                  {/* Ad-Specific: Creative Verdict */}
+                  {selectedAI.ai_recommendation?.creative_verdict && (
+                    <div className={`rounded-lg p-4 border-l-4 ${selectedAI.ai_recommendation.creative_verdict === 'SCALE_WINNER' ? 'bg-green-50 border-green-500' :
+                      selectedAI.ai_recommendation.creative_verdict === 'FATIGUED' ? 'bg-red-50 border-red-500' :
+                        selectedAI.ai_recommendation.creative_verdict === 'FIX_HOOK' ? 'bg-yellow-50 border-yellow-500' :
+                          'bg-orange-50 border-orange-500'
+                      }`}>
+                      <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Creative Verdict</h4>
+                      <p className={`text-lg font-bold ${selectedAI.ai_recommendation.creative_verdict === 'SCALE_WINNER' ? 'text-green-700' :
+                        selectedAI.ai_recommendation.creative_verdict === 'FATIGUED' ? 'text-red-700' :
+                          'text-yellow-700'
+                        }`}>
+                        {selectedAI.ai_recommendation.creative_verdict.replace(/_/g, ' ')}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Ad-Specific: Hook Analysis */}
+                  {selectedAI.ai_recommendation?.hook_analysis && (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Hook Analysis</h4>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedAI.ai_recommendation.hook_analysis.score === 'STRONG' ? 'bg-green-100 text-green-600' :
+                            selectedAI.ai_recommendation.hook_analysis.score === 'WEAK' ? 'bg-red-100 text-red-600' :
+                              'bg-yellow-100 text-yellow-600'
+                          }`}>
+                          {selectedAI.ai_recommendation.hook_analysis.score}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-gray-700 leading-relaxed">{selectedAI.ai_recommendation.hook_analysis.observation}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ad-Specific: Retention Analysis */}
+                  {selectedAI.ai_recommendation?.retention_analysis && (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Retention Analysis</h4>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedAI.ai_recommendation.retention_analysis.score === 'STRONG' ? 'bg-green-100 text-green-600' :
+                            selectedAI.ai_recommendation.retention_analysis.score === 'WEAK' ? 'bg-red-100 text-red-600' :
+                              'bg-yellow-100 text-yellow-600'
+                          }`}>
+                          {selectedAI.ai_recommendation.retention_analysis.score}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-gray-700 leading-relaxed">{selectedAI.ai_recommendation.retention_analysis.observation}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ad-Specific: Fatigue Analysis */}
+                  {selectedAI.ai_recommendation?.fatigue_analysis && (
+                    <div className={`border rounded-lg overflow-hidden ${selectedAI.ai_recommendation.fatigue_analysis.is_fatigued ? 'border-red-300' : 'border-green-300'
+                      }`}>
+                      <div className={`px-3 py-2 border-b flex items-center justify-between ${selectedAI.ai_recommendation.fatigue_analysis.is_fatigued ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+                        }`}>
+                        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Fatigue Analysis</h4>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedAI.ai_recommendation.fatigue_analysis.is_fatigued ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                          }`}>
+                          {selectedAI.ai_recommendation.fatigue_analysis.is_fatigued ? 'FATIGUED' : 'HEALTHY'}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-gray-700 leading-relaxed">{selectedAI.ai_recommendation.fatigue_analysis.observation}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ad-Specific: Messaging Analysis */}
+                  {selectedAI.ai_recommendation?.messaging_analysis && (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Messaging Analysis</h4>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedAI.ai_recommendation.messaging_analysis.copy_hook_gap ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                          }`}>
+                          {selectedAI.ai_recommendation.messaging_analysis.copy_hook_gap ? 'COPY-HOOK GAP' : 'ALIGNED'}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-gray-700 leading-relaxed">{selectedAI.ai_recommendation.messaging_analysis.observation}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ad-Specific: Quality Analysis */}
+                  {selectedAI.ai_recommendation?.quality_analysis && (
+                    <div className={`border rounded-lg overflow-hidden ${selectedAI.ai_recommendation.quality_analysis.meta_penalty ? 'border-red-300' : 'border-green-300'
+                      }`}>
+                      <div className={`px-3 py-2 border-b flex items-center justify-between ${selectedAI.ai_recommendation.quality_analysis.meta_penalty ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+                        }`}>
+                        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Quality Analysis</h4>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedAI.ai_recommendation.quality_analysis.meta_penalty ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                          }`}>
+                          {selectedAI.ai_recommendation.quality_analysis.meta_penalty ? 'META PENALTY' : 'NO PENALTY'}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-gray-700 leading-relaxed">{selectedAI.ai_recommendation.quality_analysis.observation}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ad-Specific: Video Performance */}
+                  {selectedAI.video_performance && Object.keys(selectedAI.video_performance).length > 0 && (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Video Performance</h4>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-gray-200">
+                        {selectedAI.video_performance.video_play_rate !== undefined && (
+                          <div className="p-3 text-center">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Play Rate</p>
+                            <p className="text-lg font-bold text-[#1e4a79]">{selectedAI.video_performance.video_play_rate?.toFixed(1)}%</p>
+                          </div>
+                        )}
+                        {selectedAI.video_performance.video_30_sec_rate !== undefined && (
+                          <div className="p-3 text-center">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">30s Hold</p>
+                            <p className="text-lg font-bold text-[#1e4a79]">{selectedAI.video_performance.video_30_sec_rate?.toFixed(1)}%</p>
+                          </div>
+                        )}
+                        {selectedAI.video_performance.video_completion_rate !== undefined && (
+                          <div className="p-3 text-center">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Completion</p>
+                            <p className="text-lg font-bold text-[#1e4a79]">{selectedAI.video_performance.video_completion_rate?.toFixed(1)}%</p>
+                          </div>
+                        )}
+                        {selectedAI.video_performance.video_avg_time_watched !== undefined && (
+                          <div className="p-3 text-center">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">Avg Watch</p>
+                            <p className="text-lg font-bold text-[#1e4a79]">{selectedAI.video_performance.video_avg_time_watched?.toFixed(1)}s</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ad-Specific: Engagement Quality */}
+                  {selectedAI.engagement_quality && Object.keys(selectedAI.engagement_quality).length > 0 && (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Engagement Quality</h4>
+                      </div>
+                      <div className="p-3 grid grid-cols-2 gap-3 text-xs">
+                        {selectedAI.engagement_quality.click_quality_score !== undefined && (
+                          <div>
+                            <span className="text-gray-500">Click Quality Score:</span>
+                            <span className={`ml-2 font-bold ${selectedAI.engagement_quality.click_quality_score > 0.7 ? 'text-green-600' : 'text-yellow-600'}`}>
+                              {selectedAI.engagement_quality.click_quality_score?.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        {selectedAI.engagement_quality.link_click_rate !== undefined && (
+                          <div>
+                            <span className="text-gray-500">Link Click Rate:</span>
+                            <span className="ml-2 font-bold text-gray-800">{selectedAI.engagement_quality.link_click_rate?.toFixed(1)}%</span>
+                          </div>
+                        )}
+                        {selectedAI.engagement_quality.add_to_cart_rate !== undefined && (
+                          <div>
+                            <span className="text-gray-500">ATC Rate:</span>
+                            <span className="ml-2 font-bold text-gray-800">{selectedAI.engagement_quality.add_to_cart_rate?.toFixed(1)}%</span>
+                          </div>
+                        )}
+                        {selectedAI.engagement_quality.click_to_purchase_rate !== undefined && (
+                          <div>
+                            <span className="text-gray-500">Click → Purchase:</span>
+                            <span className="ml-2 font-bold text-gray-800">{selectedAI.engagement_quality.click_to_purchase_rate?.toFixed(1)}%</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ad-Specific: Meta Quality Scores */}
+                  {selectedAI.meta_quality_scores && (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">Meta Quality Rankings</h4>
+                      </div>
+                      <div className="p-3 space-y-2">
+                        {selectedAI.meta_quality_scores.quality_ranking && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600">Quality Ranking:</span>
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${selectedAI.meta_quality_scores.quality_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-600' :
+                              selectedAI.meta_quality_scores.quality_ranking === 'BELOW_AVERAGE' ? 'bg-red-100 text-red-600' :
+                                'bg-yellow-100 text-yellow-600'
+                              }`}>
+                              {selectedAI.meta_quality_scores.quality_ranking.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                        )}
+                        {selectedAI.meta_quality_scores.engagement_rate_ranking && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600">Engagement Ranking:</span>
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${selectedAI.meta_quality_scores.engagement_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-600' :
+                              selectedAI.meta_quality_scores.engagement_rate_ranking === 'BELOW_AVERAGE' ? 'bg-red-100 text-red-600' :
+                                'bg-yellow-100 text-yellow-600'
+                              }`}>
+                              {selectedAI.meta_quality_scores.engagement_rate_ranking.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                        )}
+                        {selectedAI.meta_quality_scores.conversion_rate_ranking && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600">Conversion Ranking:</span>
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${selectedAI.meta_quality_scores.conversion_rate_ranking === 'ABOVE_AVERAGE' ? 'bg-green-100 text-green-600' :
+                              selectedAI.meta_quality_scores.conversion_rate_ranking === 'BELOW_AVERAGE' ? 'bg-red-100 text-red-600' :
+                                'bg-yellow-100 text-yellow-600'
+                              }`}>
+                              {selectedAI.meta_quality_scores.conversion_rate_ranking.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+
                   {/* Budget Analysis / Allocation Audit */}
                   {(selectedAI.ai_recommendation?.budget_analysis || selectedAI.ai_recommendation?.budget_allocation_audit) && (
                     <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -3357,14 +3614,49 @@ function PerformanceExplorer() {
                         <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">
                           {selectedAI.ai_recommendation.budget_allocation_audit ? 'Budget Allocation' : 'Budget Analysis'}
                         </h4>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${(selectedAI.ai_recommendation.budget_analysis?.efficiency_score === 'HIGH' || selectedAI.ai_recommendation.budget_allocation_audit?.verdict === 'Efficient') ? 'bg-green-100 text-green-600' :
-                          (selectedAI.ai_recommendation.budget_analysis?.efficiency_score === 'MEDIUM' || selectedAI.ai_recommendation.budget_allocation_audit?.verdict === 'Average') ? 'bg-yellow-100 text-yellow-600' :
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${(selectedAI.ai_recommendation.budget_analysis?.efficiency_score === 'HIGH' ||
+                          selectedAI.ai_recommendation.budget_allocation_audit?.verdict === 'Efficient' ||
+                          selectedAI.ai_recommendation.budget_analysis?.verdict?.toLowerCase().includes('scale')) ? 'bg-green-100 text-green-600' :
+                          (selectedAI.ai_recommendation.budget_analysis?.efficiency_score === 'MEDIUM' ||
+                            selectedAI.ai_recommendation.budget_allocation_audit?.verdict === 'Average' ||
+                            selectedAI.ai_recommendation.budget_analysis?.verdict?.toLowerCase().includes('maintain')) ? 'bg-yellow-100 text-yellow-600' :
                             'bg-red-100 text-red-600'
                           }`}>
-                          {selectedAI.ai_recommendation.budget_allocation_audit?.verdict || selectedAI.ai_recommendation.budget_analysis?.efficiency_score + ' Efficiency'}
+                          {selectedAI.ai_recommendation.budget_analysis?.verdict ||
+                            selectedAI.ai_recommendation.budget_allocation_audit?.verdict ||
+                            (selectedAI.ai_recommendation.budget_analysis?.efficiency_score ? selectedAI.ai_recommendation.budget_analysis.efficiency_score + ' Efficiency' : 'Action Required')}
                         </span>
                       </div>
                       <div className="p-3 space-y-3">
+                        {/* Budget Analysis Verdict & Observation */}
+                        {selectedAI.ai_recommendation.budget_analysis?.verdict && (
+                          <div className={`p-4 rounded-xl border-l-4 ${selectedAI.ai_recommendation.budget_analysis.verdict.toLowerCase().includes('scale') ? 'bg-green-50 border-green-500' :
+                            selectedAI.ai_recommendation.budget_analysis.verdict.toLowerCase().includes('kill') || selectedAI.ai_recommendation.budget_analysis.verdict.toLowerCase().includes('reduce') ? 'bg-red-50 border-red-500' :
+                              'bg-yellow-50 border-yellow-500'
+                            }`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-bold text-gray-500 uppercase">Growth Verdict</span>
+                              <div className="flex gap-1">
+                                {['Kill', 'Reduce', 'Maintain', 'Scale'].map((level) => {
+                                  const verdict = selectedAI.ai_recommendation.budget_analysis.verdict.toLowerCase();
+                                  const isActive = verdict.includes(level.toLowerCase());
+                                  return (
+                                    <div key={level} className={`w-8 h-1.5 rounded-full ${isActive ? (
+                                      level === 'Kill' || level === 'Reduce' ? 'bg-red-500' :
+                                        level === 'Maintain' ? 'bg-yellow-500' : 'bg-green-500'
+                                    ) : 'bg-gray-200'
+                                      }`} title={level}></div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <p className="text-sm font-bold text-gray-800 mb-1">{selectedAI.ai_recommendation.budget_analysis.verdict}</p>
+                            {selectedAI.ai_recommendation.budget_analysis.observation && (
+                              <p className="text-xs text-gray-600 leading-relaxed">{selectedAI.ai_recommendation.budget_analysis.observation}</p>
+                            )}
+                          </div>
+                        )}
+
                         {/* New Allocation Audit Observation */}
                         {selectedAI.ai_recommendation.budget_allocation_audit && (
                           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">

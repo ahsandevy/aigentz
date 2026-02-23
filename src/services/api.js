@@ -118,6 +118,26 @@ export const analyticsAPI = {
         }
     },
 
+    getAdSetAIRecommendation: async (adsetId, days) => {
+        try {
+            const response = await api.get(`/adset/${adsetId}/ai-recommendation`, { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching adset AI recommendation:', error);
+            throw error;
+        }
+    },
+
+    getAdAIAnalysis: async (adId, days) => {
+        try {
+            const response = await api.get(`/performance-explorer/ads/${adId}/ai-analysis`, { params: { days } });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching ad AI analysis:', error);
+            throw error;
+        }
+    },
+
     getPerformanceAudiences: async (days, refreshAudienceIds = null) => {
         try {
             const params = { days };
