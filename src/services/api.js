@@ -68,14 +68,28 @@ export const analyticsAPI = {
         }
     },
 
-    // Refresh Data
-    refreshData: async (days, signal) => {
+    // Refresh Data (no days: backend uses "since last sync" or 90 days on first run)
+    // force=true for full 90-day re-sync
+    refreshData: async (force = false, signal) => {
         try {
-            const response = await api.post('/refresh', null, { params: { days }, signal });
+            const params = force ? { force: true } : {};
+            const response = await api.post('/refresh', null, { params, signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;
             console.error("Error refreshing data:", error);
+            throw error;
+        }
+    },
+
+    // Data status (last_synced_date, etc.) for "Last synced" UI
+    getDataStatus: async (signal) => {
+        try {
+            const response = await api.get('/data-status', { signal });
+            return response.data;
+        } catch (error) {
+            if (axios.isCancel(error)) return null;
+            console.error('Error fetching data status:', error);
             throw error;
         }
     },

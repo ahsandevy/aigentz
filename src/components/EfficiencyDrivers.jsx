@@ -266,7 +266,7 @@ function EfficiencyDrivers() {
 
         {/* Placement Performance */}
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
-          <h3 className="text-sm font-semibold text-[#374151] mb-4">Placement Performance (ROAS - Top 5)</h3>
+          <h3 className="text-sm font-semibold text-[#374151] mb-4">Top placements by spend</h3>
           <div className="space-y-3">
             {data.placementPerformance && data.placementPerformance.length > 0 ? (
               data.placementPerformance.map((item, idx) => (
