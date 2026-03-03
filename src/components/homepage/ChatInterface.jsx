@@ -57,6 +57,48 @@ const ReasoningSection = ({ content }) => {
   );
 };
 
+const REASONING_TAG = '[REASONING]';
+const INSIGHTS_TAG = '[INSIGHTS]';
+
+const stripInternalMetadata = (text) => {
+  if (!text) return '';
+  const lowered = text.toLowerCase();
+  if (lowered.includes('natural_language_query') || lowered.includes('original_user_query')) {
+    return '';
+  }
+  return text.trim();
+};
+
+const extractReasoningFromContent = (content) => {
+  if (!content) return '';
+
+  const reasoningIndex = content.indexOf(REASONING_TAG);
+  if (reasoningIndex === -1) return '';
+
+  const start = reasoningIndex + REASONING_TAG.length;
+  const insightsIndex = content.indexOf(INSIGHTS_TAG, start);
+  const end = insightsIndex !== -1 ? insightsIndex : content.length;
+
+  return content.slice(start, end).trim();
+};
+
+const cleanInsightsContent = (content) => {
+  if (!content) return '';
+
+  let text = content;
+  const insightsIndex = text.indexOf(INSIGHTS_TAG);
+  if (insightsIndex !== -1) {
+    text = text.slice(insightsIndex + INSIGHTS_TAG.length);
+  }
+
+  const cleaned = text
+    .replaceAll(REASONING_TAG, '')
+    .replaceAll(INSIGHTS_TAG, '')
+    .trim();
+
+  return stripInternalMetadata(cleaned);
+};
+
 function ChatInterface() {
   const [query, setQuery] = useState('')
   const [messages, setMessages] = useState([])
@@ -168,22 +210,50 @@ function ChatInterface() {
                 setIsThinking(false)
                 let text = data.content
 
-                // 1. Detect explicit markers from instructions
-                if (text.includes('[REASONING]')) {
-                  hasReceivedToolOutput = false; // Reset if we see explicit reasoning again
-                  text = text.replace('[REASONING]', '').trim();
-                }
-                if (text.includes('[INSIGHTS]')) {
-                  hasReceivedToolOutput = true;
-                  text = text.replace('[INSIGHTS]', '').trim();
+                // Drop internal metadata-only messages
+                const lowered = text.toLowerCase()
+                if (lowered.includes('natural_language_query') || lowered.includes('original_user_query')) {
+                  continue
                 }
 
-                // 2. Use marker state or backend flag to decide placement
-                if (!hasReceivedToolOutput && data.is_reasoning !== false) {
-                  aiReasoning += text
+                let reasoningChunk = ''
+                let insightsChunk = ''
+
+                const hasReasoningTag = text.includes(REASONING_TAG)
+                const hasInsightsTag = text.includes(INSIGHTS_TAG)
+
+                if (hasReasoningTag || hasInsightsTag) {
+                  const reasoningIndex = hasReasoningTag ? text.indexOf(REASONING_TAG) : -1
+                  const insightsIndex = hasInsightsTag ? text.indexOf(INSIGHTS_TAG) : -1
+
+                  if (reasoningIndex !== -1) {
+                    const start = reasoningIndex + REASONING_TAG.length
+                    const end = insightsIndex !== -1 && insightsIndex > reasoningIndex ? insightsIndex : text.length
+                    reasoningChunk = text.slice(start, end).trim()
+                  }
+
+                  if (insightsIndex !== -1) {
+                    const start = insightsIndex + INSIGHTS_TAG.length
+                    const end = text.length
+                    insightsChunk = text.slice(start, end).trim()
+                  }
+
+                  if (insightsChunk) {
+                    hasReceivedToolOutput = true
+                  } else if (reasoningChunk) {
+                    hasReceivedToolOutput = false
+                  }
                 } else {
-                  aiContent += text
+                  // Fallback: use marker state or backend flag to decide placement
+                  if (!hasReceivedToolOutput && data.is_reasoning !== false) {
+                    reasoningChunk = text
+                  } else {
+                    insightsChunk = text
+                  }
                 }
+
+                aiReasoning += reasoningChunk
+                aiContent += insightsChunk
 
                 setMessages(prev => {
                   const newMessages = [...prev]
@@ -255,7 +325,7 @@ function ChatInterface() {
                       msg.content
                     ) : (
                       <>
-                        <ReasoningSection content={msg.reasoning} />
+                        <ReasoningSection content={stripInternalMetadata(msg.reasoning) || extractReasoningFromContent(msg.content)} />
 
                         {msg.sql && (
                           <div className="mb-4 bg-slate-900 rounded-xl p-4 text-[13px] font-mono text-emerald-400 overflow-x-auto border border-slate-800 shadow-inner">
@@ -291,7 +361,7 @@ function ChatInterface() {
                               AI Analysis & Insights
                             </div>
                             <div className="text-[15px] text-[#062a74] leading-relaxed">
-                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                              <ReactMarkdown>{cleanInsightsContent(msg.content)}</ReactMarkdown>
                             </div>
                           </div>
                         )}
