@@ -19,18 +19,18 @@ import { useAppliedRecommendations } from '../hooks/useAppliedRecommendations'
 import { analyticsAPI } from '../services/api'
 import { useModal } from '../context/ModalContext'
 
-function AIRecommendations() {
+function AIRecommendations({ days = 7 }) {
   const { showAlert, showConfirm, showSuccess, showError } = useModal()
   const queryClient = useQueryClient()
-  const { data, isLoading, error, refetch: refetchBudget } = useBudgetRecommendation(7)
-  const { data: creativeData, isLoading: creativeIsLoading, error: creativeError, refetch: refetchCreative } = useCreativeAnalysisRecommendation(7)
-  const { data: placementData, isLoading: placementIsLoading, error: placementError, refetch: refetchPlacement } = usePlacementOptimizationRecommendation(7)
-  const { data: audienceData, isLoading: audienceIsLoading, error: audienceError, refetch: refetchAudience } = useAudienceOptimizationRecommendation(7)
-  const { data: biddingData, isLoading: biddingIsLoading, error: biddingError, refetch: refetchBidding } = useBiddingStrategyOptimizationRecommendation(7)
-  const { data: daypartingData, isLoading: daypartingIsLoading, error: daypartingError, refetch: refetchDayparting } = useDaypartingOptimizationRecommendation(7)
+  const { data, isLoading, error, refetch: refetchBudget } = useBudgetRecommendation(days)
+  const { data: creativeData, isLoading: creativeIsLoading, error: creativeError, refetch: refetchCreative } = useCreativeAnalysisRecommendation(days)
+  const { data: placementData, isLoading: placementIsLoading, error: placementError, refetch: refetchPlacement } = usePlacementOptimizationRecommendation(days)
+  const { data: audienceData, isLoading: audienceIsLoading, error: audienceError, refetch: refetchAudience } = useAudienceOptimizationRecommendation(days)
+  const { data: biddingData, isLoading: biddingIsLoading, error: biddingError, refetch: refetchBidding } = useBiddingStrategyOptimizationRecommendation(days)
+  const { data: daypartingData, isLoading: daypartingIsLoading, error: daypartingError, refetch: refetchDayparting } = useDaypartingOptimizationRecommendation(days)
 
   // Fetch priorities from the all recommendations endpoint using React Query
-  const { data: priorities = {}, isLoading: prioritiesLoading, refetch: refetchPriorities } = useAllRecommendationsPriorities(7)
+  const { data: priorities = {}, isLoading: prioritiesLoading, refetch: refetchPriorities } = useAllRecommendationsPriorities(days)
 
   // Fetch applied recommendations using React Query
   const { data: appliedRecommendations = [], isLoading: appliedLoading, refetch: refetchAppliedRecommendations } = useAppliedRecommendations(50)

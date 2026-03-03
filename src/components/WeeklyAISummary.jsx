@@ -1,7 +1,7 @@
 import { useWeeklySummary } from '../hooks/useWeeklySummary'
 
-function WeeklyAISummary() {
-  const { data: summary, isLoading, error } = useWeeklySummary(7)
+function WeeklyAISummary({ days = 7 }) {
+  const { data: summary, isLoading, error } = useWeeklySummary(days)
 
   const formatCurrency = (val) => {
     if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`

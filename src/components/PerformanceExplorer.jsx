@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { analyticsAPI } from '../services/api'
 import { useCampaigns, useAdSets, useAds, useAudiences } from '../hooks/usePerformanceData'
 
-function PerformanceExplorer() {
+function PerformanceExplorer({ days = 7 }) {
   const [activeTab, setActiveTab] = useState('Campaigns')
   const [search, setSearch] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -11,9 +11,9 @@ function PerformanceExplorer() {
   const [selectedScalingItem, setSelectedScalingItem] = useState(null)
 
   // Use React Query hooks - data is automatically cached
-  const { data: campaigns = [], isLoading: campaignsLoading } = useCampaigns()
-  const { data: adSets = [], isLoading: adSetsLoading } = useAdSets()
-  const { data: ads = [], isLoading: adsLoading } = useAds()
+  const { data: campaigns = [], isLoading: campaignsLoading } = useCampaigns(days)
+  const { data: adSets = [], isLoading: adSetsLoading } = useAdSets(days)
+  const { data: ads = [], isLoading: adsLoading } = useAds(days)
   const {
     data: audiences = [],
     isLoading: audiencesLoading,
@@ -21,7 +21,7 @@ function PerformanceExplorer() {
     refreshingAudienceIds,
     refreshAllAudiencesLLM,
     isRefreshingAll
-  } = useAudiences()
+  } = useAudiences(days)
 
   // Determine loading state based on active tab
   const loading = useMemo(() => {
@@ -43,7 +43,7 @@ function PerformanceExplorer() {
     try {
       setAiLoading(true)
       setSelectedAI(null)
-      const response = await analyticsAPI.getAIRecommendation(campaignId, 7)
+      const response = await analyticsAPI.getAIRecommendation(campaignId, days)
       setSelectedAI(response)
     } catch (error) {
       console.error('Error fetching AI recommendation:', error)
@@ -56,7 +56,7 @@ function PerformanceExplorer() {
     try {
       setAiLoading(true)
       setSelectedAI(null)
-      const response = await analyticsAPI.getAdSetAIRecommendation(adsetId, 7)
+      const response = await analyticsAPI.getAdSetAIRecommendation(adsetId, days)
       setSelectedAI(response)
     } catch (error) {
       console.error('Error fetching AdSet AI recommendation:', error)
@@ -69,7 +69,7 @@ function PerformanceExplorer() {
     try {
       setAiLoading(true)
       setSelectedAI(null)
-      const response = await analyticsAPI.getAdAIAnalysis(adId, 7)
+      const response = await analyticsAPI.getAdAIAnalysis(adId, days)
       setSelectedAI(response)
     } catch (error) {
       console.error('Error fetching Ad AI analysis:', error)
