@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { analyticsAPI } from '../services/api'
 
-function AIExecutiveBrief() {
+function AIExecutiveBrief({ days = 7 }) {
   const [brief, setBrief] = useState(null)
   const [boardSummary, setBoardSummary] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -9,7 +9,6 @@ function AIExecutiveBrief() {
   const [generatingSummary, setGeneratingSummary] = useState(false)
   const [error, setError] = useState(null)
   const [summaryError, setSummaryError] = useState(null)
-  const [days, setDays] = useState(7)
   const [showBoardSummary, setShowBoardSummary] = useState(false)
 
   useEffect(() => {
@@ -27,7 +26,12 @@ function AIExecutiveBrief() {
       }
       setError(null)
       const data = await analyticsAPI.getExecutiveBrief(days, forceRefresh, signal)
-      if (data) setBrief(data)
+      if (data?.error) {
+        setBrief(null)
+        setError(data.message || data.error || 'No data available. Please sync performance data and try again.')
+      } else if (data) {
+        setBrief(data)
+      }
     } catch (err) {
       if (err.name === 'AbortError') return;
       console.error('Error fetching executive brief:', err)
@@ -158,7 +162,7 @@ function AIExecutiveBrief() {
 
   return (
     <section className="mb-8">
-      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <svg className="w-6 h-6 text-[#1e4a79]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -166,16 +170,9 @@ function AIExecutiveBrief() {
           <h2 className="text-2xl font-bold text-[#1e4a79]">AI Executive Brief</h2>
         </div>
         <div className="flex items-center gap-4">
-          <select
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e4a79]"
-            disabled={loading || refreshing}
-          >
-            <option value={7}>Last 7 days</option>
-            <option value={14}>Last 14 days</option>
-            <option value={30}>Last 30 days</option>
-          </select>
+          <span className="text-xs text-gray-500">
+            Window: Last {days} {days === 1 ? 'day' : 'days'}
+          </span>
           <button
             onClick={handleRefresh}
             disabled={loading || refreshing}

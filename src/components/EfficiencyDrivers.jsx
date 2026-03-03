@@ -137,12 +137,14 @@ function PieChart({ data, size = 200 }) {
   );
 }
 
-function EfficiencyDrivers() {
+function EfficiencyDrivers({ days = 7 }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     funnelMix: [],
     conversionFunnel: [],
     qualityRankings: [],
+    placementPerformanceLabel: null,
+    placementPerformanceValueLabel: null,
     placementPerformance: []
   });
 
@@ -150,7 +152,7 @@ function EfficiencyDrivers() {
     async function fetchData() {
       try {
         setLoading(true);
-        const result = await analyticsAPI.getEfficiencyDrivers(7);
+        const result = await analyticsAPI.getEfficiencyDrivers(days);
         setData(result);
       } catch (error) {
         console.error('Error fetching efficiency drivers:', error);
@@ -159,7 +161,20 @@ function EfficiencyDrivers() {
       }
     }
     fetchData();
-  }, []);
+  }, [days]);
+
+  const formatPlacementValue = (value, metricKey = 'spend') => {
+    if (value === null || value === undefined) return '-';
+
+    if (metricKey === 'spend') {
+      if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M AED`;
+      if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K AED`;
+      return `${value.toLocaleString()} AED`;
+    }
+
+    // Fallback: just format as generic number
+    return value.toLocaleString();
+  };
 
   if (loading) {
     return (
@@ -266,15 +281,32 @@ function EfficiencyDrivers() {
 
         {/* Placement Performance */}
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
-          <h3 className="text-sm font-semibold text-[#374151] mb-4">Top placements by spend</h3>
+          <h3 className="text-sm font-semibold text-[#374151] mb-3">
+            {data.placementPerformanceLabel || 'Top 5 placements by spend'}
+          </h3>
           <div className="space-y-3">
             {data.placementPerformance && data.placementPerformance.length > 0 ? (
-              data.placementPerformance.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <span className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]" title={item.name}>{item.name}</span>
-                  <span className={`text-[12px] font-bold ${idx === 0 ? 'text-[#78a3cd]' : 'text-[#6b7280]'}`}>{item.roas}</span>
-                </div>
-              ))
+              data.placementPerformance.map((item, idx) => {
+                const metricKey = data.placementPerformanceValueLabel || 'spend';
+                const rawValue = item[metricKey] ?? item.spend;
+                const displayValue = formatPlacementValue(rawValue, metricKey);
+
+                return (
+                  <div key={idx} className="flex items-center justify-between">
+                    <span
+                      className="text-[12px] font-bold text-[#6b7280] truncate max-w-[150px]"
+                      title={item.name}
+                    >
+                      {item.name}
+                    </span>
+                    <span
+                      className={`text-[12px] font-bold ${idx === 0 ? 'text-[#78a3cd]' : 'text-[#6b7280]'}`}
+                    >
+                      {displayValue}
+                    </span>
+                  </div>
+                );
+              })
             ) : (
               <div className="flex items-center justify-center h-32">
                 <span className="text-sm text-gray-400">No data available</span>

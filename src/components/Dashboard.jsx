@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Header from './Header'
 import AIExecutiveBrief from './AIExecutiveBrief'
 import PerformanceExplorer from './PerformanceExplorer'
@@ -7,17 +8,19 @@ import ChangeControl from './ChangeControl'
 import WeeklyAISummary from './WeeklyAISummary'
 
 function Dashboard() {
+  const [selectedDays, setSelectedDays] = useState(1)
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f4f8fe] to-white">
-      <Header />
+      <Header days={selectedDays} onDaysChange={setSelectedDays} />
 
       <main className="w-full md:w-[85%] mx-auto px-4 md:px-8 py-8">
-        <AIExecutiveBrief />
-        <PerformanceExplorer />
-        <AIRecommendations />
-        <EfficiencyDrivers />
+        <AIExecutiveBrief days={selectedDays} />
+        <PerformanceExplorer days={selectedDays} />
+        <AIRecommendations days={selectedDays} />
+        <EfficiencyDrivers days={selectedDays} />
         <ChangeControl />
-        <WeeklyAISummary />
+        <WeeklyAISummary days={selectedDays} />
       </main>
     </div>
   )

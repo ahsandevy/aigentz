@@ -13,9 +13,8 @@ function formatDateLabel(dateStr) {
   }
 }
 
-function Header() {
+function Header({ days, onDaysChange }) {
   const navigate = useNavigate()
-  const [days, setDays] = useState(1)
   const [isSyncing, setIsSyncing] = useState(false)
   const [isFullRefresh, setIsFullRefresh] = useState(false)
   const [dataStatus, setDataStatus] = useState(null)
@@ -67,7 +66,8 @@ function Header() {
       "Last 30 days": 30,
       "Last 90 days": 90
     }
-    setDays(daysMap[value] || 1)
+    const mappedDays = daysMap[value] ?? 1
+    onDaysChange?.(mappedDays)
   }
 
   return (
@@ -123,13 +123,23 @@ function Header() {
             <div className="relative flex-1 md:flex-none">
               <select
                 onChange={handleDateChange}
-                defaultValue="Today"
+                value={
+                  days === 1
+                    ? 'Today'
+                    : days === 7
+                    ? 'Last 7 days'
+                    : days === 30
+                    ? 'Last 30 days'
+                    : days === 90
+                    ? 'Last 90 days'
+                    : 'Today'
+                }
                 className="w-full md:w-auto appearance-none bg-[#EDF0A8] border-none rounded-full px-4 md:px-6 py-2.5 pr-10 text-xs md:text-sm font-medium text-[#374151] shadow-sm focus:outline-none cursor-pointer"
               >
-                <option>Today</option>
-                <option>Last 7 days</option>
-                <option>Last 30 days</option>
-                <option>Last 90 days</option>
+                <option value="Today">Today</option>
+                <option value="Last 7 days">Last 7 days</option>
+                <option value="Last 30 days">Last 30 days</option>
+                <option value="Last 90 days">Last 90 days</option>
               </select>
               <svg className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#374151] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
