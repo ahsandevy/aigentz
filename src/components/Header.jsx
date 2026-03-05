@@ -16,9 +16,9 @@ function formatDateLabel(dateStr) {
 function Header({ days, onDaysChange }) {
   const navigate = useNavigate()
   const [isSyncing, setIsSyncing] = useState(false)
-  const [isFullRefresh, setIsFullRefresh] = useState(false)
   const [dataStatus, setDataStatus] = useState(null)
   const [syncMessage, setSyncMessage] = useState(null)
+  const [cooldownMessage, setCooldownMessage] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -37,11 +37,22 @@ function Header({ days, onDaysChange }) {
   }, [])
 
   const handleSync = async (force = false) => {
-    setIsFullRefresh(force)
     setIsSyncing(true)
     setSyncMessage(null)
+    setCooldownMessage(null)
     try {
       const result = await analyticsAPI.refreshData(force)
+
+      // Cooldown guard: backend returned cached data without hitting Meta API
+      if (result?.from_saved === true && result?.records_updated === 0 && !force) {
+        if (result?.last_synced_date != null) {
+          setDataStatus((prev) => ({ ...prev, last_synced_date: result.last_synced_date }))
+        }
+        const rawMessage = result?.message || 'Data is already up to date.'
+        setCooldownMessage(rawMessage.replace(/\s*Use force=true to override\.?/gi, '').trim())
+        return
+      }
+
       if (result?.sync_from_date != null && result?.sync_until_date != null) {
         sessionStorage.setItem('lastSyncRange', JSON.stringify({ from: result.sync_from_date, to: result.sync_until_date }))
       }
@@ -53,7 +64,6 @@ function Header({ days, onDaysChange }) {
       console.error("Sync failed", error)
     } finally {
       setIsSyncing(false)
-      setIsFullRefresh(false)
     }
   }
 
@@ -154,24 +164,26 @@ function Header({ days, onDaysChange }) {
               </svg>
               <span>Chat with Agent</span>
             </button>
-            <button
-              onClick={() => handleSync(false)}
-              disabled={isSyncing}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#EDF0A8] text-[#374151] px-4 md:px-6 py-2.5 rounded-full text-xs md:text-sm font-medium shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isSyncing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>{isSyncing ? (isFullRefresh ? 'Full refresh...' : 'Syncing...') : 'Sync Meta'}</span>
-            </button>
-            <button
-              onClick={() => handleSync(true)}
-              disabled={isSyncing}
-              className="flex-1 md:flex-none flex items-center justify-center gap-1.5 text-[#64748b] hover:text-[#1e4a79] text-xs font-medium whitespace-nowrap disabled:opacity-50"
-              title="Re-fetch last 90 days"
-            >
-              Full refresh
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                onClick={() => handleSync(false)}
+                disabled={isSyncing}
+                className={`flex items-center justify-center gap-2 bg-[#EDF0A8] text-[#374151] px-4 md:px-6 py-2.5 rounded-full text-xs md:text-sm font-medium shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isSyncing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>{isSyncing ? 'Syncing...' : 'Sync Meta'}</span>
+              </button>
+              {cooldownMessage && (
+                <div className="flex items-start gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-xs text-amber-800 max-w-[260px]">
+                  <svg className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{cooldownMessage}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         {syncMessage && (
