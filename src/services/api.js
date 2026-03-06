@@ -421,20 +421,16 @@ export const analyticsAPI = {
 
 // Session ID management for agent conversation isolation
 const getOrCreateSessionId = () => {
-    const STORAGE_KEY = 'agent_session_id';
-    let sessionId = localStorage.getItem(STORAGE_KEY);
-
-    if (!sessionId) {
+    if (!window._agentSessionId) {
         // Generate a UUID v4
-        sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        window._agentSessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
             const r = Math.random() * 16 | 0;
             const v = c === 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
-        localStorage.setItem(STORAGE_KEY, sessionId);
     }
 
-    return sessionId;
+    return window._agentSessionId;
 };
 
 export const agentAPI = {
@@ -443,7 +439,7 @@ export const agentAPI = {
 
     // Clear session to start fresh conversation
     clearSession: () => {
-        localStorage.removeItem('agent_session_id');
+        window._agentSessionId = null;
     },
 
     chatWithAgent: async (query, signal) => {

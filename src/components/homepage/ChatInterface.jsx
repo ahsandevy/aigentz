@@ -62,11 +62,16 @@ const INSIGHTS_TAG = '[INSIGHTS]';
 
 const stripInternalMetadata = (text) => {
   if (!text) return '';
-  const lowered = text.toLowerCase();
-  if (lowered.includes('natural_language_query') || lowered.includes('original_user_query')) {
-    return '';
+
+  let cleaned = text;
+  // If the agent hallucinated/echoed its tool variables, just strip the keywords instead of nuking the response
+  if (cleaned.toLowerCase().includes('natural_language_query')) {
+    cleaned = cleaned.replace(/natural_language_query/gi, '');
   }
-  return text.trim();
+  if (cleaned.toLowerCase().includes('original_user_query')) {
+    cleaned = cleaned.replace(/original_user_query/gi, '');
+  }
+  return cleaned.trim();
 };
 
 const extractReasoningFromContent = (content) => {
@@ -85,13 +90,7 @@ const extractReasoningFromContent = (content) => {
 const cleanInsightsContent = (content) => {
   if (!content) return '';
 
-  let text = content;
-  const insightsIndex = text.indexOf(INSIGHTS_TAG);
-  if (insightsIndex !== -1) {
-    text = text.slice(insightsIndex + INSIGHTS_TAG.length);
-  }
-
-  const cleaned = text
+  const cleaned = content
     .replaceAll(REASONING_TAG, '')
     .replaceAll(INSIGHTS_TAG, '')
     .trim();
@@ -126,19 +125,18 @@ function ChatInterface() {
     setIsThinking(true)
 
     // Prepare placeholder for AI response
-    setMessages(prev => [...prev, { role: 'ai', content: '', reasoning: '', sql: null, data: null }])
+    setMessages(prev => [...prev, { role: 'ai', content: '', reasoning: '', thinking: '', sql: null, data: null }])
 
     try {
-      const STORAGE_KEY = 'agent_session_id';
-      let sessionId = localStorage.getItem(STORAGE_KEY);
-      if (!sessionId) {
-        sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      // Use a per-page-load session ID instead of persistent localStorage
+      if (!window._agentSessionId) {
+        window._agentSessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
           const r = Math.random() * 16 | 0;
           const v = c === 'x' ? r : (r & 0x3 | 0x8);
           return v.toString(16);
         });
-        localStorage.setItem(STORAGE_KEY, sessionId);
       }
+      const sessionId = window._agentSessionId;
 
       const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
       const agentApiUrl = VITE_API_BASE_URL
@@ -166,6 +164,7 @@ function ChatInterface() {
       const decoder = new TextDecoder()
       let aiContent = ''
       let aiReasoning = ''
+      let aiThinking = ''
       let hasReceivedToolOutput = false
 
       while (true) {
@@ -185,8 +184,19 @@ function ChatInterface() {
 
               if (data.error) throw new Error(data.error)
 
-              if (data.type === 'sql') {
+              if (data.type === 'thinking') {
+                aiThinking += data.content
+                setMessages(prev => {
+                  const newMessages = [...prev]
+                  const lastIdx = newMessages.length - 1
+                  if (lastIdx >= 0 && newMessages[lastIdx].role === 'ai') {
+                    newMessages[lastIdx] = { ...newMessages[lastIdx], thinking: aiThinking }
+                  }
+                  return newMessages
+                })
+              } else if (data.type === 'sql') {
                 setIsThinking(false)
+                hasReceivedToolOutput = true
                 setMessages(prev => {
                   const newMessages = [...prev]
                   const lastIdx = newMessages.length - 1
@@ -209,12 +219,6 @@ function ChatInterface() {
               } else if (data.type === 'text') {
                 setIsThinking(false)
                 let text = data.content
-
-                // Drop internal metadata-only messages
-                const lowered = text.toLowerCase()
-                if (lowered.includes('natural_language_query') || lowered.includes('original_user_query')) {
-                  continue
-                }
 
                 let reasoningChunk = ''
                 let insightsChunk = ''
@@ -244,11 +248,17 @@ function ChatInterface() {
                     hasReceivedToolOutput = false
                   }
                 } else {
-                  // Fallback: use marker state or backend flag to decide placement
-                  if (!hasReceivedToolOutput && data.is_reasoning !== false) {
+                  // Fallback: use explicit backend flag if present, else use tool state
+                  if (data.is_reasoning === true) {
                     reasoningChunk = text
-                  } else {
+                  } else if (data.is_reasoning === false) {
                     insightsChunk = text
+                  } else {
+                    if (!hasReceivedToolOutput) {
+                      reasoningChunk = text
+                    } else {
+                      insightsChunk = text
+                    }
                   }
                 }
 
@@ -325,7 +335,7 @@ function ChatInterface() {
                       msg.content
                     ) : (
                       <>
-                        <ReasoningSection content={stripInternalMetadata(msg.reasoning) || extractReasoningFromContent(msg.content)} />
+                        <ReasoningSection content={stripInternalMetadata(msg.reasoning) || msg.thinking || extractReasoningFromContent(msg.content)} />
 
                         {msg.sql && (
                           <div className="mb-4 bg-slate-900 rounded-xl p-4 text-[13px] font-mono text-emerald-400 overflow-x-auto border border-slate-800 shadow-inner">
@@ -375,15 +385,25 @@ function ChatInterface() {
             {/* Loading Indicator (Only show if isThinking is true AND we haven't started receiving tokens yet) */}
             {isThinking && messages.length > 0 && messages[messages.length - 1].content === '' && (
               <div className="flex justify-start">
-                <div className="flex gap-3 max-w-[85%]">
-                  <div className="w-8 h-8 rounded-full bg-[#f0f0bc] flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <img src="/ai 2.png" alt="AI" className="w-5 h-5 object-contain" />
+                <div className="flex gap-3 max-w-[85%] w-full">
+                  <div className="w-8 h-8 rounded-full bg-[#f0f0bc] flex items-center justify-center flex-shrink-0 shadow-sm animate-pulse">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                    </svg>
                   </div>
-                  <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5 h-12">
-                    <div className="w-1.5 h-1.5 bg-[#062a74] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                    <div className="w-1.5 h-1.5 bg-[#062a74] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-1.5 h-1.5 bg-[#062a74] rounded-full animate-bounce"></div>
-                  </div>
+                  {messages[messages.length - 1].thinking ? (
+                    <div className="bg-white border-2 border-amber-200/50 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center h-auto min-h-12 w-full animate-pulse transition-all">
+                      <div className="text-[14px] text-amber-700/70 italic antialiased prose prose-sm max-w-none break-words w-full">
+                        <ReactMarkdown>{messages[messages.length - 1].thinking + '...'}</ReactMarkdown>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5 h-12">
+                      <div className="w-1.5 h-1.5 bg-[#062a74] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-1.5 h-1.5 bg-[#062a74] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                      <div className="w-1.5 h-1.5 bg-[#062a74] rounded-full animate-bounce"></div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
