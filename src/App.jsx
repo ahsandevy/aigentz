@@ -7,7 +7,7 @@ import AdminRoute from './components/AdminRoute'
 import TrainingDataPage from './components/TrainingDataPage'
 
 import { ModalProvider } from './context/ModalContext'
-//dummy line
+
 // Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
