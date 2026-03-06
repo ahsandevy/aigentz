@@ -3,13 +3,13 @@ import MetricCard from './MetricCard'
 import { analyticsAPI } from '../services/api'
 
 const STATIC_METRICS = {
-  spend: { value: 45000, change_percentage: 12.5, trend: 'positive' },
-  revenue: { value: 180000, change_percentage: 15.3, trend: 'positive' },
-  roas: { value: 4.0, target: 3.5, change_percentage: 2.5, trend: 'positive' },
-  cpa: { value: 45, change_percentage: -8.2, trend: 'positive' },
-  ctr: { value: 1.8, change_percentage: 5.4, trend: 'positive' },
-  purchases: { value: 450, change_percentage: 10.1, trend: 'positive' },
-  aov: { value: 400, change_percentage: 4.8, trend: 'positive' },
+  spend: { value: 45000, change_percentage: 12.5 },
+  revenue: { value: 180000, change_percentage: 15.3 },
+  roas: { value: 4.0, target: 3.5, change_percentage: 2.5 },
+  cpa: { value: 45, change_percentage: -8.2 },
+  ctr: { value: 1.8, change_percentage: 5.4 },
+  purchases: { value: 450, change_percentage: 10.1 },
+  aov: { value: 400, change_percentage: 4.8 },
   reach_efficiency: { value: 35 }
 }
 
@@ -62,16 +62,15 @@ function MetricsGrid({ days = 7 }) {
     return `${val}%`
   }
 
-  // Helper to determine change type securely
-  // API returns trend as 'positive' or 'negative', but sometimes we want to check value directly if trend isn't sent
   const getChangeType = (metric) => {
     if (!metric) return 'positive'
-    if (metric.trend) return metric.trend
     if (metric.change_percentage !== undefined && metric.change_percentage !== null) {
       return metric.change_percentage >= 0 ? 'positive' : 'negative'
     }
     return 'positive'
   }
+
+  const periodLabel = days === 1 ? 'DoD' : days === 7 ? 'WoW' : days === 30 ? 'MoM' : 'QoQ'
 
   const getChangeLabel = (val) => {
     if (val === null || val === undefined) return null
@@ -96,6 +95,7 @@ function MetricsGrid({ days = 7 }) {
             value={formatCurrency(metrics.spend?.value)}
             change={getChangeLabel(metrics.spend?.change_percentage)}
             changeType={getChangeType(metrics.spend)}
+            periodLabel={periodLabel}
           />
         )}
         {metrics.revenue && (
@@ -104,6 +104,7 @@ function MetricsGrid({ days = 7 }) {
             value={formatCurrency(metrics.revenue?.value)}
             change={getChangeLabel(metrics.revenue?.change_percentage)}
             changeType={getChangeType(metrics.revenue)}
+            periodLabel={periodLabel}
           />
         )}
         {metrics.roas && (
@@ -113,6 +114,7 @@ function MetricsGrid({ days = 7 }) {
             target={metrics.roas?.target ? `${metrics.roas.target}x` : null}
             change={getChangeLabel(metrics.roas?.change_percentage)}
             changeType={getChangeType(metrics.roas)}
+            periodLabel={periodLabel}
           />
         )}
         {metrics.cpa && (
@@ -121,6 +123,7 @@ function MetricsGrid({ days = 7 }) {
             value={formatCurrency(metrics.cpa?.value)}
             change={getChangeLabel(metrics.cpa?.change_percentage)}
             changeType={getChangeType(metrics.cpa)}
+            periodLabel={periodLabel}
           />
         )}
         {metrics.ctr && (
@@ -130,6 +133,7 @@ function MetricsGrid({ days = 7 }) {
             subtitle="Click Rate"
             change={getChangeLabel(metrics.ctr?.change_percentage)}
             changeType={getChangeType(metrics.ctr)}
+            periodLabel={periodLabel}
           />
         )}
         {metrics.purchases && (
@@ -138,6 +142,7 @@ function MetricsGrid({ days = 7 }) {
             value={formatNumber(metrics.purchases?.value)}
             change={getChangeLabel(metrics.purchases?.change_percentage)}
             changeType={getChangeType(metrics.purchases)}
+            periodLabel={periodLabel}
           />
         )}
         {metrics.aov && (
@@ -146,6 +151,7 @@ function MetricsGrid({ days = 7 }) {
             value={formatCurrency(metrics.aov?.value)}
             change={getChangeLabel(metrics.aov?.change_percentage)}
             changeType={getChangeType(metrics.aov)}
+            periodLabel={periodLabel}
           />
         )}
         {metrics.reach_efficiency && (
@@ -155,6 +161,7 @@ function MetricsGrid({ days = 7 }) {
             subtitle={metrics.reach_efficiency?.subtitle || "% of impressions reaching unique people"}
             change={metrics.reach_efficiency?.change_percentage !== undefined ? getChangeLabel(metrics.reach_efficiency.change_percentage) : null}
             changeType={metrics.reach_efficiency?.change_percentage !== undefined ? getChangeType(metrics.reach_efficiency) : null}
+            periodLabel={periodLabel}
           />
         )}
       </div>

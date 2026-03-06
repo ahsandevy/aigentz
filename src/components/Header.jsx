@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MetricsGrid from './MetricsGrid'
 import { analyticsAPI } from '../services/api'
@@ -19,6 +19,7 @@ function Header({ days, onDaysChange }) {
   const [dataStatus, setDataStatus] = useState(null)
   const [syncMessage, setSyncMessage] = useState(null)
   const [cooldownMessage, setCooldownMessage] = useState(null)
+  const cooldownTimerRef = useRef(null)
 
   useEffect(() => {
     let cancelled = false
@@ -49,7 +50,10 @@ function Header({ days, onDaysChange }) {
           setDataStatus((prev) => ({ ...prev, last_synced_date: result.last_synced_date }))
         }
         const rawMessage = result?.message || 'Data is already up to date.'
-        setCooldownMessage(rawMessage.replace(/\s*Use force=true to override\.?/gi, '').trim())
+        const cleaned = rawMessage.replace(/\s*Use force=true to override\.?/gi, '').trim()
+        setCooldownMessage(cleaned)
+        clearTimeout(cooldownTimerRef.current)
+        cooldownTimerRef.current = setTimeout(() => setCooldownMessage(null), 6000)
         return
       }
 
@@ -164,26 +168,16 @@ function Header({ days, onDaysChange }) {
               </svg>
               <span>Chat with Agent</span>
             </button>
-            <div className="flex flex-col items-end gap-1">
-              <button
-                onClick={() => handleSync(false)}
-                disabled={isSyncing}
-                className={`flex items-center justify-center gap-2 bg-[#EDF0A8] text-[#374151] px-4 md:px-6 py-2.5 rounded-full text-xs md:text-sm font-medium shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isSyncing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>{isSyncing ? 'Syncing...' : 'Sync Meta'}</span>
-              </button>
-              {cooldownMessage && (
-                <div className="flex items-start gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-xs text-amber-800 max-w-[260px]">
-                  <svg className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{cooldownMessage}</span>
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => handleSync(false)}
+              disabled={isSyncing}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#EDF0A8] text-[#374151] px-4 md:px-6 py-2.5 rounded-full text-xs md:text-sm font-medium shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isSyncing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>{isSyncing ? 'Syncing...' : 'Sync Meta'}</span>
+            </button>
           </div>
         </div>
         {syncMessage && (
@@ -195,6 +189,28 @@ function Header({ days, onDaysChange }) {
         {/* Metric Cards Grid */}
         <MetricsGrid days={days} />
       </div>
+      {/* Cooldown toast */}
+      {cooldownMessage && (
+        <div className="fixed top-6 right-6 z-50 flex items-start gap-3 bg-white border border-amber-200 shadow-lg rounded-xl px-4 py-3 max-w-sm animate-fade-in">
+          <div className="mt-0.5 shrink-0 w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+            <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[#1e4a79] mb-0.5">Data is fresh</p>
+            <p className="text-xs text-[#6b7280] leading-snug">{cooldownMessage}</p>
+          </div>
+          <button
+            onClick={() => { clearTimeout(cooldownTimerRef.current); setCooldownMessage(null) }}
+            className="shrink-0 text-[#9ca3af] hover:text-[#374151] transition-colors mt-0.5"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
     </header >
   )
 }
