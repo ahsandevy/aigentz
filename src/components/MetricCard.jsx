@@ -1,4 +1,4 @@
-function MetricCard({ title, value, change, changeType, subtitle, target }) {
+function MetricCard({ title, value, change, changeType, subtitle, target, periodLabel = 'WoW' }) {
   return (
     <div className="bg-white rounded-lg border-t-4 border-[#1e4a79] border-r-0 border-b-0 border-l-0 p-4 md:p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)] h-full overflow-hidden">
       <p className="text-xs md:text-sm text-[#374151] mb-2 truncate">{title}</p>
@@ -24,7 +24,7 @@ function MetricCard({ title, value, change, changeType, subtitle, target }) {
           <span className={`text-sm font-medium ${changeType === 'positive' ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
             {change}
           </span>
-          {change.includes('%') && <span className="text-xs text-[#6b7280]">WoW</span>}
+          {change.includes('%') && <span className="text-xs text-[#6b7280]">{periodLabel}</span>}
         </div>
       )}
       {subtitle && <p className="text-xs text-[#6b7280]">{subtitle}</p>}
