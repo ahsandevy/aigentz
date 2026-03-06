@@ -6,20 +6,20 @@ const DataTable = ({ data }) => {
   const headers = Object.keys(data[0]);
 
   return (
-    <div className="overflow-x-auto my-4 border border-gray-200 rounded-xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] bg-white">
+    <div className="overflow-x-auto my-4 border border-gray-100 rounded-xl shadow-sm bg-white/50">
       <table className="min-w-full divide-y divide-gray-200 text-[13px]">
         <thead>
-          <tr className="bg-slate-50/80 backdrop-blur-sm">
+          <tr className="bg-slate-50/50">
             {headers.map(h => (
-              <th key={h} className="px-5 py-3 text-left font-bold text-slate-600 uppercase tracking-wider text-[11px] border-b border-gray-200">{h}</th>
+              <th key={h} className="px-4 py-2.5 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">{h}</th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-gray-100">
           {data.map((row, i) => (
-            <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+            <tr key={i} className="hover:bg-slate-50/30 transition-colors">
               {headers.map(h => (
-                <td key={h} className="px-5 py-3 text-slate-700 font-medium group-hover:text-[#062a74] transition-colors">{String(row[h])}</td>
+                <td key={h} className="px-4 py-2.5 text-slate-600 font-medium">{String(row[h] ?? '-')}</td>
               ))}
             </tr>
           ))}
@@ -29,28 +29,112 @@ const DataTable = ({ data }) => {
   );
 };
 
+const DataInsightSection = ({ data }) => {
+  if (!data) return null;
+
+  if (Array.isArray(data)) {
+    return <DataTable data={data} />;
+  }
+
+  const { summary, top_performers, bottom_performers } = data;
+  const hasSummary = summary && Object.values(summary).some(v => v !== null && v !== undefined);
+  const hasPerformers = (top_performers && top_performers.length > 0) || (bottom_performers && bottom_performers.length > 0);
+
+  if (!hasSummary && !hasPerformers) return null;
+
+  return (
+    <div className="space-y-6 my-8">
+      {hasSummary && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {Object.entries(summary).map(([key, value]) => {
+            if (value === null || value === undefined) return null;
+            const label = key.replace(/_/g, ' ');
+            const formattedValue = typeof value === 'number' 
+              ? value > 1000 ? value.toLocaleString() : value.toFixed(2)
+              : value;
+            
+            return (
+              <div key={key} className="bg-white border border-slate-100 p-4 rounded-xl shadow-sm">
+                <div className="text-[10px] text-slate-400 font-bold tracking-wider uppercase mb-1">{label}</div>
+                <div className="text-xl font-bold text-[#062a74] tracking-tight">{formattedValue}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {top_performers && top_performers.length > 0 && (
+        <div>
+          <div className="text-[11px] font-bold text-emerald-600 mb-4 tracking-widest uppercase">Top Performers</div>
+          <DataTable data={top_performers} />
+        </div>
+      )}
+
+      {bottom_performers && bottom_performers.length > 0 && (
+        <div>
+          <div className="text-[11px] font-bold text-rose-600 mb-4 tracking-widest uppercase">Underperforming</div>
+          <DataTable data={bottom_performers} />
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ReasoningSection = ({ content }) => {
   if (!content) return null;
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="mb-4 bg-amber-50/50 border border-amber-100 rounded-xl overflow-hidden transition-all duration-300">
+    <div className="mb-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2 flex items-center justify-between text-[13px] font-semibold text-amber-700 hover:bg-amber-100/50 transition-colors"
+        className={`group flex items-center gap-3 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 outline-none ${
+          isOpen 
+          ? 'bg-[#062a74] text-white shadow-[0_8px_20px_rgba(6,42,116,0.25)]' 
+          : 'bg-slate-50 text-slate-400 hover:bg-white hover:text-[#062a74] hover:shadow-[0_4px_15px_rgba(0,0,0,0.05)] active:scale-95'
+        }`}
       >
-        <div className="flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 19l7-7-7-7" />
-            <path d="M5 19l7-7-7-7" />
-          </svg>
-          Reasoning & Strategy
+        <div className="relative h-2 w-2 flex items-center justify-center">
+          <div className={`absolute inset-0 rounded-full opacity-40 ${isOpen ? 'bg-amber-400 animate-ping' : ''}`}></div>
+          <div className={`relative h-1.5 w-1.5 rounded-full transition-colors duration-500 ${isOpen ? 'bg-amber-400' : 'bg-slate-300 group-hover:bg-blue-400'}`}></div>
         </div>
-        <span>{isOpen ? '−' : '+'}</span>
+        
+        {isOpen ? 'Close Logic' : 'View Logic'}
+        
+        <svg 
+          width="10" height="10" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="3.5" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          className={`transition-transform duration-500 ease-out ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
       </button>
+      
       {isOpen && (
-        <div className="px-4 py-3 text-[14px] text-amber-800/80 prose prose-sm max-w-none border-t border-amber-100 antialiased italic">
-          <ReactMarkdown>{content}</ReactMarkdown>
+        <div className="mt-3 p-4 text-[13px] text-slate-500 bg-slate-50/50 rounded-xl border border-slate-100 leading-relaxed italic">
+          <ReactMarkdown
+            components={{
+              p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+              strong: ({ node, ...props }) => {
+                const isTool = String(props.children).includes('Using Tool:');
+                if (isTool) {
+                  return (
+                    <span className="block text-[#062a74] font-bold uppercase text-[10px] mb-2 tracking-wider">
+                      • {props.children}
+                    </span>
+                  );
+                }
+                return <strong className="font-bold text-slate-700" {...props} />;
+              }
+            }}
+          >
+            {content}
+          </ReactMarkdown>
         </div>
       )}
     </div>
@@ -64,13 +148,13 @@ const stripInternalMetadata = (text) => {
   if (!text) return '';
 
   let cleaned = text;
-  // If the agent hallucinated/echoed its tool variables, just strip the keywords instead of nuking the response
-  if (cleaned.toLowerCase().includes('natural_language_query')) {
-    cleaned = cleaned.replace(/natural_language_query/gi, '');
-  }
-  if (cleaned.toLowerCase().includes('original_user_query')) {
-    cleaned = cleaned.replace(/original_user_query/gi, '');
-  }
+  // Strip common technical argument patterns
+  cleaned = cleaned.replace(/days\s*\d+|top_n\s*\d+/gi, '');
+  cleaned = cleaned.replace(/["']?natural_language_query["']?:?\s*/gi, '');
+  cleaned = cleaned.replace(/["']?original_user_query["']?:?\s*/gi, '');
+  cleaned = cleaned.replace(/,\s*,/g, ','); // Clean up double commas
+  cleaned = cleaned.replace(/^[\s,]+|[\s,]+$/g, ''); // Clean up leading/trailing punctuation
+  
   return cleaned.trim();
 };
 
@@ -216,6 +300,19 @@ function ChatInterface() {
                   }
                   return newMessages
                 })
+              } else if (data.type === 'tool_call') {
+                const toolName = data.tool || data.content?.name || data.name;
+                if (toolName) {
+                  aiReasoning += `\n\n**Using Tool:** \`${toolName}\`\n\n`;
+                  setMessages(prev => {
+                    const newMessages = [...prev]
+                    const lastIdx = newMessages.length - 1
+                    if (lastIdx >= 0 && newMessages[lastIdx].role === 'ai') {
+                      newMessages[lastIdx] = { ...newMessages[lastIdx], reasoning: aiReasoning }
+                    }
+                    return newMessages
+                  })
+                }
               } else if (data.type === 'text') {
                 setIsThinking(false)
                 let text = data.content
@@ -327,9 +424,9 @@ function ChatInterface() {
                   </div>
 
                   {/* Message Bubble */}
-                  <div className={`px-4 py-3 rounded-2xl text-[15px] md:text-[16px] leading-relaxed shadow-sm ${msg.role === 'user'
-                    ? 'bg-[#062a74] text-white rounded-tr-sm'
-                    : `bg-white border border-gray-200 text-[#062a74] rounded-tl-sm prose prose-sm max-w-none ${msg.isError ? 'text-red-500 border-red-200' : ''}`
+                  <div className={`px-5 py-4 rounded-2xl text-[15.5px] leading-relaxed transition-all duration-300 ${msg.role === 'user'
+                    ? 'bg-[#062a74] text-white rounded-tr-sm shadow-md'
+                    : `bg-white border border-slate-100 text-[#062a74] rounded-tl-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] prose prose-sm max-w-none ${msg.isError ? 'text-red-500 border-red-200 bg-red-50' : ''}`
                     }`}>
                     {msg.role === 'user' ? (
                       msg.content
@@ -360,18 +457,44 @@ function ChatInterface() {
                               </svg>
                               Query Results
                             </div>
-                            <DataTable data={msg.data} />
+                            <DataInsightSection data={msg.data} />
                           </div>
                         )}
 
                         {msg.content && (
-                          <div className="insights-section mt-5 pt-5 border-t border-gray-100">
-                            <div className="text-[10px] text-[#062a74] mb-3 uppercase tracking-[0.15em] font-black flex items-center gap-2 opacity-70">
-                              <div className="w-1.5 h-1.5 bg-[#062a74] rounded-full"></div>
-                              AI Analysis & Insights
+                          <div className="insights-section mt-10">
+                            <div className="text-[11px] text-[#062a74] uppercase tracking-widest font-bold mb-6 flex items-center gap-3 border-b border-slate-100 pb-2">
+                              AI Insights
                             </div>
-                            <div className="text-[15px] text-[#062a74] leading-relaxed">
-                              <ReactMarkdown>{cleanInsightsContent(msg.content)}</ReactMarkdown>
+                            
+                            <div className="text-[15px] text-[#062a74]/90 leading-relaxed font-medium">
+                              <ReactMarkdown 
+                                components={{
+                                  p: ({node, ...props}) => {
+                                    const text = String(props.children);
+                                    const isHeader = /^(Severity Level|Root Causes|Prioritized Recommendations|Executive Summary|Key Highlights)/i.test(text);
+                                    if (isHeader) {
+                                      return (
+                                        <h4 className="text-[12px] font-bold text-[#062a74] mt-8 mb-4 uppercase tracking-wider">
+                                          {text}
+                                        </h4>
+                                      );
+                                    }
+                                    return <p className="mb-4 last:mb-0" {...props} />;
+                                  },
+                                  strong: ({node, ...props}) => <strong className="font-bold text-[#062a74]" {...props} />,
+                                  li: ({node, ...props}) => (
+                                    <li className="mb-3 flex items-start gap-3">
+                                      <div className="mt-2 w-1 h-1 bg-slate-300 rounded-full flex-shrink-0"></div>
+                                      <span className="flex-1">{props.children}</span>
+                                    </li>
+                                  ),
+                                  ul: ({node, ...props}) => <ul className="mb-6" {...props} />,
+                                  ol: ({node, ...props}) => <ol className="mb-6 list-decimal ml-4" {...props} />,
+                                }}
+                              >
+                                {cleanInsightsContent(msg.content)}
+                              </ReactMarkdown>
                             </div>
                           </div>
                         )}
@@ -435,9 +558,13 @@ function ChatInterface() {
             <button
               onClick={handleSearch}
               disabled={!query.trim() || isThinking}
-              className={`w-[20px] h-[20px] md:w-[24px] md:h-[24px] flex-shrink-0 text-[#062a74] transition-all cursor-pointer ${(!query.trim() || isThinking) ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-70'}`}
+              className={`flex items-center justify-center w-[44px] h-[44px] rounded-xl transition-all duration-300 ${
+                (!query.trim() || isThinking) 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-[#062a74] text-white shadow-[0_4px_12px_rgba(6,42,116,0.3)] hover:shadow-[0_6px_16px_rgba(6,42,116,0.4)] hover:-translate-y-0.5 active:translate-y-0'
+              }`}
             >
-              <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
