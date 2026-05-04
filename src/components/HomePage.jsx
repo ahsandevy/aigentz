@@ -45,7 +45,7 @@ function HomePage() {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 pt-28 sm:pt-32 md:pt-[160px] pb-12 md:pb-20">
+      <div className="relative z-10 pt-16 sm:pt-20 md:pt-20 pb-12 md:pb-20">
         <HeroSection />
         <div className="max-w-[1370px] mx-auto">
           <ChatInterface />
