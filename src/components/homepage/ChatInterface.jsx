@@ -198,7 +198,7 @@ export default function ChatInterface() {
   };
 
   const sendActivationMessage = (accountName) => {
-    const activationQuery = `Activate my "${accountName}" from the available accounts`;
+    const activationQuery = `Activate context for "${accountName}".`;
     // We can't call handleSearch directly with a param easily without refactoring, 
     // so let's use a temporary state or just trigger it.
     // Better: create a reusable sendMessage function.
@@ -444,8 +444,8 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900 h-[500px] border border-gray-200 rounded-[24px] shadow-sm mt-2 mb-8 overflow-hidden">
-      <div className="flex-1 w-full flex flex-col h-full relative">
+    <div className="w-full max-w-5xl mx-auto bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900 min-h-[500px] max-h-[80vh] border border-gray-200 rounded-[24px] shadow-sm mt-2 mb-8 overflow-hidden">
+      <div className="flex-1 w-full flex flex-col relative overflow-hidden">
 
         {/* Header */}
         <div className="flex justify-between items-center py-6 px-4 md:px-8 border-b border-gray-100 bg-[#FAFAFA]/80 backdrop-blur-md sticky top-0 z-20">
@@ -486,75 +486,73 @@ export default function ChatInterface() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col overflow-hidden relative">
-          <div
-            ref={scrollRef}
-            className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
-          >
-            {messages.length === 0 && !streamingMessage && (
-              <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8 animate-in fade-in duration-700">
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
+        >
+          {messages.length === 0 && !streamingMessage && (
+            <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8 animate-in fade-in duration-700">
 
-                <div>
-                  <h3 className="text-2xl font-medium text-gray-900 mb-2 tracking-tight">How can I help?</h3>
-                  <p className="text-gray-500 text-[15px] leading-relaxed">
-                    Query data, run diagnostics, and fetch reports.
-                  </p>
+              <div>
+                <h3 className="text-2xl font-medium text-gray-900 mb-2 tracking-tight">How can I help?</h3>
+                <p className="text-gray-500 text-[15px] leading-relaxed">
+                  Query data, run diagnostics, and fetch reports.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
+          {streamingMessage && <MessageBubble msg={streamingMessage} />}
+
+          {isThinking && (
+            <div className="flex w-full mb-8 justify-start animate-in fade-in duration-300">
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200 shadow-sm mt-1">
+                  <Loader2 size={14} className="animate-spin text-gray-400" />
                 </div>
               </div>
-            )}
+            </div>
+          )}
+        </div>
 
-            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
-            {streamingMessage && <MessageBubble msg={streamingMessage} />}
+        {/*  */}
+        <div className="p-4 md:p-6 bg-white border-t border-gray-100">
+          <div className="max-w-3xl mx-auto relative">
+            <div className="relative flex items-center gap-3 bg-white border border-gray-200 rounded-[24px] p-2 pl-6 shadow-sm transition-all focus-within:shadow-md focus-within:border-gray-300">
+              <textarea
+                ref={inputRef}
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSearch();
+                  }
+                }}
+                placeholder="Ask a question..."
+                className="flex-1 bg-transparent border-none outline-none py-3 text-[15px] text-gray-900 placeholder:text-gray-400 resize-none max-h-32 min-h-[44px]"
+                rows={1}
+                disabled={isThinking}
+              />
 
-            {isThinking && (
-              <div className="flex w-full mb-8 justify-start animate-in fade-in duration-300">
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200 shadow-sm mt-1">
-                    <Loader2 size={14} className="animate-spin text-gray-400" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/*  */}
-          <div className="p-4 md:p-6 bg-white border-t border-gray-100">
-            <div className="max-w-3xl mx-auto relative">
-              <div className="relative flex items-center gap-3 bg-white border border-gray-200 rounded-[24px] p-2 pl-6 shadow-sm transition-all focus-within:shadow-md focus-within:border-gray-300">
-                <textarea
-                  ref={inputRef}
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    e.target.style.height = 'auto';
-                    e.target.style.height = `${e.target.scrollHeight}px`;
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSearch();
-                    }
-                  }}
-                  placeholder="Ask a question..."
-                  className="flex-1 bg-transparent border-none outline-none py-3 text-[15px] text-gray-900 placeholder:text-gray-400 resize-none max-h-32 min-h-[44px]"
-                  rows={1}
-                  disabled={isThinking}
-                />
-
-                <button
-                  onClick={handleSearch}
-                  disabled={!query.trim() || isThinking}
-                  className={`flex items-center justify-center w-10 h-10 mb-0.5 rounded-full transition-all duration-300 self-end ${!query.trim() || isThinking
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95'
-                    }`}
-                >
-                  <Send size={16} className={isThinking ? 'animate-pulse translate-x-0.5' : 'translate-x-0.5'} />
-                </button>
-              </div>
-              <div className="text-center mt-3">
-                <p className="text-[11px] text-gray-400">AI can make mistakes. Verify important data.</p>
-              </div>
+              <button
+                onClick={handleSearch}
+                disabled={!query.trim() || isThinking}
+                className={`flex items-center justify-center w-10 h-10 mb-0.5 rounded-full transition-all duration-300 self-end ${!query.trim() || isThinking
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95'
+                  }`}
+              >
+                <Send size={16} className={isThinking ? 'animate-pulse translate-x-0.5' : 'translate-x-0.5'} />
+              </button>
+            </div>
+            <div className="text-center mt-3">
+              <p className="text-[11px] text-gray-400">AI can make mistakes. Verify important data.</p>
             </div>
           </div>
         </div>
