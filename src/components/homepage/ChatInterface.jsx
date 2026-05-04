@@ -83,7 +83,7 @@ const SQLBlock = ({ query }) => {
  */
 const StepCard = ({ step }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const status = step.status || 'complete'; 
+  const status = step.status || 'complete';
 
   const getStatusIcon = () => {
     switch (status) {
@@ -182,7 +182,7 @@ export default function ChatInterface() {
     const userMsg = { id: Date.now(), role: 'user', content: trimmedQuery };
     setMessages(prev => [...prev, userMsg]);
     setQuery('');
-    
+
     // Reset textarea height
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
@@ -197,7 +197,7 @@ export default function ChatInterface() {
       thinking: '',
       reasoning: '',
       content: '',
-      steps: [], 
+      steps: [],
       sql: null,
       data: null,
       error: null
@@ -402,7 +402,7 @@ export default function ChatInterface() {
   return (
     <div className="w-full max-w-5xl mx-auto bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900 h-[500px] border border-gray-200 rounded-[24px] shadow-sm mt-2 mb-8 overflow-hidden">
       <div className="flex-1 w-full flex flex-col h-full relative">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center py-6 px-4 md:px-8 border-b border-gray-100 bg-[#FAFAFA]/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-3">
@@ -423,7 +423,7 @@ export default function ChatInterface() {
           >
             {messages.length === 0 && !streamingMessage && (
               <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8 animate-in fade-in duration-700">
-                
+
                 <div>
                   <h3 className="text-2xl font-medium text-gray-900 mb-2 tracking-tight">How can I help?</h3>
                   <p className="text-gray-500 text-[15px] leading-relaxed">
@@ -435,7 +435,7 @@ export default function ChatInterface() {
 
             {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
             {streamingMessage && <MessageBubble msg={streamingMessage} />}
-            
+
             {isThinking && (
               <div className="flex w-full mb-8 justify-start animate-in fade-in duration-300">
                 <div className="flex gap-4">
@@ -447,7 +447,7 @@ export default function ChatInterface() {
             )}
           </div>
 
-          {/* Input Area */}
+          {/*  */}
           <div className="p-4 md:p-6 bg-white border-t border-gray-100">
             <div className="max-w-3xl mx-auto relative">
               <div className="relative flex items-center gap-3 bg-white border border-gray-200 rounded-[24px] p-2 pl-6 shadow-sm transition-all focus-within:shadow-md focus-within:border-gray-300">
@@ -474,11 +474,10 @@ export default function ChatInterface() {
                 <button
                   onClick={handleSearch}
                   disabled={!query.trim() || isThinking}
-                  className={`flex items-center justify-center w-10 h-10 mb-0.5 rounded-full transition-all duration-300 self-end ${
-                    !query.trim() || isThinking
+                  className={`flex items-center justify-center w-10 h-10 mb-0.5 rounded-full transition-all duration-300 self-end ${!query.trim() || isThinking
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95'
-                  }`}
+                    }`}
                 >
                   <Send size={16} className={isThinking ? 'animate-pulse translate-x-0.5' : 'translate-x-0.5'} />
                 </button>
