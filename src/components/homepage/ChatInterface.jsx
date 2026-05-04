@@ -153,6 +153,9 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState([]);
   const [isThinking, setIsThinking] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState(null);
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
 
   const scrollRef = useRef(null);
   const sessionIdRef = useRef(null);
@@ -163,7 +166,44 @@ export default function ChatInterface() {
     if (!sessionIdRef.current) {
       sessionIdRef.current = crypto.randomUUID ? crypto.randomUUID() : 'session-' + Date.now();
     }
+    fetchAccounts();
   }, []);
+
+  const fetchAccounts = async () => {
+    setIsLoadingAccounts(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_BASE_URL
+        ? `${import.meta.env.VITE_API_BASE_URL}/api/analytics/mcp/accounts`
+        : '/api/analytics/mcp/accounts';
+      const response = await fetch(API_URL);
+      if (response.ok) {
+        const data = await response.json();
+        setAccounts(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch accounts:', error);
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  };
+
+  const handleAccountChange = (e) => {
+    const accountId = e.target.value;
+    const account = accounts.find(a => a.id === accountId);
+    if (account) {
+      setSelectedAccount(account);
+      // Auto-send activation message
+      sendActivationMessage(account.name);
+    }
+  };
+
+  const sendActivationMessage = (accountName) => {
+    const activationQuery = `Activate my "${accountName}" from the available accounts`;
+    // We can't call handleSearch directly with a param easily without refactoring, 
+    // so let's use a temporary state or just trigger it.
+    // Better: create a reusable sendMessage function.
+    performSearch(activationQuery);
+  };
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -176,7 +216,11 @@ export default function ChatInterface() {
   }, [messages, streamingMessage, scrollToBottom]);
 
   const handleSearch = async () => {
-    const trimmedQuery = query.trim();
+    await performSearch(query);
+  };
+
+  const performSearch = async (searchQuery) => {
+    const trimmedQuery = searchQuery.trim();
     if (!trimmedQuery || isThinking) return;
 
     const userMsg = { id: Date.now(), role: 'user', content: trimmedQuery };
@@ -412,6 +456,32 @@ export default function ChatInterface() {
             <div>
               <h2 className="text-[16px] font-semibold text-gray-900 tracking-tight">Analytics Assistant</h2>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="relative group">
+              <select
+                className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2 pr-10 text-[13px] font-medium text-gray-700 outline-none transition-all focus:border-gray-300 focus:shadow-sm cursor-pointer disabled:bg-gray-50 disabled:text-gray-400"
+                value={selectedAccount?.id || ''}
+                onChange={handleAccountChange}
+                disabled={isLoadingAccounts || isThinking}
+              >
+                <option value="" disabled>Select Ad Account</option>
+                {accounts.map(account => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-gray-600 transition-colors">
+                <ChevronDown size={14} />
+              </div>
+            </div>
+            {isLoadingAccounts && (
+              <div className="animate-spin text-gray-400 ml-1">
+                <Loader2 size={14} />
+              </div>
+            )}
           </div>
         </div>
 
