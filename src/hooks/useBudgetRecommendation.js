@@ -1,17 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { analyticsAPI } from '../services/api'
+import { AI_RECOMMENDATIONS_QUERY_DEFAULTS } from './aiRecommendationsQueryUtils'
 
-export const useBudgetRecommendation = (days = 7) => {
+export const useBudgetRecommendation = () => {
   return useQuery({
-    queryKey: ['budget-reallocation', days],
+    queryKey: ['budget-reallocation'],
     queryFn: async ({ signal }) => {
-      const response = await analyticsAPI.getBudgetReallocationRecommendation(days, signal)
+      const response = await analyticsAPI.getBudgetReallocationRecommendation(signal)
       return response
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: 1, // Only retry once on failure
+    ...AI_RECOMMENDATIONS_QUERY_DEFAULTS,
   })
 }

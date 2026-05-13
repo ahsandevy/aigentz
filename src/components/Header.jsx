@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MetricsGrid from './MetricsGrid'
+import CampaignsDropdown from './CampaignsDropdown'
+import AccountsDropdown from './AccountsDropdown'
 import { analyticsAPI } from '../services/api'
 
 function formatDateLabel(dateStr) {
@@ -13,16 +15,45 @@ function formatDateLabel(dateStr) {
   }
 }
 
+function extractFirstArray(value) {
+  if (Array.isArray(value)) return value
+  if (!value || typeof value !== 'object') return null
+  for (const nested of Object.values(value)) {
+    if (Array.isArray(nested)) return nested
+  }
+  for (const nested of Object.values(value)) {
+    if (nested && typeof nested === 'object') {
+      const found = extractFirstArray(nested)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+function normalizeCampaigns(payload) {
+  return extractFirstArray(payload) || []
+}
+
+function normalizeAccounts(payload) {
+  return extractFirstArray(payload) || []
+}
+
 function Header({ days, onDaysChange }) {
   const navigate = useNavigate()
   const [isSyncing, setIsSyncing] = useState(false)
   const [dataStatus, setDataStatus] = useState(null)
   const [syncMessage, setSyncMessage] = useState(null)
   const [cooldownMessage, setCooldownMessage] = useState(null)
-  const cooldownTimerRef = useRef(null)
+  const [selectedCampaign, setSelectedCampaign] = useState('total')
+  const [selectedAccount, setSelectedAccount] = useState('total')
+  const [campaignOptions, setCampaignOptions] = useState([])
+  const [accountOptions, setAccountOptions] = useState([])
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true)
+  const [loadingAccounts, setLoadingAccounts] = useState(true)
 
   useEffect(() => {
     let cancelled = false
+    const controller = new AbortController()
     const storedSyncRange = sessionStorage.getItem('lastSyncRange')
     if (storedSyncRange) {
       try {
@@ -31,10 +62,44 @@ function Header({ days, onDaysChange }) {
         sessionStorage.removeItem('lastSyncRange')
       } catch (_) { /* ignore */ }
     }
-    analyticsAPI.getDataStatus()
+    analyticsAPI.getDataStatus(controller.signal)
       .then((data) => { if (!cancelled) setDataStatus(data) })
       .catch(() => { if (!cancelled) setDataStatus({}) })
-    return () => { cancelled = true }
+
+    const fetchDropdowns = async () => {
+      setLoadingCampaigns(true)
+      setLoadingAccounts(true)
+      try {
+        const [campaignsData, accountsData] = await Promise.all([
+          analyticsAPI.getMcpCampaigns(controller.signal),
+          analyticsAPI.getMcpAccounts(controller.signal)
+        ])
+        if (!cancelled) {
+          setCampaignOptions(normalizeCampaigns(campaignsData))
+          setAccountOptions(normalizeAccounts(accountsData))
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setCampaignOptions([])
+          setAccountOptions([])
+        }
+        // Ignore aborts during unmount/remount in development strict mode.
+        if (error?.name !== 'CanceledError' && error?.name !== 'AbortError') {
+          console.error('Failed to load dropdown options:', error)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingCampaigns(false)
+          setLoadingAccounts(false)
+        }
+      }
+    }
+
+    fetchDropdowns()
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
   }, [])
 
   const handleSync = async (force = false) => {
@@ -186,8 +251,27 @@ function Header({ days, onDaysChange }) {
           </div>
         )}
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <CampaignsDropdown
+            value={selectedCampaign}
+            onChange={setSelectedCampaign}
+            campaigns={campaignOptions}
+            loading={loadingCampaigns}
+          />
+          <AccountsDropdown
+            value={selectedAccount}
+            onChange={setSelectedAccount}
+            accounts={accountOptions}
+            loading={loadingAccounts}
+          />
+        </div>
+
         {/* Metric Cards Grid */}
-        <MetricsGrid days={days} />
+        <MetricsGrid
+          days={days}
+          selectedCampaign={selectedCampaign}
+          selectedAccount={selectedAccount}
+        />
       </div>
       {/* Cooldown toast */}
       {cooldownMessage && (

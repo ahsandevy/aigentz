@@ -1,17 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { analyticsAPI } from '../services/api'
+import { AI_RECOMMENDATIONS_QUERY_DEFAULTS } from './aiRecommendationsQueryUtils'
 
-export const useCreativeAnalysisRecommendation = (days = 7) => {
+export const useCreativeAnalysisRecommendation = () => {
   return useQuery({
-    queryKey: ['creative-analysis', days],
+    queryKey: ['creative-analysis'],
     queryFn: async ({ signal }) => {
-      const response = await analyticsAPI.getCreativeAnalysisRecommendation(days, signal)
+      const response = await analyticsAPI.getCreativeAnalysisRecommendation(signal)
       return response
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: 1, // Only retry once on failure
+    ...AI_RECOMMENDATIONS_QUERY_DEFAULTS,
   })
 }

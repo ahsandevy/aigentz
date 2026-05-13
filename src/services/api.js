@@ -56,6 +56,18 @@ export const analyticsAPI = {
         }
     },
 
+    // Campaign-level diagnostic info for dashboard insights section
+    getCampaignLevelInfo: async (signal) => {
+        try {
+            const response = await api.get('/campaign-level-info', { signal });
+            return response.data;
+        } catch (error) {
+            if (axios.isCancel(error)) return null;
+            console.error('Error fetching campaign-level info:', error);
+            throw error;
+        }
+    },
+
     // Campaigns
     getCampaigns: async (signal) => {
         try {
@@ -64,6 +76,54 @@ export const analyticsAPI = {
         } catch (error) {
             if (axios.isCancel(error)) return null;
             console.error('Error fetching campaigns:', error);
+            throw error;
+        }
+    },
+
+    // MCP dropdown data
+    getMcpCampaigns: async (signal) => {
+        try {
+            const response = await api.get('/mcp/campaigns', { signal });
+            return response.data;
+        } catch (error) {
+            if (axios.isCancel(error)) return null;
+            console.error('Error fetching MCP campaigns:', error);
+            throw error;
+        }
+    },
+
+    getMcpAccounts: async (signal) => {
+        try {
+            const response = await api.get('/mcp/accounts', { signal });
+            return response.data;
+        } catch (error) {
+            if (axios.isCancel(error)) return null;
+            console.error('Error fetching MCP accounts:', error);
+            throw error;
+        }
+    },
+
+    // Header metrics filtered by selected dropdown values.
+    // If campaign is selected, fetch campaign-level header metrics.
+    // Account is currently reserved for future backend support.
+    getHeaderMetricsBySelection: async (days, campaign = 'total', account = 'total', signal) => {
+        try {
+            let response;
+            if (campaign && campaign !== 'total') {
+                response = await api.get(`/campaign/${campaign}/header-metrics`, {
+                    params: { days },
+                    signal
+                });
+            } else {
+                response = await api.get('/header-metrics', {
+                    params: { days },
+                    signal
+                });
+            }
+            return response.data;
+        } catch (error) {
+            if (axios.isCancel(error)) return null;
+            console.error('Error fetching filtered header metrics:', error);
             throw error;
         }
     },
@@ -218,9 +278,9 @@ export const analyticsAPI = {
     },
 
     // Budget Reallocation Recommendation
-    getBudgetReallocationRecommendation: async (days = 7, signal) => {
+    getBudgetReallocationRecommendation: async (signal) => {
         try {
-            const response = await api.get('/budget-reallocation/recommendation', { params: { days }, signal });
+            const response = await api.get('/budget-reallocation/recommendation', { signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;
@@ -230,9 +290,9 @@ export const analyticsAPI = {
     },
 
     // Creative Analysis Recommendation
-    getCreativeAnalysisRecommendation: async (days = 7, signal) => {
+    getCreativeAnalysisRecommendation: async (signal) => {
         try {
-            const response = await api.get('/creative-analysis/recommendation', { params: { days }, signal });
+            const response = await api.get('/creative-analysis/recommendation', { signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;
@@ -242,9 +302,9 @@ export const analyticsAPI = {
     },
 
     // Placement Optimization Recommendation
-    getPlacementOptimizationRecommendation: async (days = 7, signal) => {
+    getPlacementOptimizationRecommendation: async (signal) => {
         try {
-            const response = await api.get('/placement-optimization/recommendation', { params: { days }, signal });
+            const response = await api.get('/placement-optimization/recommendation', { signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;
@@ -254,9 +314,9 @@ export const analyticsAPI = {
     },
 
     // Audience Optimization Recommendation
-    getAudienceOptimizationRecommendation: async (days = 7, signal) => {
+    getAudienceOptimizationRecommendation: async (signal) => {
         try {
-            const response = await api.get('/audience-optimization/recommendation', { params: { days }, signal });
+            const response = await api.get('/audience-optimization/recommendation', { signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;
@@ -266,9 +326,9 @@ export const analyticsAPI = {
     },
 
     // Bidding Strategy Optimization Recommendation
-    getBiddingStrategyOptimizationRecommendation: async (days = 7, signal) => {
+    getBiddingStrategyOptimizationRecommendation: async (signal) => {
         try {
-            const response = await api.get('/bidding-strategy-optimization/recommendation', { params: { days }, signal });
+            const response = await api.get('/bidding-strategy-optimization/recommendation', { signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;
@@ -278,9 +338,9 @@ export const analyticsAPI = {
     },
 
     // Dayparting Optimization Recommendation
-    getDaypartingOptimizationRecommendation: async (days = 7, signal) => {
+    getDaypartingOptimizationRecommendation: async (signal) => {
         try {
-            const response = await api.get('/dayparting/recommendation', { params: { days }, signal });
+            const response = await api.get('/dayparting/recommendation', { signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;
@@ -302,9 +362,9 @@ export const analyticsAPI = {
     },
 
     // Executive Brief
-    getExecutiveBrief: async (days = 7, forceRefresh = false, signal) => {
+    getExecutiveBrief: async (forceRefresh = false, signal) => {
         try {
-            const params = { days };
+            const params = {};
             if (forceRefresh) {
                 params.force_refresh = true;
             }

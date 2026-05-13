@@ -16,24 +16,25 @@ import { useBiddingStrategyOptimizationRecommendation } from '../hooks/useBiddin
 import { useDaypartingOptimizationRecommendation } from '../hooks/useDaypartingOptimizationRecommendation'
 import { useAllRecommendationsPriorities } from '../hooks/useAllRecommendationsPriorities'
 import { useAppliedRecommendations } from '../hooks/useAppliedRecommendations'
+import { AI_RECOMMENDATIONS_APPLIED_LIMIT } from '../hooks/aiRecommendationsQueryUtils'
 import { analyticsAPI } from '../services/api'
 import { useModal } from '../context/ModalContext'
 
 function AIRecommendations({ days = 7 }) {
   const { showAlert, showConfirm, showSuccess, showError } = useModal()
   const queryClient = useQueryClient()
-  const { data, isLoading, error, refetch: refetchBudget } = useBudgetRecommendation(days)
-  const { data: creativeData, isLoading: creativeIsLoading, error: creativeError, refetch: refetchCreative } = useCreativeAnalysisRecommendation(days)
-  const { data: placementData, isLoading: placementIsLoading, error: placementError, refetch: refetchPlacement } = usePlacementOptimizationRecommendation(days)
-  const { data: audienceData, isLoading: audienceIsLoading, error: audienceError, refetch: refetchAudience } = useAudienceOptimizationRecommendation(days)
-  const { data: biddingData, isLoading: biddingIsLoading, error: biddingError, refetch: refetchBidding } = useBiddingStrategyOptimizationRecommendation(days)
-  const { data: daypartingData, isLoading: daypartingIsLoading, error: daypartingError, refetch: refetchDayparting } = useDaypartingOptimizationRecommendation(days)
+  const { data, isLoading, error, refetch: refetchBudget } = useBudgetRecommendation()
+  const { data: creativeData, isLoading: creativeIsLoading, error: creativeError, refetch: refetchCreative } = useCreativeAnalysisRecommendation()
+  const { data: placementData, isLoading: placementIsLoading, error: placementError, refetch: refetchPlacement } = usePlacementOptimizationRecommendation()
+  const { data: audienceData, isLoading: audienceIsLoading, error: audienceError, refetch: refetchAudience } = useAudienceOptimizationRecommendation()
+  const { data: biddingData, isLoading: biddingIsLoading, error: biddingError, refetch: refetchBidding } = useBiddingStrategyOptimizationRecommendation()
+  const { data: daypartingData, isLoading: daypartingIsLoading, error: daypartingError, refetch: refetchDayparting } = useDaypartingOptimizationRecommendation()
 
   // Fetch priorities from the all recommendations endpoint using React Query
   const { data: priorities = {}, isLoading: prioritiesLoading, refetch: refetchPriorities } = useAllRecommendationsPriorities(days)
 
   // Fetch applied recommendations using React Query
-  const { data: appliedRecommendations = [], isLoading: appliedLoading, refetch: refetchAppliedRecommendations } = useAppliedRecommendations(50)
+  const { data: appliedRecommendations = [], isLoading: appliedLoading, refetch: refetchAppliedRecommendations } = useAppliedRecommendations(AI_RECOMMENDATIONS_APPLIED_LIMIT)
   const [selectedBudgetRecommendation, setSelectedBudgetRecommendation] = useState(null)
   const [selectedCreativeRecommendation, setSelectedCreativeRecommendation] = useState(null)
   const [selectedPlacementRecommendation, setSelectedPlacementRecommendation] = useState(null)
@@ -804,18 +805,18 @@ function AIRecommendations({ days = 7 }) {
 
         // Map recommendation types to their refetch functions and query keys
         const recommendationTypeMap = {
-          'budget': { refetch: refetchBudget, queryKey: ['budget-reallocation', 7] },
-          'creative': { refetch: refetchCreative, queryKey: ['creative-analysis', 7] },
-          'placement': { refetch: refetchPlacement, queryKey: ['placement-optimization', 7] },
-          'audience': { refetch: refetchAudience, queryKey: ['audience-optimization', 7] },
-          'bidding': { refetch: refetchBidding, queryKey: ['bidding-strategy-optimization', 7] },
-          'dayparting': { refetch: refetchDayparting, queryKey: ['dayparting-optimization', 7] },
-          'budget_reallocation': { refetch: refetchBudget, queryKey: ['budget-reallocation', 7] },
-          'creative_analysis': { refetch: refetchCreative, queryKey: ['creative-analysis', 7] },
-          'placement_optimization': { refetch: refetchPlacement, queryKey: ['placement-optimization', 7] },
-          'audience_optimization': { refetch: refetchAudience, queryKey: ['audience-optimization', 7] },
-          'bidding_strategy_optimization': { refetch: refetchBidding, queryKey: ['bidding-strategy-optimization', 7] },
-          'dayparting_optimization': { refetch: refetchDayparting, queryKey: ['dayparting-optimization', 7] }
+          'budget': { refetch: refetchBudget, queryKey: ['budget-reallocation'] },
+          'creative': { refetch: refetchCreative, queryKey: ['creative-analysis'] },
+          'placement': { refetch: refetchPlacement, queryKey: ['placement-optimization'] },
+          'audience': { refetch: refetchAudience, queryKey: ['audience-optimization'] },
+          'bidding': { refetch: refetchBidding, queryKey: ['bidding-strategy-optimization'] },
+          'dayparting': { refetch: refetchDayparting, queryKey: ['dayparting-optimization'] },
+          'budget_reallocation': { refetch: refetchBudget, queryKey: ['budget-reallocation'] },
+          'creative_analysis': { refetch: refetchCreative, queryKey: ['creative-analysis'] },
+          'placement_optimization': { refetch: refetchPlacement, queryKey: ['placement-optimization'] },
+          'audience_optimization': { refetch: refetchAudience, queryKey: ['audience-optimization'] },
+          'bidding_strategy_optimization': { refetch: refetchBidding, queryKey: ['bidding-strategy-optimization'] },
+          'dayparting_optimization': { refetch: refetchDayparting, queryKey: ['dayparting-optimization'] }
         }
 
         // OPTIMIZED: Only refetch what's necessary based on backend response
@@ -834,9 +835,9 @@ function AIRecommendations({ days = 7 }) {
             // Use Promise.all for concurrent invalidation
             await Promise.all([
               queryClient.invalidateQueries({ queryKey: regeneratedTypeConfig.queryKey }),
-              queryClient.invalidateQueries({ queryKey: ['all-recommendations-priorities', 7] }),
-              queryClient.invalidateQueries({ queryKey: ['applied-recommendations', 50] }),
-              queryClient.invalidateQueries({ queryKey: ['weekly-summary', 7] })
+              queryClient.invalidateQueries({ queryKey: ['all-recommendations-priorities', days] }),
+              queryClient.invalidateQueries({ queryKey: ['applied-recommendations', AI_RECOMMENDATIONS_APPLIED_LIMIT] }),
+              queryClient.invalidateQueries({ queryKey: ['weekly-summary', days] })
             ])
 
             console.log('Invalidation complete - active observers will refetch')
@@ -852,15 +853,15 @@ function AIRecommendations({ days = 7 }) {
             console.warn('Unknown recommendation type - falling back to full invalidation:', result.new_recommendation_type)
 
             const queriesToInvalidate = [
-              ['budget-reallocation', 7],
-              ['creative-analysis', 7],
-              ['placement-optimization', 7],
-              ['audience-optimization', 7],
-              ['bidding-strategy-optimization', 7],
-              ['dayparting-optimization', 7],
-              ['all-recommendations-priorities', 7],
-              ['applied-recommendations', 50],
-              ['weekly-summary', 7]
+              ['budget-reallocation'],
+              ['creative-analysis'],
+              ['placement-optimization'],
+              ['audience-optimization'],
+              ['bidding-strategy-optimization'],
+              ['dayparting-optimization'],
+              ['all-recommendations-priorities', days],
+              ['applied-recommendations', AI_RECOMMENDATIONS_APPLIED_LIMIT],
+              ['weekly-summary', days]
             ]
 
             await Promise.all(queriesToInvalidate.map(key => queryClient.invalidateQueries({ queryKey: key })))
@@ -874,7 +875,7 @@ function AIRecommendations({ days = 7 }) {
           // Find which type was approved based on the category
           const approvedTypeConfig = category ? recommendationTypeMap[category.toLowerCase()] : null
 
-          const queriesToInvalidate = [['applied-recommendations', 50], ['weekly-summary', 7]]
+          const queriesToInvalidate = [['applied-recommendations', AI_RECOMMENDATIONS_APPLIED_LIMIT], ['weekly-summary', days]]
           if (approvedTypeConfig) {
             queriesToInvalidate.push(approvedTypeConfig.queryKey)
           }
@@ -953,14 +954,14 @@ function AIRecommendations({ days = 7 }) {
         console.log('Reverting recommendation - invalidating all recommendation types')
 
         const queriesToInvalidate = [
-          ['budget-reallocation', 7],
-          ['creative-analysis', 7],
-          ['placement-optimization', 7],
-          ['audience-optimization', 7],
-          ['bidding-strategy-optimization', 7],
-          ['dayparting-optimization', 7],
-          ['applied-recommendations', 50],
-          ['weekly-summary', 7]
+          ['budget-reallocation'],
+          ['creative-analysis'],
+          ['placement-optimization'],
+          ['audience-optimization'],
+          ['bidding-strategy-optimization'],
+          ['dayparting-optimization'],
+          ['applied-recommendations', AI_RECOMMENDATIONS_APPLIED_LIMIT],
+          ['weekly-summary', days]
         ]
 
         // Invalidate all queries to force refetch for all active observers

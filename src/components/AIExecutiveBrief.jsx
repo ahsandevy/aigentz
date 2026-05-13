@@ -1,49 +1,56 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { analyticsAPI } from '../services/api'
+import { useExecutiveBrief } from '../hooks/useExecutiveBrief'
+import { EXECUTIVE_BRIEF_QUERY_KEY } from '../hooks/executiveBriefQueryUtils'
 
 function AIExecutiveBrief({ days = 7 }) {
-  const [brief, setBrief] = useState(null)
+  const queryClient = useQueryClient()
+  const { data, isLoading, isError, error: queryError, refetch, isFetching } = useExecutiveBrief()
+
   const [boardSummary, setBoardSummary] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [generatingSummary, setGeneratingSummary] = useState(false)
-  const [error, setError] = useState(null)
   const [summaryError, setSummaryError] = useState(null)
   const [showBoardSummary, setShowBoardSummary] = useState(false)
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchExecutiveBrief(false, controller.signal);
-    return () => controller.abort();
-  }, [days])
+  const { brief, error } = useMemo(() => {
+    const raw = data
+    if (raw?.error) {
+      return {
+        brief: null,
+        error:
+          raw.message ||
+          raw.error ||
+          'No data available. Please sync performance data and try again.',
+      }
+    }
+    if (raw) {
+      return { brief: raw, error: null }
+    }
+    return { brief: null, error: null }
+  }, [data])
 
-  const fetchExecutiveBrief = async (forceRefresh = false, signal) => {
+  const fetchError =
+    error ||
+    (isError
+      ? queryError?.message || 'Failed to generate executive brief. Please try again.'
+      : null)
+
+  const loading = isLoading && !brief
+  const showRefreshOverlay =
+    refreshing || (!!brief && isFetching && !isLoading)
+
+  const handleRefresh = async () => {
     try {
-      if (forceRefresh) {
-        setRefreshing(true)
-      } else {
-        setLoading(true)
-      }
-      setError(null)
-      const data = await analyticsAPI.getExecutiveBrief(days, forceRefresh, signal)
-      if (data?.error) {
-        setBrief(null)
-        setError(data.message || data.error || 'No data available. Please sync performance data and try again.')
-      } else if (data) {
-        setBrief(data)
-      }
+      setRefreshing(true)
+      const res = await analyticsAPI.getExecutiveBrief(true)
+      queryClient.setQueryData(EXECUTIVE_BRIEF_QUERY_KEY, res)
     } catch (err) {
-      if (err.name === 'AbortError') return;
-      console.error('Error fetching executive brief:', err)
-      setError('Failed to generate executive brief. Please try again.')
+      console.error('Error refreshing executive brief:', err)
     } finally {
-      setLoading(false)
       setRefreshing(false)
     }
-  }
-
-  const handleRefresh = () => {
-    fetchExecutiveBrief(true)
   }
 
   const handleGenerateBoardSummary = async (forceRefresh = false) => {
@@ -132,7 +139,7 @@ function AIExecutiveBrief({ days = 7 }) {
     )
   }
 
-  if (error) {
+  if (fetchError) {
     return (
       <section className="mb-8">
         <div className="flex items-center gap-3 mb-6">
@@ -143,9 +150,10 @@ function AIExecutiveBrief({ days = 7 }) {
         </div>
         <div className="bg-[#fafafa] rounded-lg border border-[#bfdbfe] p-8 shadow-[0px_0.871px_1.742px_0px_rgba(0,0,0,0.05)]">
           <div className="text-center py-8">
-            <p className="text-red-600 mb-4">{error}</p>
+            <p className="text-red-600 mb-4">{fetchError}</p>
             <button
-              onClick={fetchExecutiveBrief}
+              type="button"
+              onClick={() => refetch()}
               className="bg-[#1e4a79] text-white px-6 py-2 rounded-lg hover:bg-[#1e3a69] transition-colors"
             >
               Try Again
@@ -175,11 +183,11 @@ function AIExecutiveBrief({ days = 7 }) {
           </span>
           <button
             onClick={handleRefresh}
-            disabled={loading || refreshing}
+            disabled={loading || refreshing || showRefreshOverlay}
             className="flex items-center gap-2 px-4 py-2 bg-[#1e4a79] text-white rounded-lg hover:bg-[#1e3a69] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Refresh executive brief"
           >
-            {refreshing ? (
+            {showRefreshOverlay ? (
               <>
                 <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -212,7 +220,7 @@ function AIExecutiveBrief({ days = 7 }) {
       </div>
 
       <div className="bg-[#fafafa] rounded-lg border border-[#bfdbfe] p-8 shadow-[0px_0.871px_1.742px_0px_rgba(0,0,0,0.05)] relative">
-        {refreshing && (
+        {showRefreshOverlay && (
           <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
             <div className="flex flex-col items-center gap-3">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e4a79]"></div>

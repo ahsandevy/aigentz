@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { analyticsAPI } from '../services/api'
-import { useCampaigns, useAdSets, useAds, useAudiences } from '../hooks/usePerformanceData'
+import { usePerformanceExplorer } from '../hooks/usePerformanceData'
 
-function PerformanceExplorer({ days = 7 }) {
+function PerformanceExplorer({ days = 30 }) {
   const [activeTab, setActiveTab] = useState('Campaigns')
   const [search, setSearch] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -10,21 +10,25 @@ function PerformanceExplorer({ days = 7 }) {
   const [selectedAssessment, setSelectedAssessment] = useState(null)
   const [selectedScalingItem, setSelectedScalingItem] = useState(null)
 
-  // Use React Query hooks - data is automatically cached
-  const { data: campaigns = [], isLoading: campaignsLoading } = useCampaigns(days)
-  const { data: adSets = [], isLoading: adSetsLoading } = useAdSets(days)
-  const { data: ads = [], isLoading: adsLoading } = useAds(days)
   const {
-    data: audiences = [],
-    isLoading: audiencesLoading,
+    campaigns,
+    adSets,
+    ads,
+    audiences,
+    campaignsLoading,
+    adSetsLoading,
+    adsLoading,
+    audiencesLoading,
+    isFetchingAny,
     refreshAudienceLLM,
     refreshingAudienceIds,
     refreshAllAudiencesLLM,
-    isRefreshingAll
-  } = useAudiences(days)
+    isRefreshingAll,
+  } = usePerformanceExplorer(days)
 
-  // Determine loading state based on active tab
+  // Show table loading when any explorer query is in flight (initial load, stale remount, or refetch)
   const loading = useMemo(() => {
+    if (isFetchingAny) return true
     switch (activeTab) {
       case 'Campaigns':
         return campaignsLoading
@@ -37,7 +41,14 @@ function PerformanceExplorer({ days = 7 }) {
       default:
         return false
     }
-  }, [activeTab, campaignsLoading, adSetsLoading, adsLoading, audiencesLoading])
+  }, [
+    isFetchingAny,
+    activeTab,
+    campaignsLoading,
+    adSetsLoading,
+    adsLoading,
+    audiencesLoading,
+  ])
 
   const handleAIRequest = async (campaignId) => {
     try {

@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { analyticsAPI } from '../services/api'
+import {
+  AI_RECOMMENDATIONS_APPLIED_LIMIT,
+  AI_RECOMMENDATIONS_QUERY_DEFAULTS,
+} from './aiRecommendationsQueryUtils'
 
-export const useAppliedRecommendations = (limit = 50) => {
+export const useAppliedRecommendations = (limit = AI_RECOMMENDATIONS_APPLIED_LIMIT) => {
   return useQuery({
     queryKey: ['applied-recommendations', limit],
     queryFn: async ({ signal }) => {
@@ -12,10 +16,6 @@ export const useAppliedRecommendations = (limit = 50) => {
       }
       return []
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: 1, // Only retry once on failure
+    ...AI_RECOMMENDATIONS_QUERY_DEFAULTS,
   })
 }

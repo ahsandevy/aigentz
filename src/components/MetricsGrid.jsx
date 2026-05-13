@@ -13,7 +13,7 @@ const STATIC_METRICS = {
   reach_efficiency: { value: 35 }
 }
 
-function MetricsGrid({ days = 7 }) {
+function MetricsGrid({ days = 30, selectedCampaign = 'total', selectedAccount = 'total' }) {
   const [metrics, setMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [usingFallback, setUsingFallback] = useState(false)
@@ -22,7 +22,13 @@ function MetricsGrid({ days = 7 }) {
     const fetchMetrics = async () => {
       try {
         setLoading(true)
-        const data = await analyticsAPI.getHeaderMetrics(days)
+        let data
+        try {
+          data = await analyticsAPI.getHeaderMetricsBySelection(days, selectedCampaign, selectedAccount)
+        } catch (selectionError) {
+          console.warn('Filtered header metrics unavailable; using default header metrics.', selectionError)
+          data = await analyticsAPI.getHeaderMetrics(days)
+        }
         setMetrics(data)
         setUsingFallback(false)
       } catch (err) {
@@ -35,7 +41,7 @@ function MetricsGrid({ days = 7 }) {
     }
 
     fetchMetrics()
-  }, [days])
+  }, [days, selectedCampaign, selectedAccount])
 
   if (loading) {
     return (
