@@ -1,17 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { analyticsAPI } from '../services/api'
+import { AI_RECOMMENDATIONS_QUERY_DEFAULTS } from './aiRecommendationsQueryUtils'
 
-export const useAudienceOptimizationRecommendation = (days = 7) => {
+export const useAudienceOptimizationRecommendation = () => {
   return useQuery({
-    queryKey: ['audience-optimization', days],
+    queryKey: ['audience-optimization'],
     queryFn: async ({ signal }) => {
-      const response = await analyticsAPI.getAudienceOptimizationRecommendation(days, signal)
+      const response = await analyticsAPI.getAudienceOptimizationRecommendation(signal)
       return response
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: 1, // Only retry once on failure
+    ...AI_RECOMMENDATIONS_QUERY_DEFAULTS,
   })
 }

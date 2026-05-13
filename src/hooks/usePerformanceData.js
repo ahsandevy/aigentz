@@ -1,198 +1,226 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { analyticsAPI } from '../services/api'
 
-// Shared query options for all Performance Explorer queries
-const sharedQueryOptions = {
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
-  refetchOnWindowFocus: false,
-  refetchOnMount: false,
+/** Same value as `sharedQueryOptions.staleTime` — use for “still fresh” checks outside the hook. */
+export const PERFORMANCE_EXPLORER_STALE_MS = 5 * 60 * 1000
+
+/** Prefix for all Performance Explorer queries */
+export const PERFORMANCE_EXPLORER_QUERY_KEY = ['performance-explorer']
+
+export const getPerformanceExplorerQueryKeys = (days) => [
+  [...PERFORMANCE_EXPLORER_QUERY_KEY, 'campaigns', days],
+  [...PERFORMANCE_EXPLORER_QUERY_KEY, 'adsets', days],
+  [...PERFORMANCE_EXPLORER_QUERY_KEY, 'ads', days],
+  [...PERFORMANCE_EXPLORER_QUERY_KEY, 'audiences', days],
+]
+
+/** Matches React Query “fresh” when PE is mounted; falls back to dataUpdatedAt if no observers yet. */
+const isPerformanceExplorerQueryFresh = (query, staleMs) => {
+  if (!query || query.state.status !== 'success') return false
+  if (query.getObserversCount() > 0) {
+    return !query.isStale()
+  }
+  const updated = query.state.dataUpdatedAt
+  return (
+    updated > 0 &&
+    Date.now() - updated < staleMs &&
+    !query.state.isInvalidated
+  )
 }
 
-// Use parallel queries hook - fetches all 4 endpoints simultaneously
-// React Query's useQueries executes all queries in parallel by default
-const usePerformanceQueries = (days = 7) => {
-  return useQueries({
+/**
+ * True when all four PE queries exist, succeeded, and are still fresh (within staleTime).
+ */
+export const performanceExplorerQueriesAreFresh = (queryClient, days) => {
+  const staleMs = PERFORMANCE_EXPLORER_STALE_MS
+  const cache = queryClient.getQueryCache()
+  for (const key of getPerformanceExplorerQueryKeys(days)) {
+    const query = cache.find({ queryKey: key, exact: true })
+    if (!isPerformanceExplorerQueryFresh(query, staleMs)) return false
+  }
+  return true
+}
+
+/** Latest `dataUpdatedAt` among the four queries (ms), or null if any query is missing / not success. */
+export const getPerformanceExplorerLatestDataUpdatedAt = (queryClient, days) => {
+  const cache = queryClient.getQueryCache()
+  let latest = 0
+  for (const key of getPerformanceExplorerQueryKeys(days)) {
+    const query = cache.find({ queryKey: key, exact: true })
+    if (!query || query.state.status !== 'success' || !query.state.dataUpdatedAt) {
+      return null
+    }
+    latest = Math.max(latest, query.state.dataUpdatedAt)
+  }
+  return latest || null
+}
+
+// Shared query options for all Performance Explorer queries
+const sharedQueryOptions = {
+  staleTime: PERFORMANCE_EXPLORER_STALE_MS, // while fresh, remount does not trigger HTTP
+  gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
+  refetchOnWindowFocus: false,
+  // Refetch on mount only when data is stale (staleTime elapsed); fresh cache = no refetch
+  refetchOnMount: true,
+}
+
+const normalizeCampaigns = (raw) =>
+  Array.isArray(raw) ? raw : raw?.campaigns ?? raw?.data ?? []
+
+const normalizeAdSets = (raw) =>
+  Array.isArray(raw) ? raw : raw?.adsets ?? raw?.data ?? []
+
+const normalizeAds = (raw) =>
+  Array.isArray(raw) ? raw : raw?.ads ?? raw?.data ?? []
+
+const normalizeAudiences = (raw) =>
+  Array.isArray(raw) ? raw : raw?.audiences ?? raw?.data ?? []
+
+/**
+ * Single useQueries run: all four Performance Explorer endpoints in parallel.
+ * Includes audience LLM refresh mutations (cache updates on same audience query key).
+ */
+export const usePerformanceExplorer = (days = 30) => {
+  const queryClient = useQueryClient()
+
+  const queries = useQueries({
     queries: [
       {
-        queryKey: ['performance-explorer', 'campaigns', days],
-        queryFn: async () => {
-          // analyticsAPI methods already return response.data
-          const data = await analyticsAPI.getPerformanceExplorer(days)
-          return data
-        },
+        queryKey: [...PERFORMANCE_EXPLORER_QUERY_KEY, 'campaigns', days],
+        queryFn: () => analyticsAPI.getPerformanceExplorer(days),
         ...sharedQueryOptions,
       },
       {
-        queryKey: ['performance-explorer', 'adsets', days],
-        queryFn: async () => {
-          const data = await analyticsAPI.getPerformanceAdSets(days)
-          return data
-        },
+        queryKey: [...PERFORMANCE_EXPLORER_QUERY_KEY, 'adsets', days],
+        queryFn: () => analyticsAPI.getPerformanceAdSets(days),
         ...sharedQueryOptions,
       },
       {
-        queryKey: ['performance-explorer', 'ads', days],
-        queryFn: async () => {
-          const data = await analyticsAPI.getPerformanceAds(days)
-          return data
-        },
+        queryKey: [...PERFORMANCE_EXPLORER_QUERY_KEY, 'ads', days],
+        queryFn: () => analyticsAPI.getPerformanceAds(days),
         ...sharedQueryOptions,
       },
       {
-        queryKey: ['performance-explorer', 'audiences', days],
-        queryFn: async () => {
-          const data = await analyticsAPI.getPerformanceAudiences(days)
-          return data
-        },
+        queryKey: [...PERFORMANCE_EXPLORER_QUERY_KEY, 'audiences', days],
+        queryFn: () => analyticsAPI.getPerformanceAudiences(days),
         ...sharedQueryOptions,
       },
     ],
   })
-}
 
-// Hook for Campaigns - uses parallel queries but returns only campaigns data
-export const useCampaigns = (days = 7) => {
-  const queries = usePerformanceQueries(days)
-  const campaignsQuery = queries[0]
+  const [campaignsQuery, adsetsQuery, adsQuery, audiencesQuery] = queries
 
-  const raw = campaignsQuery.data
-  const campaigns =
-    Array.isArray(raw)
-      ? raw
-      : raw?.campaigns ??
-        raw?.data ??
-        []
+  const campaigns = useMemo(
+    () => normalizeCampaigns(campaignsQuery.data),
+    [campaignsQuery.data]
+  )
+  const adSets = useMemo(() => normalizeAdSets(adsetsQuery.data), [adsetsQuery.data])
+  const ads = useMemo(() => normalizeAds(adsQuery.data), [adsQuery.data])
+  const audiences = useMemo(
+    () => normalizeAudiences(audiencesQuery.data),
+    [audiencesQuery.data]
+  )
 
-  return {
-    data: campaigns,
-    isLoading: campaignsQuery.isLoading,
-    isError: campaignsQuery.isError,
-    error: campaignsQuery.error,
-    refetch: campaignsQuery.refetch,
-  }
-}
+  const refetchAll = useCallback(async () => {
+    await Promise.all([
+      campaignsQuery.refetch(),
+      adsetsQuery.refetch(),
+      adsQuery.refetch(),
+      audiencesQuery.refetch(),
+    ])
+  }, [
+    campaignsQuery.refetch,
+    adsetsQuery.refetch,
+    adsQuery.refetch,
+    audiencesQuery.refetch,
+  ])
 
-// Hook for Ad Sets - uses parallel queries but returns only adsets data
-export const useAdSets = (days = 7) => {
-  const queries = usePerformanceQueries(days)
-  const adsetsQuery = queries[1]
+  const audienceQueryKey = useMemo(
+    () => [...PERFORMANCE_EXPLORER_QUERY_KEY, 'audiences', days],
+    [days]
+  )
 
-  const raw = adsetsQuery.data
-  const adsets =
-    Array.isArray(raw)
-      ? raw
-      : raw?.adsets ??
-        raw?.data ??
-        []
-
-  return {
-    data: adsets,
-    isLoading: adsetsQuery.isLoading,
-    isError: adsetsQuery.isError,
-    error: adsetsQuery.error,
-    refetch: adsetsQuery.refetch,
-  }
-}
-
-// Hook for Ads - uses parallel queries but returns only ads data
-export const useAds = (days = 7) => {
-  const queries = usePerformanceQueries(days)
-  const adsQuery = queries[2]
-
-  const raw = adsQuery.data
-  const ads =
-    Array.isArray(raw)
-      ? raw
-      : raw?.ads ??
-        raw?.data ??
-        []
-
-  return {
-    data: ads,
-    isLoading: adsQuery.isLoading,
-    isError: adsQuery.isError,
-    error: adsQuery.error,
-    refetch: adsQuery.refetch,
-  }
-}
-
-// Hook for Audiences - uses parallel queries but returns only audiences data
-export const useAudiences = (days = 7) => {
-  const queryClient = useQueryClient()
-  const queries = usePerformanceQueries(days)
-  const audiencesQuery = queries[3]
-
-  // Mutation for refreshing individual audience LLM
   const refreshLLMMutation = useMutation({
     mutationFn: async (audienceId) => {
       return await analyticsAPI.refreshAudienceLLM(audienceId, days)
     },
     onSuccess: (updatedAudience, audienceId) => {
-      // Optimistically update the cache
-      queryClient.setQueryData(['performance-explorer', 'audiences', days], (old) => {
+      queryClient.setQueryData(audienceQueryKey, (old) => {
         if (!old) return old
-        return old.map(aud =>
-          (aud.audience_id === audienceId || aud.id === audienceId)
-            ? updatedAudience
-            : aud
+        const list = Array.isArray(old) ? old : old?.audiences ?? old?.data
+        if (!Array.isArray(list)) return old
+        const next = list.map((aud) =>
+          aud.audience_id === audienceId || aud.id === audienceId ? updatedAudience : aud
         )
+        if (Array.isArray(old)) return next
+        if (old?.audiences) return { ...old, audiences: next }
+        if (old?.data) return { ...old, data: next }
+        return next
       })
     },
   })
 
-  // Mutation for refreshing all audiences LLM
   const refreshAllLLMMutation = useMutation({
     mutationFn: async (audienceIds) => {
-      const data = await analyticsAPI.getPerformanceAudiences(days, audienceIds)
-      return data
+      return await analyticsAPI.getPerformanceAudiences(days, audienceIds)
     },
     onSuccess: (data) => {
-      // Update the cache with refreshed data
-      queryClient.setQueryData(['performance-explorer', 'audiences', days], data)
+      queryClient.setQueryData(audienceQueryKey, data)
     },
   })
 
-  // Track refreshing IDs manually since mutations don't support multiple concurrent calls easily
   const [refreshingIds, setRefreshingIds] = useState(new Set())
 
-  const refreshAudienceLLM = (audienceId) => {
-    setRefreshingIds(prev => new Set(prev).add(audienceId))
-    refreshLLMMutation.mutate(audienceId, {
-      onSettled: () => {
-        setRefreshingIds(prev => {
-          const next = new Set(prev)
-          next.delete(audienceId)
-          return next
-        })
-      }
-    })
-  }
+  const refreshAudienceLLM = useCallback(
+    (audienceId) => {
+      setRefreshingIds((prev) => new Set(prev).add(audienceId))
+      refreshLLMMutation.mutate(audienceId, {
+        onSettled: () => {
+          setRefreshingIds((prev) => {
+            const next = new Set(prev)
+            next.delete(audienceId)
+            return next
+          })
+        },
+      })
+    },
+    [refreshLLMMutation]
+  )
 
-  const refreshAllAudiencesLLM = (audienceIds) => {
-    setRefreshingIds(new Set(audienceIds))
-    refreshAllLLMMutation.mutate(audienceIds, {
-      onSettled: () => {
-        setRefreshingIds(new Set())
-      }
-    })
-  }
+  const refreshAllAudiencesLLM = useCallback(
+    (audienceIds) => {
+      setRefreshingIds(new Set(audienceIds))
+      refreshAllLLMMutation.mutate(audienceIds, {
+        onSettled: () => {
+          setRefreshingIds(new Set())
+        },
+      })
+    },
+    [refreshAllLLMMutation]
+  )
 
-  const raw = audiencesQuery.data
-  const audiences =
-    Array.isArray(raw)
-      ? raw
-      : raw?.audiences ??
-        raw?.data ??
-        []
+  const isFetchingAny =
+    campaignsQuery.isFetching ||
+    adsetsQuery.isFetching ||
+    adsQuery.isFetching ||
+    audiencesQuery.isFetching
 
   return {
-    data: audiences,
-    isLoading: audiencesQuery.isLoading,
-    isError: audiencesQuery.isError,
-    error: audiencesQuery.error,
-    refetch: audiencesQuery.refetch,
+    campaigns,
+    adSets,
+    ads,
+    audiences,
+    campaignsLoading: campaignsQuery.isLoading,
+    adSetsLoading: adsetsQuery.isLoading,
+    adsLoading: adsQuery.isLoading,
+    audiencesLoading: audiencesQuery.isLoading,
+    campaignsError: campaignsQuery.error,
+    adSetsError: adsetsQuery.error,
+    adsError: adsQuery.error,
+    audiencesError: audiencesQuery.error,
+    isFetchingAny,
+    refetchAll,
     refreshAudienceLLM,
     isRefreshingAudience: refreshLLMMutation.isPending,
     refreshingAudienceIds: refreshingIds,
