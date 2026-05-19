@@ -42,8 +42,9 @@ export const useCampaignLevelInfo = () => {
   return useQuery({
     queryKey: ['campaign-level-info'],
     queryFn: async ({ signal }) => {
-      const response = await analyticsAPI.getCampaignLevelInfo(signal)
-      return normalizeCampaignLevelInfo(response)
+      // const response = await analyticsAPI.getCampaignLevelInfo(signal)
+      // return normalizeCampaignLevelInfo(response)
+      return { items: [], total: 0 }
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,

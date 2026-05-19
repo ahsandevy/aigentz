@@ -8,7 +8,8 @@ export const AI_RECOMMENDATIONS_QUERY_DEFAULTS = {
   staleTime: AI_RECOMMENDATIONS_STALE_MS,
   gcTime: 48 * 60 * 60 * 1000,
   refetchOnWindowFocus: false,
-  refetchOnMount: false,
+  // On mount, refetch only when data is stale.
+  refetchOnMount: true,
   retry: 1,
 }
 

@@ -83,7 +83,7 @@ export const analyticsAPI = {
     // MCP dropdown data
     getMcpCampaigns: async (signal) => {
         try {
-            const response = await api.get('/mcp/campaigns', { signal });
+            const response = await api.get('/meta/campaigns', { signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;
@@ -94,7 +94,7 @@ export const analyticsAPI = {
 
     getMcpAccounts: async (signal) => {
         try {
-            const response = await api.get('/mcp/accounts', { signal });
+            const response = await api.get('/meta/accounts', { signal });
             return response.data;
         } catch (error) {
             if (axios.isCancel(error)) return null;

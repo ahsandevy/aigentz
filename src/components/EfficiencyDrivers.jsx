@@ -1,5 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { analyticsAPI } from '../services/api';
+import {
+  EFFICIENCY_DRIVERS_STALE_MS,
+  getEfficiencyDriversQueryKey,
+} from '../hooks/efficiencyDriversQueryUtils';
 
 // Pie Chart Component
 function PieChart({ data, size = 200 }) {
@@ -137,31 +142,29 @@ function PieChart({ data, size = 200 }) {
   );
 }
 
-function EfficiencyDrivers({ days = 7 }) {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({
+function EfficiencyDrivers({ days = 30 }) {
+  const {
+    data: queryData,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: getEfficiencyDriversQueryKey(days),
+    queryFn: () => analyticsAPI.getEfficiencyDrivers(days),
+    staleTime: EFFICIENCY_DRIVERS_STALE_MS,
+    gcTime: 48 * 60 * 60 * 1000, // 48 hours
+    refetchOnWindowFocus: false,
+    // Refetch on remount only when stale (after staleTime window).
+    refetchOnMount: true,
+    retry: 1,
+  });
+
+  const data = queryData ?? {
     funnelMix: [],
     conversionFunnel: [],
     qualityRankings: [],
     placementPerformanceLabel: null,
     placementPerformanceValueLabel: null,
     placementPerformance: []
-  });
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const result = await analyticsAPI.getEfficiencyDrivers(days);
-        setData(result);
-      } catch (error) {
-        console.error('Error fetching efficiency drivers:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [days]);
+  };
 
   const formatPlacementValue = (value, metricKey = 'spend') => {
     if (value === null || value === undefined) return '-';

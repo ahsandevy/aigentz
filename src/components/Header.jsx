@@ -69,30 +69,52 @@ function Header({ days, onDaysChange }) {
     const fetchDropdowns = async () => {
       setLoadingCampaigns(true)
       setLoadingAccounts(true)
-      try {
-        const [campaignsData, accountsData] = await Promise.all([
-          analyticsAPI.getMcpCampaigns(controller.signal),
-          analyticsAPI.getMcpAccounts(controller.signal)
-        ])
-        if (!cancelled) {
-          setCampaignOptions(normalizeCampaigns(campaignsData))
-          setAccountOptions(normalizeAccounts(accountsData))
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setCampaignOptions([])
-          setAccountOptions([])
-        }
-        // Ignore aborts during unmount/remount in development strict mode.
-        if (error?.name !== 'CanceledError' && error?.name !== 'AbortError') {
-          console.error('Failed to load dropdown options:', error)
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingCampaigns(false)
-          setLoadingAccounts(false)
-        }
-      }
+
+      // Start both requests immediately (parallel), but resolve/update each dropdown independently.
+      const campaignsPromise = analyticsAPI.getMcpCampaigns(controller.signal)
+      const accountsPromise = analyticsAPI.getMcpAccounts(controller.signal)
+
+      campaignsPromise
+        .then((campaignsData) => {
+          if (!cancelled) {
+            setCampaignOptions(normalizeCampaigns(campaignsData))
+          }
+        })
+        .catch((error) => {
+          if (!cancelled) {
+            setCampaignOptions([])
+          }
+          // Ignore aborts during unmount/remount in development strict mode.
+          if (error?.name !== 'CanceledError' && error?.name !== 'AbortError') {
+            console.error('Failed to load campaign options:', error)
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setLoadingCampaigns(false)
+          }
+        })
+
+      accountsPromise
+        .then((accountsData) => {
+          if (!cancelled) {
+            setAccountOptions(normalizeAccounts(accountsData))
+          }
+        })
+        .catch((error) => {
+          if (!cancelled) {
+            setAccountOptions([])
+          }
+          // Ignore aborts during unmount/remount in development strict mode.
+          if (error?.name !== 'CanceledError' && error?.name !== 'AbortError') {
+            console.error('Failed to load account options:', error)
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setLoadingAccounts(false)
+          }
+        })
     }
 
     fetchDropdowns()
