@@ -23,6 +23,14 @@ import EfficiencyDrivers from './EfficiencyDrivers'
 import ChangeControl from './ChangeControl'
 import WeeklyAISummary from './WeeklyAISummary'
 import CampaignLevelInfo from './CampaignLevelInfo'
+import {
+  weeklySummaryQueryIsFresh,
+  getWeeklySummaryLatestDataUpdatedAt,
+} from '../hooks/useWeeklySummary'
+import {
+  efficiencyDriversQueryIsFresh,
+  getEfficiencyDriversLatestDataUpdatedAt,
+} from '../hooks/efficiencyDriversQueryUtils'
 
 function RefreshableSection({ title, onRefresh, extraControls = null, children }) {
   return (
@@ -60,7 +68,7 @@ function Dashboard() {
   const queryClient = useQueryClient()
   const { showSuccess } = useModal()
   const [selectedDays, setSelectedDays] = useState(30)
-  const [efficiencyDriversDays, setEfficiencyDriversDays] = useState(7)
+  const [efficiencyDriversDays, setEfficiencyDriversDays] = useState(30)
   const [performanceExplorerDays, setPerformanceExplorerDays] = useState(30)
   const [refreshKeys, setRefreshKeys] = useState({
     efficiencyDrivers: 0,
@@ -78,6 +86,17 @@ function Dashboard() {
   }
 
   const handleWeeklySummarySectionRefresh = () => {
+    if (weeklySummaryQueryIsFresh(queryClient, selectedDays)) {
+      const latest = getWeeklySummaryLatestDataUpdatedAt(queryClient, selectedDays)
+      const ago =
+        latest != null ? formatRelativeAgo(Date.now() - latest) : 'just now'
+      void showSuccess(
+        'Weekly Summary is still fresh',
+        `Your data was last loaded ${ago} ago and is still within the 24-hour freshness window, so no new requests were sent. Try again later, or change the header date range to request another period.`,
+        'OK'
+      )
+      return
+    }
     refreshSection('weeklySummary')
   }
 
@@ -138,7 +157,7 @@ function Dashboard() {
         latest != null ? formatRelativeAgo(Date.now() - latest) : 'just now'
       void showSuccess(
         'Performance Explorer is still fresh',
-        `Your data was last loaded ${ago} ago and is still within the 5-minute freshness window, so no new requests were sent. Try again in a little while, or change the date range to reload a different period.`,
+        `Your data was last loaded ${ago} ago and is still within the 24-hour freshness window, so no new requests were sent. Try again later, or change the date range to reload a different period.`,
         'OK'
       )
       return
@@ -146,98 +165,148 @@ function Dashboard() {
     refreshSection('performanceExplorer')
   }
 
-  // TEMP DEBUG SWITCH: keep only Header active.
-  // true  -> only Header renders
-  // false -> full dashboard renders normally
+  const handleEfficiencyDriversSectionRefresh = () => {
+    if (efficiencyDriversQueryIsFresh(queryClient, efficiencyDriversDays)) {
+      const latest = getEfficiencyDriversLatestDataUpdatedAt(
+        queryClient,
+        efficiencyDriversDays
+      )
+      const ago =
+        latest != null ? formatRelativeAgo(Date.now() - latest) : 'just now'
+      void showSuccess(
+        'Efficiency Drivers is still fresh',
+        `Your data was last loaded ${ago} ago and is still within the 24-hour freshness window, so no new requests were sent. Try again later, or change the period dropdown to load a different range.`,
+        'OK'
+      )
+      return
+    }
+    refreshSection('efficiencyDrivers')
+  }
+
+  // --- Local testing toggles (set all to false for normal dashboard; see comments) ---
+  /** `true` → only Header + empty main (no dashboard sections). */
   const HEADER_ONLY_DEBUG_MODE = false
+  /**
+   * `true` → **only** Performance Explorer (no Header — no header-metrics / meta dropdown calls).
+   * Other debug flags are ignored for layout. Set to `false` when done debugging.
+   */
+  const PERFORMANCE_EXPLORER_ONLY_DEBUG_MODE = false
+  /**
+   * `true` → full dashboard except Performance Explorer (PE hooks / HTTP skipped).
+   * Ignored while `PERFORMANCE_EXPLORER_ONLY_DEBUG_MODE` is true (PE-only branch does not render Header).
+   */
+  const SKIP_PERFORMANCE_EXPLORER = false
+
+  const performanceExplorerSection = (
+    <RefreshableSection
+      title="Performance Explorer"
+      onRefresh={handlePerformanceExplorerSectionRefresh}
+      extraControls={
+        <select
+          value={performanceExplorerDays}
+          onChange={(e) => setPerformanceExplorerDays(Number(e.target.value))}
+          className="text-xs px-2 py-1.5 rounded-md border border-[#c8d6e8] text-[#1e4a79] bg-white"
+          aria-label="Performance Explorer days"
+        >
+          <option value={1}>1 day</option>
+          <option value={7}>7 days</option>
+          <option value={14}>14 days</option>
+          <option value={30}>30 days</option>
+        </select>
+      }
+    >
+      <PerformanceExplorer
+        days={performanceExplorerDays}
+        key={`performance-explorer-${refreshKeys.performanceExplorer}-${performanceExplorerDays}`}
+      />
+    </RefreshableSection>
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f4f8fe] to-white">
-      <Header days={selectedDays} onDaysChange={setSelectedDays} />
-
-      {!HEADER_ONLY_DEBUG_MODE && (
+      {PERFORMANCE_EXPLORER_ONLY_DEBUG_MODE ? (
         <main className="w-full md:w-[85%] mx-auto px-4 md:px-8 py-8">
-          <RefreshableSection
-            title="Executive Brief"
-            onRefresh={handleExecutiveBriefSectionRefresh}
-          >
-            <AIExecutiveBrief days={selectedDays} />
-          </RefreshableSection>
-
-          <RefreshableSection
-            title="AI Recommendations"
-            onRefresh={handleAIRecommendationsSectionRefresh}
-          >
-            <AIRecommendations days={selectedDays} />
-          </RefreshableSection>
-
-          <RefreshableSection
-            title="Efficiency Drivers"
-            onRefresh={() => refreshSection('efficiencyDrivers')}
-            extraControls={
-              <select
-                value={efficiencyDriversDays}
-                onChange={(e) => setEfficiencyDriversDays(Number(e.target.value))}
-                className="text-xs px-2 py-1.5 rounded-md border border-[#c8d6e8] text-[#1e4a79] bg-white"
-                aria-label="Efficiency Drivers days"
-              >
-                <option value={1}>1 day</option>
-                <option value={7}>7 days</option>
-                <option value={14}>14 days</option>
-                <option value={30}>30 days</option>
-              </select>
-            }
-          >
-            <EfficiencyDrivers
-              days={efficiencyDriversDays}
-              key={`efficiency-drivers-${refreshKeys.efficiencyDrivers}-${efficiencyDriversDays}`}
-            />
-          </RefreshableSection>
-
-          <RefreshableSection title="Change Control" onRefresh={() => refreshSection('changeControl')}>
-            <ChangeControl key={`change-control-${refreshKeys.changeControl}`} />
-          </RefreshableSection>
-
-          <RefreshableSection
-            title="Weekly AI Summary"
-            onRefresh={handleWeeklySummarySectionRefresh}
-          >
-            <WeeklyAISummary
-              days={selectedDays}
-              key={`weekly-summary-${refreshKeys.weeklySummary}-${selectedDays}`}
-            />
-          </RefreshableSection>
-          <RefreshableSection
-            title="Performance Explorer"
-            onRefresh={handlePerformanceExplorerSectionRefresh}
-            extraControls={
-              <select
-                value={performanceExplorerDays}
-                onChange={(e) => setPerformanceExplorerDays(Number(e.target.value))}
-                className="text-xs px-2 py-1.5 rounded-md border border-[#c8d6e8] text-[#1e4a79] bg-white"
-                aria-label="Performance Explorer days"
-              >
-                <option value={1}>1 day</option>
-                <option value={7}>7 days</option>
-                <option value={14}>14 days</option>
-                <option value={30}>30 days</option>
-              </select>
-            }
-          >
-            <PerformanceExplorer
-              days={performanceExplorerDays}
-              key={`performance-explorer-${refreshKeys.performanceExplorer}-${performanceExplorerDays}`}
-            />
-          </RefreshableSection>
-          <RefreshableSection title="Campaign Level Info" onRefresh={() => refreshSection('campaignLevelInfo')}>
-            <CampaignLevelInfo key={`campaign-level-info-${refreshKeys.campaignLevelInfo}`} />
-          </RefreshableSection>
+          <section className="mb-8 rounded-md border border-dashed border-sky-400/80 bg-sky-50/70 px-4 py-3 text-xs text-sky-950">
+            Debug mode: Performance Explorer only — Header is not mounted (
+            <code className="rounded bg-white/80 px-1">PERFORMANCE_EXPLORER_ONLY_DEBUG_MODE</code> in{' '}
+            <code className="rounded bg-white/80 px-1">Dashboard.jsx</code>). Set it to{' '}
+            <code className="rounded bg-white/80 px-1">false</code> to restore the full dashboard (including Header).
+          </section>
+          {performanceExplorerSection}
         </main>
-      )}
-      {HEADER_ONLY_DEBUG_MODE && (
-        <main className="w-full md:w-[85%] mx-auto px-4 md:px-8 py-8">
-          
-        </main>
+      ) : (
+        <>
+          <Header days={selectedDays} onDaysChange={setSelectedDays} />
+
+          {!HEADER_ONLY_DEBUG_MODE && (
+            <main className="w-full md:w-[85%] mx-auto px-4 md:px-8 py-8">
+              <RefreshableSection
+                title="Executive Brief"
+                onRefresh={handleExecutiveBriefSectionRefresh}
+              >
+                <AIExecutiveBrief days={selectedDays} />
+              </RefreshableSection>
+
+              <RefreshableSection
+                title="AI Recommendations"
+                onRefresh={handleAIRecommendationsSectionRefresh}
+              >
+                <AIRecommendations days={selectedDays} />
+              </RefreshableSection>
+
+              <RefreshableSection
+                title="Efficiency Drivers"
+                onRefresh={handleEfficiencyDriversSectionRefresh}
+                extraControls={
+                  <select
+                    value={efficiencyDriversDays}
+                    onChange={(e) => setEfficiencyDriversDays(Number(e.target.value))}
+                    className="text-xs px-2 py-1.5 rounded-md border border-[#c8d6e8] text-[#1e4a79] bg-white"
+                    aria-label="Efficiency Drivers days"
+                  >
+                    <option value={1}>1 day</option>
+                    <option value={7}>7 days</option>
+                    <option value={14}>14 days</option>
+                    <option value={30}>30 days</option>
+                  </select>
+                }
+              >
+                <EfficiencyDrivers
+                  days={efficiencyDriversDays}
+                  key={`efficiency-drivers-${refreshKeys.efficiencyDrivers}-${efficiencyDriversDays}`}
+                />
+              </RefreshableSection>
+
+              <RefreshableSection title="Change Control" onRefresh={() => refreshSection('changeControl')}>
+                <ChangeControl key={`change-control-${refreshKeys.changeControl}`} />
+              </RefreshableSection>
+
+              <RefreshableSection
+                title="Weekly AI Summary"
+                onRefresh={handleWeeklySummarySectionRefresh}
+              >
+                <WeeklyAISummary
+                  days={selectedDays}
+                  key={`weekly-summary-${refreshKeys.weeklySummary}-${selectedDays}`}
+                />
+              </RefreshableSection>
+              {!SKIP_PERFORMANCE_EXPLORER && performanceExplorerSection}
+              {SKIP_PERFORMANCE_EXPLORER && (
+                <section className="mb-8 rounded-md border border-dashed border-amber-300/80 bg-amber-50/60 px-4 py-3 text-xs text-amber-900">
+                  Performance Explorer is not mounted (<code className="rounded bg-white/80 px-1">SKIP_PERFORMANCE_EXPLORER</code> in{' '}
+                  <code className="rounded bg-white/80 px-1">Dashboard.jsx</code>). Set it to <code className="rounded bg-white/80 px-1">false</code>{' '}
+                  to restore.
+                </section>
+              )}
+              <RefreshableSection title="Campaign Level Info" onRefresh={() => refreshSection('campaignLevelInfo')}>
+                <CampaignLevelInfo key={`campaign-level-info-${refreshKeys.campaignLevelInfo}`} />
+              </RefreshableSection>
+            </main>
+          )}
+          {HEADER_ONLY_DEBUG_MODE && (
+            <main className="w-full md:w-[85%] mx-auto px-4 md:px-8 py-8"></main>
+          )}
+        </>
       )}
     </div>
   )

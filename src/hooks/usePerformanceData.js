@@ -3,7 +3,7 @@ import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { analyticsAPI } from '../services/api'
 
 /** Same value as `sharedQueryOptions.staleTime` — use for “still fresh” checks outside the hook. */
-export const PERFORMANCE_EXPLORER_STALE_MS = 5 * 60 * 1000
+export const PERFORMANCE_EXPLORER_STALE_MS = 24 * 60 * 60 * 1000
 
 /** Prefix for all Performance Explorer queries */
 export const PERFORMANCE_EXPLORER_QUERY_KEY = ['performance-explorer']
@@ -59,7 +59,7 @@ export const getPerformanceExplorerLatestDataUpdatedAt = (queryClient, days) => 
 // Shared query options for all Performance Explorer queries
 const sharedQueryOptions = {
   staleTime: PERFORMANCE_EXPLORER_STALE_MS, // while fresh, remount does not trigger HTTP
-  gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
+  gcTime: 60 * 60 * 1000, // 60 minutes (formerly cacheTime)
   refetchOnWindowFocus: false,
   // Refetch on mount only when data is stale (staleTime elapsed); fresh cache = no refetch
   refetchOnMount: true,

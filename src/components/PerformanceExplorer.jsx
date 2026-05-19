@@ -19,16 +19,14 @@ function PerformanceExplorer({ days = 30 }) {
     adSetsLoading,
     adsLoading,
     audiencesLoading,
-    isFetchingAny,
     refreshAudienceLLM,
     refreshingAudienceIds,
     refreshAllAudiencesLLM,
     isRefreshingAll,
   } = usePerformanceExplorer(days)
 
-  // Show table loading when any explorer query is in flight (initial load, stale remount, or refetch)
+  // Per-tab loading: each panel shows data as soon as its own query finishes; other tabs still show loading when selected.
   const loading = useMemo(() => {
-    if (isFetchingAny) return true
     switch (activeTab) {
       case 'Campaigns':
         return campaignsLoading
@@ -41,14 +39,22 @@ function PerformanceExplorer({ days = 30 }) {
       default:
         return false
     }
-  }, [
-    isFetchingAny,
-    activeTab,
-    campaignsLoading,
-    adSetsLoading,
-    adsLoading,
-    audiencesLoading,
-  ])
+  }, [activeTab, campaignsLoading, adSetsLoading, adsLoading, audiencesLoading])
+
+  const isTabDataLoading = (tab) => {
+    switch (tab) {
+      case 'Campaigns':
+        return campaignsLoading
+      case 'Ad Sets':
+        return adSetsLoading
+      case 'Ads':
+        return adsLoading
+      case 'Audiences':
+        return audiencesLoading
+      default:
+        return false
+    }
+  }
 
   const handleAIRequest = async (campaignId) => {
     try {
@@ -408,18 +414,26 @@ function PerformanceExplorer({ days = 30 }) {
       {/* Tabs - Floating Pill Style */}
       <div className="flex justify-center mb-10">
         <div className="bg-white border border-[#e2e8f0] rounded-full p-1.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] inline-flex gap-2 overflow-x-auto max-w-full">
-          {['Campaigns', 'Ad Sets', 'Ads', 'Audiences'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-10 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap text-[14px] ${activeTab === tab
-                ? 'bg-[#f0f2b6] text-[#374151] shadow-sm'
-                : 'text-[#64748b] hover:text-[#1e4a79] hover:bg-gray-50'
-                }`}
-            >
-              {tab}
-            </button>
-          ))}
+          {['Campaigns', 'Ad Sets', 'Ads', 'Audiences'].map((tab) => {
+            const tabBusy = isTabDataLoading(tab)
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                aria-busy={tabBusy}
+                className={`px-10 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap text-[14px] inline-flex items-center justify-center gap-2 ${activeTab === tab
+                  ? 'bg-[#f0f2b6] text-[#374151] shadow-sm'
+                  : 'text-[#64748b] hover:text-[#1e4a79] hover:bg-gray-50'
+                  }`}
+              >
+                {tab}
+                {tabBusy && (
+                  <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-[#1e4a79] animate-pulse" title="Loading data…" />
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
