@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import Header from './Header'
 import { useModal } from '../context/ModalContext'
@@ -14,7 +14,6 @@ import {
 import {
   executiveBriefQueriesAreFresh,
   getExecutiveBriefLatestDataUpdatedAt,
-  EXECUTIVE_BRIEF_QUERY_KEY,
 } from '../hooks/executiveBriefQueryUtils'
 import AIExecutiveBrief from './AIExecutiveBrief'
 import PerformanceExplorer from './PerformanceExplorer'
@@ -22,7 +21,6 @@ import AIRecommendations from './AIRecommendations'
 import EfficiencyDrivers from './EfficiencyDrivers'
 import ChangeControl from './ChangeControl'
 import WeeklyAISummary from './WeeklyAISummary'
-import CampaignLevelInfo from './CampaignLevelInfo'
 import {
   weeklySummaryQueryIsFresh,
   getWeeklySummaryLatestDataUpdatedAt,
@@ -42,15 +40,54 @@ function RefreshableSection({ title, onRefresh, extraControls = null, children }
           <button
             type="button"
             onClick={onRefresh}
-            className="text-xs px-3 py-1.5 rounded-md border border-[#c8d6e8] text-[#1e4a79] bg-white hover:bg-[#f4f8fe]"
+            className="flex items-center gap-2 px-4 py-2 bg-[#1e4a79] text-white rounded-lg hover:bg-[#1e3a69] transition-colors"
+            title={`Refresh ${title}`}
           >
-            Refresh
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="text-sm font-medium">Refresh</span>
           </button>
         </div>
       </div>
       {children}
     </section>
   )
+}
+
+function FreshnessBanner({ ago }) {
+  return (
+    <div className="mb-5 flex items-start gap-3 rounded-xl border border-[#dbeafe] bg-[#f8fafc] px-4 py-3">
+      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1e4a79]/10">
+        <svg className="h-4 w-4 text-[#1e4a79]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm text-[#334155]">
+          Last loaded{' '}
+          <span className="font-semibold text-[#1e4a79]">{ago} ago</span>
+        </p>
+        <p className="mt-0.5 text-xs text-[#64748b]">
+          Still within the 24-hour freshness window — no reload needed.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function SectionWithFreshness({ freshnessAgo, children }) {
+  return (
+    <section className="mb-8">
+      {freshnessAgo && <FreshnessBanner ago={freshnessAgo} />}
+      {children}
+    </section>
+  )
+}
+
+function getFreshnessAgo(latestUpdatedAt) {
+  if (latestUpdatedAt == null) return null
+  return formatRelativeAgo(Date.now() - latestUpdatedAt)
 }
 
 function formatRelativeAgo(ms) {
@@ -70,13 +107,36 @@ function Dashboard() {
   const [selectedDays, setSelectedDays] = useState(30)
   const [efficiencyDriversDays, setEfficiencyDriversDays] = useState(30)
   const [performanceExplorerDays, setPerformanceExplorerDays] = useState(30)
+  const [freshnessTick, setFreshnessTick] = useState(0)
   const [refreshKeys, setRefreshKeys] = useState({
     efficiencyDrivers: 0,
     changeControl: 0,
     weeklySummary: 0,
     performanceExplorer: 0,
-    campaignLevelInfo: 0,
   })
+
+  useEffect(() => {
+    const id = setInterval(() => setFreshnessTick((n) => n + 1), 60000)
+    return () => clearInterval(id)
+  }, [])
+
+  const executiveBriefFreshnessAgo = useMemo(() => {
+    if (!executiveBriefQueriesAreFresh(queryClient)) return null
+    return getFreshnessAgo(getExecutiveBriefLatestDataUpdatedAt(queryClient))
+  }, [queryClient, freshnessTick])
+
+  const aiRecommendationsFreshnessAgo = useMemo(() => {
+    if (!aiRecommendationsQueriesAreFresh(queryClient, selectedDays, AI_RECOMMENDATIONS_APPLIED_LIMIT)) {
+      return null
+    }
+    return getFreshnessAgo(
+      getAIRecommendationsLatestDataUpdatedAt(
+        queryClient,
+        selectedDays,
+        AI_RECOMMENDATIONS_APPLIED_LIMIT
+      )
+    )
+  }, [queryClient, selectedDays, freshnessTick])
 
   const refreshSection = (section) => {
     setRefreshKeys((prev) => ({
@@ -98,53 +158,6 @@ function Dashboard() {
       return
     }
     refreshSection('weeklySummary')
-  }
-
-  const handleExecutiveBriefSectionRefresh = () => {
-    if (executiveBriefQueriesAreFresh(queryClient)) {
-      const latest = getExecutiveBriefLatestDataUpdatedAt(queryClient)
-      const ago =
-        latest != null ? formatRelativeAgo(Date.now() - latest) : 'just now'
-      void showSuccess(
-        'Executive Brief is still fresh',
-        `Your data was last loaded ${ago} ago and is still within the 24-hour freshness window, so no new requests were sent. Try again later, or use Refresh inside the brief to force a full regeneration from the server.`,
-        'OK'
-      )
-      return
-    }
-    void queryClient.invalidateQueries({ queryKey: EXECUTIVE_BRIEF_QUERY_KEY })
-  }
-
-  const handleAIRecommendationsSectionRefresh = () => {
-    if (aiRecommendationsQueriesAreFresh(queryClient, selectedDays, AI_RECOMMENDATIONS_APPLIED_LIMIT)) {
-      const latest = getAIRecommendationsLatestDataUpdatedAt(
-        queryClient,
-        selectedDays,
-        AI_RECOMMENDATIONS_APPLIED_LIMIT
-      )
-      const ago =
-        latest != null ? formatRelativeAgo(Date.now() - latest) : 'just now'
-      void showSuccess(
-        'AI Recommendations are still fresh',
-        `Your data was last loaded ${ago} ago and is still within the 24-hour freshness window, so no new requests were sent. Try again later, or change the header date range if priorities should use a different period.`,
-        'OK'
-      )
-      return
-    }
-    void Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['budget-reallocation'] }),
-      queryClient.invalidateQueries({ queryKey: ['creative-analysis'] }),
-      queryClient.invalidateQueries({ queryKey: ['placement-optimization'] }),
-      queryClient.invalidateQueries({ queryKey: ['audience-optimization'] }),
-      queryClient.invalidateQueries({ queryKey: ['bidding-strategy-optimization'] }),
-      queryClient.invalidateQueries({ queryKey: ['dayparting-optimization'] }),
-      queryClient.invalidateQueries({
-        queryKey: ['all-recommendations-priorities', selectedDays],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ['applied-recommendations', AI_RECOMMENDATIONS_APPLIED_LIMIT],
-      }),
-    ])
   }
 
   const handlePerformanceExplorerSectionRefresh = () => {
@@ -240,19 +253,13 @@ function Dashboard() {
 
           {!HEADER_ONLY_DEBUG_MODE && (
             <main className="w-full md:w-[85%] mx-auto px-4 md:px-8 py-8">
-              <RefreshableSection
-                title="Executive Brief"
-                onRefresh={handleExecutiveBriefSectionRefresh}
-              >
+              <SectionWithFreshness freshnessAgo={executiveBriefFreshnessAgo}>
                 <AIExecutiveBrief days={selectedDays} />
-              </RefreshableSection>
+              </SectionWithFreshness>
 
-              <RefreshableSection
-                title="AI Recommendations"
-                onRefresh={handleAIRecommendationsSectionRefresh}
-              >
+              <SectionWithFreshness freshnessAgo={aiRecommendationsFreshnessAgo}>
                 <AIRecommendations days={selectedDays} />
-              </RefreshableSection>
+              </SectionWithFreshness>
 
               <RefreshableSection
                 title="Efficiency Drivers"
@@ -298,9 +305,6 @@ function Dashboard() {
                   to restore.
                 </section>
               )}
-              <RefreshableSection title="Campaign Level Info" onRefresh={() => refreshSection('campaignLevelInfo')}>
-                <CampaignLevelInfo key={`campaign-level-info-${refreshKeys.campaignLevelInfo}`} />
-              </RefreshableSection>
             </main>
           )}
           {HEADER_ONLY_DEBUG_MODE && (

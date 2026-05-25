@@ -1,11 +1,18 @@
 import { useState, useMemo, useEffect } from 'react'
 import { analyticsAPI } from '../services/api'
 import { usePerformanceExplorer } from '../hooks/usePerformanceData'
+import AdAiAnalysisPanel from './AdAiAnalysisPanel'
+import CampaignAiRecommendationPanel, {
+  isCampaignAiRecommendationShape,
+} from './CampaignAiRecommendationPanel'
+
+const isAudienceItem = (item) => Boolean(item?.role && !item?.format)
 
 function PerformanceExplorer({ days = 30 }) {
   const [activeTab, setActiveTab] = useState('Campaigns')
   const [search, setSearch] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [audienceAnalysisLoading, setAudienceAnalysisLoading] = useState(false)
   const [selectedAI, setSelectedAI] = useState(null)
   const [selectedAssessment, setSelectedAssessment] = useState(null)
   const [selectedScalingItem, setSelectedScalingItem] = useState(null)
@@ -19,7 +26,7 @@ function PerformanceExplorer({ days = 30 }) {
     adSetsLoading,
     adsLoading,
     audiencesLoading,
-    refreshAudienceLLM,
+    refreshAudienceLLMAsync,
     refreshingAudienceIds,
     refreshAllAudiencesLLM,
     isRefreshingAll,
@@ -95,9 +102,23 @@ function PerformanceExplorer({ days = 30 }) {
     }
   }
 
-  // Handle refresh with selected assessment update
-  const handleRefreshAudienceLLM = (audienceId) => {
-    refreshAudienceLLM(audienceId)
+  const handleAudienceAIAnalysis = async (aud) => {
+    const audienceId = aud.audience_id || aud.id
+    if (!audienceId) return
+
+    setSelectedAssessment(aud)
+    setAudienceAnalysisLoading(true)
+
+    try {
+      const updated = await refreshAudienceLLMAsync(audienceId)
+      if (updated) {
+        setSelectedAssessment(updated)
+      }
+    } catch (error) {
+      console.error('Error fetching audience AI analysis:', error)
+    } finally {
+      setAudienceAnalysisLoading(false)
+    }
   }
 
   const handleRefreshAllAudiencesLLM = () => {
@@ -119,27 +140,6 @@ function PerformanceExplorer({ days = 30 }) {
       }
     }
   }, [audiences, selectedAssessment])
-
-  const handleAudienceAIRequest = async (aud) => {
-    try {
-      setAiLoading(true)
-      setSelectedAI(null)
-      const response = await analyticsAPI.getAudienceAIRecommendation({
-        name: aud.name,
-        role: aud.role,
-        spend: aud.spend,
-        roas: aud.roas,
-        frequency: aud.frequency,
-        size: aud.size,
-        cpa: aud.cpa
-      })
-      setSelectedAI(response)
-    } catch (error) {
-      console.error('Error fetching audience AI:', error)
-    } finally {
-      setAiLoading(false)
-    }
-  }
 
   // Filter AdSets
   const filteredAdSets = useMemo(() => {
@@ -453,7 +453,6 @@ function PerformanceExplorer({ days = 30 }) {
                     <th className="px-6 py-6 text-center hidden lg:table-cell">Made Live</th>
                     <th className="px-6 py-6 text-left">Audience Strategy</th>
                     <th className="px-6 py-6 text-center">Funnel Role</th>
-                    <th className="px-6 py-6 text-center hidden lg:table-cell">Bid Strategy</th>
                     <th className="px-6 py-6 text-center">Budget</th>
                     <th className="px-6 py-6 text-center hidden md:table-cell">Status</th>
                     <th className="px-6 py-6 text-center hidden sm:table-cell">Ads</th>
@@ -481,17 +480,6 @@ function PerformanceExplorer({ days = 30 }) {
                             <span className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm uppercase">
                               {as.funnel_stage}
                             </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-8 text-center hidden lg:table-cell">
-                          <div className="text-[11px] text-[#64748b] font-medium">
-                            {as.bid_strategy ? (
-                              <span className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-full">
-                                {as.bid_strategy.replace(/_/g, ' ')}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">N/A</span>
-                            )}
                           </div>
                         </td>
                         <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-bold tracking-tight">
@@ -679,26 +667,15 @@ function PerformanceExplorer({ days = 30 }) {
                           )}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">
-                          <div className="flex flex-col items-center gap-1 sm:gap-2">
-                            <button
-                              onClick={() => setSelectedAssessment(ad)}
-                              className="lg:hidden text-[9px] text-[#1e4a79] font-bold underline hover:text-blue-600 transition-colors"
-                            >
-                              View
-                            </button>
-                            <span className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full text-[9px] sm:text-[10px] font-bold shadow-sm whitespace-nowrap ${getAdStatusClasses(adAssessment.status)}`}>
-                              {adAssessment.status?.toUpperCase() || 'FAIR'}
-                            </span>
-                            <button
-                              onClick={() => {
-                                setSelectedScalingItem(ad);
-                                handleAdAIRequest(ad.id);
-                              }}
-                              className="mt-1 px-2 sm:px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-[9px] sm:text-[10px] font-bold shadow-sm transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap"
-                            >
-                              AI Growth
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => {
+                              setSelectedScalingItem(ad);
+                              handleAdAIRequest(ad.id);
+                            }}
+                            className="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-[9px] sm:text-[10px] font-bold shadow-sm transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap"
+                          >
+                            AI Analysis
+                          </button>
                         </td>
                       </tr>
                     )
@@ -757,9 +734,7 @@ function PerformanceExplorer({ days = 30 }) {
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Funnel Role</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden sm:table-cell">AVG Size</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center hidden lg:table-cell">Assessment</th>
-                    <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Status</th>
                     <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">Action</th>
-                    <th className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">AI</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -772,6 +747,14 @@ function PerformanceExplorer({ days = 30 }) {
                             <span className="truncate">{aud.name}</span>
                             <div className="sm:hidden flex flex-col gap-1">
                               <span className="text-[10px] text-gray-500">AVG Size: {getAudienceSize(aud)}</span>
+                              {audienceAssessment.summary && (
+                                <button
+                                  onClick={() => setSelectedAssessment(aud)}
+                                  className="text-[9px] text-[#1e4a79] font-bold underline hover:text-blue-600 transition-colors text-left"
+                                >
+                                  View assessment
+                                </button>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -805,46 +788,19 @@ function PerformanceExplorer({ days = 30 }) {
                           )}
                         </td>
                         <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">
-                          <div className="flex flex-col items-center gap-1 sm:gap-2">
-                            <button
-                              onClick={() => setSelectedAssessment(aud)}
-                              className="lg:hidden text-[9px] text-[#1e4a79] font-bold underline hover:text-blue-600 transition-colors"
-                            >
-                              View
-                            </button>
-                            <span className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full border text-[9px] sm:text-[10px] font-bold shadow-sm whitespace-nowrap ${getReadinessLevelClasses(audienceAssessment.readinessLevel)}`}>
-                              {audienceAssessment.readinessLevel?.replace(/_/g, ' ').toUpperCase() || 'OPTIMIZING'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">
                           <button
-                            onClick={() => {
-                              setSelectedScalingItem(aud);
-                              handleAudienceAIRequest(aud);
-                            }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all transform hover:scale-110 active:scale-95 whitespace-nowrap"
-                          >
-                            Scale Growth
-                          </button>
-                        </td>
-                        <td className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 text-center">
-                          <button
-                            onClick={() => handleRefreshAudienceLLM(aud.audience_id || aud.id)}
+                            onClick={() => handleAudienceAIAnalysis(aud)}
                             disabled={refreshingAudienceIds.has(aud.audience_id || aud.id)}
-                            className="flex items-center justify-center px-2 py-1.5 text-[#1e4a79] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
-                            title="Refresh AI analysis for this audience"
+                            className="inline-flex items-center justify-center gap-1.5 mx-auto px-3 sm:px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-[10px] font-bold shadow-sm transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 whitespace-nowrap"
+                            title="Run AI analysis for this audience"
                           >
                             {refreshingAudienceIds.has(aud.audience_id || aud.id) ? (
-                              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                               </svg>
-                            ) : (
-                              <svg className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
-                            )}
+                            ) : null}
+                            AI Analysis
                           </button>
                         </td>
                       </tr>
@@ -1001,9 +957,26 @@ function PerformanceExplorer({ days = 30 }) {
                       <svg className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.12 14.12l-6.06 2.02c-.52.17-1.03-.34-.86-.86l2.02-6.06c.14-.42.48-.76.9-.9l6.06-2.02c.52-.17 1.03.34.86.86l-2.02 6.06c-.14.42-.48.76-.9.9z" />
                       </svg>
-                      <span className="truncate">Assessment Details</span>
+                      <span className="truncate">
+                        {isAudienceItem(selectedAssessment) ? 'AI Analysis' : 'Assessment Details'}
+                      </span>
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 font-semibold truncate">{selectedAssessment.name}</p>
+                    {isAudienceItem(selectedAssessment) && (
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        {selectedAssessment.role && (
+                          <span className="text-[10px] sm:text-xs text-gray-500">
+                            {selectedAssessment.role}
+                            {selectedAssessment.roleSub ? ` · ${selectedAssessment.roleSub}` : ''}
+                          </span>
+                        )}
+                        {selectedAssessment.signal && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${selectedAssessment.signalStyle || 'bg-blue-100 text-blue-800'}`}>
+                            {selectedAssessment.signal}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {selectedAssessment.format && (
                       <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                         Format: <span className="font-semibold">{selectedAssessment.format}</span>
@@ -1017,6 +990,7 @@ function PerformanceExplorer({ days = 30 }) {
                   setSelectedAssessment(null);
                   setSelectedAI(null);
                   setAiLoading(false);
+                  setAudienceAnalysisLoading(false);
                 }}
                 className="text-gray-400 hover:text-gray-600 p-1 sm:p-2 flex-shrink-0 touch-manipulation"
                 aria-label="Close modal"
@@ -1028,6 +1002,15 @@ function PerformanceExplorer({ days = 30 }) {
             </div>
 
             <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 min-h-0">
+              {audienceAnalysisLoading && isAudienceItem(selectedAssessment) ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
+                    <div className="w-12 h-12 border-4 border-t-[#1e4a79] rounded-full animate-spin absolute top-0 left-0"></div>
+                  </div>
+                  <p className="text-gray-600 text-sm font-medium">Running AI analysis...</p>
+                </div>
+              ) : (
               <div className="space-y-4 sm:space-y-6">
                 {/* Content based on assessment availability */}
 
@@ -2007,6 +1990,11 @@ function PerformanceExplorer({ days = 30 }) {
                                   </span>
                                 </div>
                               </div>
+                              {selectedAssessment.assessment.audience_reaction.reaction_reasoning && (
+                                <p className="text-xs text-gray-600 italic leading-relaxed">
+                                  {selectedAssessment.assessment.audience_reaction.reaction_reasoning}
+                                </p>
+                              )}
                               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                 <span className="text-gray-600">Reaction Quality:</span>
                                 <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${selectedAssessment.assessment.audience_reaction.reaction_quality === 'highly_engaged' ? 'bg-green-100 text-green-800' :
@@ -2149,6 +2137,11 @@ function PerformanceExplorer({ days = 30 }) {
                                       <li key={idx}>{factor}</li>
                                     ))}
                                   </ul>
+                                </div>
+                              )}
+                              {selectedAssessment.assessment.sway_analysis.sway_reasoning && (
+                                <div className="mt-2 text-xs text-gray-600 italic leading-relaxed">
+                                  {selectedAssessment.assessment.sway_analysis.sway_reasoning}
                                 </div>
                               )}
                               {selectedAssessment.assessment.sway_analysis.interpretation && (
@@ -3186,7 +3179,11 @@ function PerformanceExplorer({ days = 30 }) {
                   </div>
                 ) : (
                   <div className="text-center py-6 sm:py-8 text-gray-500">
-                    <p className="text-xs sm:text-sm">No detailed assessment available for this campaign.</p>
+                    <p className="text-xs sm:text-sm">
+                      {isAudienceItem(selectedAssessment)
+                        ? 'No AI analysis available for this audience.'
+                        : 'No detailed assessment available for this campaign.'}
+                    </p>
                     {getAssessment(selectedAssessment).summary && (
                       <div className="mt-4 bg-[#f8fafc] p-3 sm:p-4 rounded-lg">
                         <p className="text-xs sm:text-sm text-gray-700 break-words">{getAssessment(selectedAssessment).summary}</p>
@@ -3195,6 +3192,7 @@ function PerformanceExplorer({ days = 30 }) {
                   </div>
                 )}
               </div>
+              )}
             </div>
 
             <div className="mt-4 sm:mt-6 md:mt-8 flex justify-center sm:justify-end flex-shrink-0 pt-4 border-t border-gray-100">
@@ -3203,6 +3201,7 @@ function PerformanceExplorer({ days = 30 }) {
                   setSelectedAssessment(null);
                   setSelectedAI(null);
                   setAiLoading(false);
+                  setAudienceAnalysisLoading(false);
                 }}
                 className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-2 bg-[#1e4a79] text-white rounded-full text-sm sm:text-base font-bold shadow-lg hover:bg-[#2c6aa8] transition-all transform hover:scale-105 touch-manipulation"
               >
@@ -3232,7 +3231,7 @@ function PerformanceExplorer({ days = 30 }) {
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#1e4a79] flex items-center gap-2 mb-1 sm:mb-2">
                       <span className="truncate">{selectedScalingItem.name}</span>
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wider truncate">AI Growth Analysis</p>
+                    <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wider truncate">AI Analysis</p>
                   </div>
                 </div>
               </div>
@@ -3263,6 +3262,9 @@ function PerformanceExplorer({ days = 30 }) {
                 </div>
               ) : selectedAI ? (
                 <div className="space-y-4 sm:space-y-5">
+                  {isCampaignAiRecommendationShape(selectedAI.ai_recommendation) && (
+                    <CampaignAiRecommendationPanel recommendation={selectedAI.ai_recommendation} />
+                  )}
 
                   {/* Header Info Row */}
                   <div className="flex flex-wrap items-center gap-2">
@@ -3308,7 +3310,20 @@ function PerformanceExplorer({ days = 30 }) {
                     {selectedAI.daily_budget && (
                       <span className="px-3 py-1.5 bg-green-100 text-green-600 rounded-full text-xs font-bold">Daily Budget: ${selectedAI.daily_budget}</span>
                     )}
+                    {selectedAI.ai_analysis?.priority && !selectedAI.ai_recommendation?.priority && (
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${selectedAI.ai_analysis.priority === 'high' ? 'bg-red-100 text-red-600' :
+                        selectedAI.ai_analysis.priority === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                          'bg-blue-100 text-blue-600'
+                        }`}>
+                        {String(selectedAI.ai_analysis.priority).toUpperCase()} Priority
+                      </span>
+                    )}
                   </div>
+
+                  {/* Ad AI Growth: full ai_analysis payload from /ads/:id/ai-analysis */}
+                  {selectedAI.ai_analysis && (
+                    <AdAiAnalysisPanel analysis={selectedAI.ai_analysis} />
+                  )}
 
                   {/* Rule-Based Assessment */}
                   {selectedAI.rule_assessment?.assessment && (
@@ -3322,11 +3337,18 @@ function PerformanceExplorer({ days = 30 }) {
                     </div>
                   )}
 
-                  {/* AI Executive Summary */}
-                  {(selectedAI.ai_recommendation?.executive_summary || selectedAI.ai_recommendation?.description) && (
+                  {/* AI Executive Summary (string only — campaign metrics object uses CampaignAiRecommendationPanel) */}
+                  {!isCampaignAiRecommendationShape(selectedAI.ai_recommendation) &&
+                    (typeof selectedAI.ai_recommendation?.executive_summary === 'string'
+                      ? selectedAI.ai_recommendation.executive_summary
+                      : selectedAI.ai_recommendation?.description) && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <h4 className="text-xs font-bold text-[#1e4a79] uppercase tracking-wide mb-2">AI Executive Summary</h4>
-                      <p className="text-sm text-gray-700 leading-relaxed">{selectedAI.ai_recommendation.executive_summary || selectedAI.ai_recommendation.description}</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {typeof selectedAI.ai_recommendation.executive_summary === 'string'
+                          ? selectedAI.ai_recommendation.executive_summary
+                          : selectedAI.ai_recommendation.description}
+                      </p>
                     </div>
                   )}
 
@@ -3632,8 +3654,9 @@ function PerformanceExplorer({ days = 30 }) {
                   )}
 
 
-                  {/* Budget Analysis / Allocation Audit */}
-                  {(selectedAI.ai_recommendation?.budget_analysis || selectedAI.ai_recommendation?.budget_allocation_audit) && (
+                  {/* Budget Analysis / Allocation Audit (legacy adset shape — hidden for campaign ai_recommendation) */}
+                  {!isCampaignAiRecommendationShape(selectedAI.ai_recommendation) &&
+                    (selectedAI.ai_recommendation?.budget_analysis || selectedAI.ai_recommendation?.budget_allocation_audit) && (
                     <div className="border border-gray-200 rounded-lg overflow-hidden">
                       <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center justify-between">
                         <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wide">
@@ -3742,7 +3765,11 @@ function PerformanceExplorer({ days = 30 }) {
                               {key === 'placement' && <span>📍</span>}
                               {key.replace(/_/g, ' ')}
                             </h5>
-                            <p className="text-sm text-gray-700 leading-relaxed">{value}</p>
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              {typeof value === 'string' || typeof value === 'number'
+                                ? value
+                                : JSON.stringify(value)}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -3750,7 +3777,8 @@ function PerformanceExplorer({ days = 30 }) {
                   )}
 
                   {/* Actionable Recommendations */}
-                  {selectedAI.ai_recommendation?.recommendations?.length > 0 && (
+                  {!isCampaignAiRecommendationShape(selectedAI.ai_recommendation) &&
+                    selectedAI.ai_recommendation?.recommendations?.length > 0 && (
                     <div className="border border-[#1e4a79]/30 rounded-lg overflow-hidden">
                       <div className="bg-[#1e4a79] px-4 py-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wide">Recommended Actions</h4>
@@ -3759,13 +3787,13 @@ function PerformanceExplorer({ days = 30 }) {
                         {selectedAI.ai_recommendation.recommendations.map((rec, i) => (
                           <div key={i} className="p-3 bg-blue-50/30">
                             <div className="flex gap-3">
-                              <span className={`flex-shrink-0 w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center ${rec.priority === 'HIGH' ? 'bg-red-500' : rec.priority === 'MEDIUM' ? 'bg-yellow-500' : 'bg-blue-500'
+                              <span className={`flex-shrink-0 w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center ${String(rec.priority).toUpperCase() === 'HIGH' ? 'bg-red-500' : String(rec.priority).toUpperCase() === 'MEDIUM' ? 'bg-yellow-500' : 'bg-blue-500'
                                 }`}>
                                 {i + 1}
                               </span>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${rec.priority === 'HIGH' ? 'bg-red-100 text-red-600' : rec.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${String(rec.priority).toUpperCase() === 'HIGH' ? 'bg-red-100 text-red-600' : String(rec.priority).toUpperCase() === 'MEDIUM' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'
                                     }`}>{rec.priority}</span>
                                   <span className="px-2 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-bold uppercase">{rec.type || rec.optimizer}</span>
                                   <span className="text-sm font-bold text-gray-800">{rec.action} {rec.target_entity_name ? `: ${rec.target_entity_name}` : ''}</span>

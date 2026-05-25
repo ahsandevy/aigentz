@@ -188,6 +188,22 @@ export const usePerformanceExplorer = (days = 30) => {
     [refreshLLMMutation]
   )
 
+  const refreshAudienceLLMAsync = useCallback(
+    async (audienceId) => {
+      setRefreshingIds((prev) => new Set(prev).add(audienceId))
+      try {
+        return await refreshLLMMutation.mutateAsync(audienceId)
+      } finally {
+        setRefreshingIds((prev) => {
+          const next = new Set(prev)
+          next.delete(audienceId)
+          return next
+        })
+      }
+    },
+    [refreshLLMMutation]
+  )
+
   const refreshAllAudiencesLLM = useCallback(
     (audienceIds) => {
       setRefreshingIds(new Set(audienceIds))
@@ -222,6 +238,7 @@ export const usePerformanceExplorer = (days = 30) => {
     isFetchingAny,
     refetchAll,
     refreshAudienceLLM,
+    refreshAudienceLLMAsync,
     isRefreshingAudience: refreshLLMMutation.isPending,
     refreshingAudienceIds: refreshingIds,
     refreshAllAudiencesLLM,

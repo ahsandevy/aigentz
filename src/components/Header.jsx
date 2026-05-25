@@ -38,12 +38,31 @@ function normalizeAccounts(payload) {
   return extractFirstArray(payload) || []
 }
 
+const SYNC_TOAST_DISMISS_MS = 6000
+
 function Header({ days, onDaysChange }) {
   const navigate = useNavigate()
   const [isSyncing, setIsSyncing] = useState(false)
   const [dataStatus, setDataStatus] = useState(null)
   const [syncMessage, setSyncMessage] = useState(null)
   const [cooldownMessage, setCooldownMessage] = useState(null)
+  const cooldownTimerRef = useRef(null)
+  const syncMessageTimerRef = useRef(null)
+
+  const clearDismissTimer = (timerRef) => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }
+
+  const scheduleToastDismiss = (timerRef, clearState) => {
+    clearDismissTimer(timerRef)
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      clearState()
+    }, SYNC_TOAST_DISMISS_MS)
+  }
   const [selectedCampaign, setSelectedCampaign] = useState('total')
   const [selectedAccount, setSelectedAccount] = useState('total')
   const [campaignOptions, setCampaignOptions] = useState([])
@@ -58,7 +77,10 @@ function Header({ days, onDaysChange }) {
     if (storedSyncRange) {
       try {
         const { from, to } = JSON.parse(storedSyncRange)
-        if (from && to) setSyncMessage(`Synced ${formatDateLabel(from)} to ${formatDateLabel(to)}`)
+        if (from && to) {
+          setSyncMessage(`Synced ${formatDateLabel(from)} to ${formatDateLabel(to)}`)
+          scheduleToastDismiss(syncMessageTimerRef, () => setSyncMessage(null))
+        }
         sessionStorage.removeItem('lastSyncRange')
       } catch (_) { /* ignore */ }
     }
@@ -121,11 +143,15 @@ function Header({ days, onDaysChange }) {
     return () => {
       cancelled = true
       controller.abort()
+      clearDismissTimer(cooldownTimerRef)
+      clearDismissTimer(syncMessageTimerRef)
     }
   }, [])
 
   const handleSync = async (force = false) => {
     setIsSyncing(true)
+    clearDismissTimer(syncMessageTimerRef)
+    clearDismissTimer(cooldownTimerRef)
     setSyncMessage(null)
     setCooldownMessage(null)
     try {
@@ -139,8 +165,7 @@ function Header({ days, onDaysChange }) {
         const rawMessage = result?.message || 'Data is already up to date.'
         const cleaned = rawMessage.replace(/\s*Use force=true to override\.?/gi, '').trim()
         setCooldownMessage(cleaned)
-        clearTimeout(cooldownTimerRef.current)
-        cooldownTimerRef.current = setTimeout(() => setCooldownMessage(null), 6000)
+        scheduleToastDismiss(cooldownTimerRef, () => setCooldownMessage(null))
         return
       }
 
@@ -308,7 +333,7 @@ function Header({ days, onDaysChange }) {
             <p className="text-xs text-[#6b7280] leading-snug">{cooldownMessage}</p>
           </div>
           <button
-            onClick={() => { clearTimeout(cooldownTimerRef.current); setCooldownMessage(null) }}
+            onClick={() => { clearDismissTimer(cooldownTimerRef); setCooldownMessage(null) }}
             className="shrink-0 text-[#9ca3af] hover:text-[#374151] transition-colors mt-0.5"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
