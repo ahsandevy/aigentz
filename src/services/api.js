@@ -56,18 +56,6 @@ export const analyticsAPI = {
         }
     },
 
-    // Campaign-level diagnostic info for dashboard insights section
-    getCampaignLevelInfo: async (signal) => {
-        try {
-            const response = await api.get('/campaign-level-info', { signal });
-            return response.data;
-        } catch (error) {
-            if (axios.isCancel(error)) return null;
-            console.error('Error fetching campaign-level info:', error);
-            throw error;
-        }
-    },
-
     // Campaigns
     getCampaigns: async (signal) => {
         try {
