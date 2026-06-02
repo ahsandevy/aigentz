@@ -28,8 +28,8 @@ function PerformanceExplorer({ days = 30 }) {
     audiencesLoading,
     refreshAudienceLLMAsync,
     refreshingAudienceIds,
-    refreshAllAudiencesLLM,
-    isRefreshingAll,
+    // refreshAllAudiencesLLM,
+    // isRefreshingAll,
   } = usePerformanceExplorer(days)
 
   // Per-tab loading: each panel shows data as soon as its own query finishes; other tabs still show loading when selected.
@@ -121,11 +121,11 @@ function PerformanceExplorer({ days = 30 }) {
     }
   }
 
-  const handleRefreshAllAudiencesLLM = () => {
-    const allAudienceIds = audiences.map(aud => aud.audience_id || aud.id).filter(Boolean)
-    if (allAudienceIds.length === 0) return
-    refreshAllAudiencesLLM(allAudienceIds)
-  }
+  // const handleRefreshAllAudiencesLLM = () => {
+  //   const allAudienceIds = audiences.map(aud => aud.audience_id || aud.id).filter(Boolean)
+  //   if (allAudienceIds.length === 0) return
+  //   refreshAllAudiencesLLM(allAudienceIds)
+  // }
 
   // Update selectedAssessment when audiences data changes (after refresh)
   useEffect(() => {
@@ -701,7 +701,7 @@ function PerformanceExplorer({ days = 30 }) {
           <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm flex flex-col">
             <div className="flex justify-between items-center px-4 sm:px-6 py-3 border-b border-[#e2e8f0]">
               <h3 className="text-sm font-bold text-[#334155]">Audiences</h3>
-              <button
+              {/* <button
                 onClick={handleRefreshAllAudiencesLLM}
                 disabled={isRefreshingAll || refreshingAudienceIds.size > 0}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-[#1e4a79] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -723,7 +723,7 @@ function PerformanceExplorer({ days = 30 }) {
                     Refresh All
                   </>
                 )}
-              </button>
+              </button> */}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse bg-white">
