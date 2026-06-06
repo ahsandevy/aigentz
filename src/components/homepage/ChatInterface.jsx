@@ -1,25 +1,25 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import {
   Send,
-  User,
   Database,
   ChevronDown,
   ChevronUp,
   AlertCircle,
   Loader2,
   CheckCircle2,
-  BarChart3,
   Terminal,
   Cpu,
-  CornerDownRight,
   Sparkles
 } from 'lucide-react';
 
-/**
- * Minimal Data Table Component
- */
-const DataTable = ({ data }) => {
+// ═══════════════════════════════════════════════════════════════════════
+//  MEMOISED SUB-COMPONENTS (defined OUTSIDE ChatInterface to preserve
+//  React component identity across renders — prevents full unmount/remount
+//  of all historical messages on every keystroke).
+// ═══════════════════════════════════════════════════════════════════════
+
+const DataTable = memo(function DataTable({ data }) {
   if (!data || !Array.isArray(data) || data.length === 0) return null;
   const headers = Object.keys(data[0]);
 
@@ -56,12 +56,9 @@ const DataTable = ({ data }) => {
       </div>
     </div>
   );
-};
+});
 
-/**
- * Minimal SQL Block
- */
-const SQLBlock = ({ query }) => {
+const SQLBlock = memo(function SQLBlock({ query }) {
   if (!query) return null;
   return (
     <div className="my-6 border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm">
@@ -76,12 +73,9 @@ const SQLBlock = ({ query }) => {
       </div>
     </div>
   );
-};
+});
 
-/**
- * Minimal Step Card Component
- */
-const StepCard = ({ step }) => {
+const StepCard = memo(function StepCard({ step }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const status = step.status || 'complete';
 
@@ -146,7 +140,84 @@ const StepCard = ({ step }) => {
       )}
     </div>
   );
-};
+});
+
+const MessageBubble = memo(function MessageBubble({ msg }) {
+  const isUser = msg.role === 'user';
+
+  if (isUser) {
+    return (
+      <div className="flex w-full mb-8 justify-end animate-in fade-in duration-300">
+        <div className="max-w-2xl px-5 py-3.5 bg-gray-100 rounded-[20px] text-[15px] leading-relaxed text-gray-800 shadow-sm border border-gray-200">
+          {msg.content}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-full mb-10 justify-start animate-in fade-in duration-500">
+      <div className="flex gap-4 w-full max-w-4xl">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200 shadow-sm mt-1">
+          <Sparkles size={14} className="text-gray-600" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="w-full">
+            {msg.steps && msg.steps.length > 0 && (
+              <div className="mb-6">
+                <div className="space-y-2">
+                  {msg.steps.map((step, idx) => (
+                    <StepCard key={step.id || idx} step={step} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {msg.sql && <SQLBlock query={msg.sql} />}
+
+            {msg.data && (
+              <div className="animate-in fade-in duration-500 overflow-hidden mt-6 mb-6">
+                <DataTable data={msg.data} />
+              </div>
+            )}
+
+            {(msg.content || (msg.reasoning && !msg.sql && !msg.data && msg.steps?.length === 0)) && (
+              <div className="text-[15px] text-gray-800 leading-relaxed font-normal prose prose-gray max-w-none prose-p:mb-4 prose-a:text-blue-600 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-mono">
+                <ReactMarkdown>
+                  {msg.content || msg.reasoning}
+                </ReactMarkdown>
+              </div>
+            )}
+
+            {msg.error && (
+              <div className="mt-4 p-4 bg-red-50/50 border border-red-100 rounded-xl flex items-start gap-3 text-red-600">
+                <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                <div className="text-[14px] font-medium leading-relaxed">{msg.error}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+//  STREAMING THROTTLE CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════
+
+// Text-only updates flush at most once per this many ms.
+const STREAM_THROTTLE_MS = 80;
+
+// Structural events (tool calls, errors, etc.) flush immediately.
+const STRUCTURAL_EVENTS = new Set([
+  'tool_call', 'tool_output', 'sql', 'data', 'error',
+]);
+
+// ═══════════════════════════════════════════════════════════════════════
+//  CHAT INTERFACE
+// ═══════════════════════════════════════════════════════════════════════
 
 export default function ChatInterface() {
   const [query, setQuery] = useState('');
@@ -159,22 +230,37 @@ export default function ChatInterface() {
 
   const scrollRef = useRef(null);
   const sessionIdRef = useRef(null);
-
   const inputRef = useRef(null);
 
+  // ── Streaming throttle refs ──
+  // Instead of calling setStreamingMessage on every SSE event (which
+  // triggers a full re-render cascade on every text token), we mutate
+  // a ref and flush to React state at most once per STREAM_THROTTLE_MS.
+  const streamingRef = useRef(null);       // { ...currentAiMsg }
+  const throttleTimerRef = useRef(null);   // setTimeout ID
+  const isThinkingRef = useRef(false);     // mirrors isThinking, read in throttle
+
+  // Keep isThinkingRef in sync.
+  useEffect(() => {
+    isThinkingRef.current = isThinking;
+  }, [isThinking]);
+
+  // ── Initialization ─────────────────────────────────────────────────
   useEffect(() => {
     if (!sessionIdRef.current) {
-      sessionIdRef.current = crypto.randomUUID ? crypto.randomUUID() : 'session-' + Date.now();
+      sessionIdRef.current = crypto.randomUUID
+        ? crypto.randomUUID()
+        : 'session-' + Date.now();
     }
     fetchAccounts();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     setIsLoadingAccounts(true);
     try {
       const API_URL = import.meta.env.VITE_API_BASE_URL
-        ? `${import.meta.env.VITE_API_BASE_URL}/api/analytics/mcp/accounts`
-        : '/api/analytics/mcp/accounts';
+        ? `${import.meta.env.VITE_API_BASE_URL}/api/analytics/meta/accounts`
+        : '/api/analytics/meta/accounts';
       const response = await fetch(API_URL);
       if (response.ok) {
         const data = await response.json();
@@ -185,26 +271,9 @@ export default function ChatInterface() {
     } finally {
       setIsLoadingAccounts(false);
     }
-  };
+  }, []);
 
-  const handleAccountChange = (e) => {
-    const accountId = e.target.value;
-    const account = accounts.find(a => a.id === accountId);
-    if (account) {
-      setSelectedAccount(account);
-      // Auto-send activation message
-      sendActivationMessage(account.name);
-    }
-  };
-
-  const sendActivationMessage = (accountName) => {
-    const activationQuery = `Activate context for "${accountName}".`;
-    // We can't call handleSearch directly with a param easily without refactoring, 
-    // so let's use a temporary state or just trigger it.
-    // Better: create a reusable sendMessage function.
-    performSearch(activationQuery);
-  };
-
+  // ── Scrolling ──────────────────────────────────────────────────────
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -215,19 +284,139 @@ export default function ChatInterface() {
     scrollToBottom();
   }, [messages, streamingMessage, scrollToBottom]);
 
-  const handleSearch = async () => {
-    await performSearch(query);
-  };
+  // ── Streaming flush ────────────────────────────────────────────────
+  // Called from the SSE loop.  Text-only events are throttled;
+  // structural events flush immediately.
 
-  const performSearch = async (searchQuery) => {
-    const trimmedQuery = searchQuery.trim();
-    if (!trimmedQuery || isThinking) return;
+  const flushStreamingState = useCallback((flushNow = false) => {
+    // Clear any pending throttle timer.
+    if (throttleTimerRef.current !== null) {
+      clearTimeout(throttleTimerRef.current);
+      throttleTimerRef.current = null;
+    }
+
+    if (flushNow) {
+      // Structural change — snapshot immediately.
+      if (streamingRef.current) {
+        setStreamingMessage({ ...streamingRef.current });
+      }
+    } else {
+      // Text-only — throttle to STREAM_THROTTLE_MS.
+      throttleTimerRef.current = setTimeout(() => {
+        throttleTimerRef.current = null;
+        if (streamingRef.current) {
+          setStreamingMessage({ ...streamingRef.current });
+        }
+      }, STREAM_THROTTLE_MS);
+    }
+  }, []);
+
+  // ── SSE stream handler ─────────────────────────────────────────────
+  const handleSSEEvent = useCallback((parsed, currentAiMsg) => {
+    const eventType = parsed.type;
+    const isStructural = STRUCTURAL_EVENTS.has(eventType);
+
+    switch (eventType) {
+      case 'thinking':
+        currentAiMsg.thinking += parsed.content || '';
+        break;
+
+      case 'text':
+        if (parsed.is_reasoning) {
+          currentAiMsg.reasoning += parsed.content || '';
+        } else {
+          currentAiMsg.content += parsed.content || '';
+          if (isThinkingRef.current) {
+            setIsThinking(false);
+          }
+        }
+        break;
+
+      case 'tool_call': {
+        const stepId = parsed.id || `step-${Date.now()}`;
+        const existingStep = currentAiMsg.steps.find(s => s.id === stepId);
+        if (!existingStep) {
+          currentAiMsg.steps.push({
+            id: stepId,
+            tool: parsed.tool,
+            args: parsed.args,
+            status: 'running',
+            output: null,
+          });
+        }
+        if (isThinkingRef.current) {
+          setIsThinking(false);
+        }
+        break;
+      }
+
+      case 'tool_output': {
+        const stepId = parsed.id;
+        const stepIndex = currentAiMsg.steps.findIndex(s => s.id === stepId);
+        if (stepIndex !== -1) {
+          currentAiMsg.steps[stepIndex].status = 'complete';
+          currentAiMsg.steps[stepIndex].output = parsed.content;
+        }
+        break;
+      }
+
+      case 'sql': {
+        currentAiMsg.sql = parsed.content;
+        const stepId = parsed.id || 'sql-gen';
+        if (!currentAiMsg.steps.find(s => s.id === stepId)) {
+          currentAiMsg.steps.push({
+            id: stepId,
+            tool: 'SQL Generation',
+            status: 'complete',
+            output: 'Query compiled successfully',
+          });
+        }
+        break;
+      }
+
+      case 'data': {
+        currentAiMsg.data = parsed.content;
+        const stepId = parsed.id;
+        const stepIndex = currentAiMsg.steps.findIndex(s => s.id === stepId);
+        if (stepIndex !== -1) {
+          currentAiMsg.steps[stepIndex].status = 'complete';
+        }
+        break;
+      }
+
+      case 'error': {
+        currentAiMsg.error = parsed.error || parsed.content;
+        const stepId = parsed.id;
+        if (stepId) {
+          const stepIndex = currentAiMsg.steps.findIndex(s => s.id === stepId);
+          if (stepIndex !== -1) {
+            currentAiMsg.steps[stepIndex].status = 'failed';
+          }
+        }
+        break;
+      }
+
+      default:
+        if (parsed.error) currentAiMsg.error = parsed.error;
+    }
+
+    // Always update the ref (zero-cost mutation).
+    streamingRef.current = currentAiMsg;
+
+    // Flush: structural events immediately, text events throttled.
+    flushStreamingState(isStructural);
+  }, [flushStreamingState]);
+
+  // ── performSearch ──────────────────────────────────────────────────
+  const performSearch = useCallback(async (searchQuery) => {
+    const trimmedQuery = (searchQuery || '').trim();
+    if (!trimmedQuery) return;
+    if (isThinkingRef.current) return;
 
     const userMsg = { id: Date.now(), role: 'user', content: trimmedQuery };
     setMessages(prev => [...prev, userMsg]);
     setQuery('');
 
-    // Reset textarea height
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
     }
@@ -235,7 +424,7 @@ export default function ChatInterface() {
     setIsThinking(true);
 
     const aiMsgId = Date.now() + 1;
-    let currentAiMsg = {
+    const currentAiMsg = {
       id: aiMsgId,
       role: 'ai',
       thinking: '',
@@ -244,10 +433,12 @@ export default function ChatInterface() {
       steps: [],
       sql: null,
       data: null,
-      error: null
+      error: null,
     };
 
-    setStreamingMessage(currentAiMsg);
+    // Seed both the ref and React state so the bubble appears immediately.
+    streamingRef.current = currentAiMsg;
+    setStreamingMessage({ ...currentAiMsg });
 
     try {
       const API_URL = import.meta.env.VITE_API_BASE_URL
@@ -259,8 +450,8 @@ export default function ChatInterface() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: trimmedQuery,
-          session_id: sessionIdRef.current
-        })
+          session_id: sessionIdRef.current,
+        }),
       });
 
       if (!response.ok) throw new Error(`Server Error: ${response.status}`);
@@ -278,171 +469,78 @@ export default function ChatInterface() {
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const rawData = line.slice(6);
-          if (rawData === '[DONE]') break;
+          if (rawData === '[DONE]') {
+            // Flush any remaining throttled content before finalising.
+            if (throttleTimerRef.current !== null) {
+              clearTimeout(throttleTimerRef.current);
+              throttleTimerRef.current = null;
+            }
+            break;
+          }
 
           try {
-            const data = JSON.parse(rawData);
-
-            switch (data.type) {
-              case 'thinking':
-                currentAiMsg.thinking += data.content;
-                break;
-
-              case 'text':
-                if (data.is_reasoning) {
-                  currentAiMsg.reasoning += data.content;
-                } else {
-                  currentAiMsg.content += data.content;
-                  setIsThinking(false);
-                }
-                break;
-
-              case 'tool_call': {
-                const stepId = data.id || `step-${Date.now()}`;
-                const existingStep = currentAiMsg.steps.find(s => s.id === stepId);
-                if (!existingStep) {
-                  currentAiMsg.steps.push({
-                    id: stepId,
-                    tool: data.tool,
-                    args: data.args,
-                    status: 'running',
-                    output: null
-                  });
-                }
-                setIsThinking(false);
-                break;
-              }
-
-              case 'tool_output': {
-                const stepId = data.id;
-                const stepIndex = currentAiMsg.steps.findIndex(s => s.id === stepId);
-                if (stepIndex !== -1) {
-                  currentAiMsg.steps[stepIndex].status = 'complete';
-                  currentAiMsg.steps[stepIndex].output = data.content;
-                }
-                break;
-              }
-
-              case 'sql': {
-                currentAiMsg.sql = data.content;
-                const stepId = data.id || 'sql-gen';
-                if (!currentAiMsg.steps.find(s => s.id === stepId)) {
-                  currentAiMsg.steps.push({
-                    id: stepId,
-                    tool: 'SQL Generation',
-                    status: 'complete',
-                    output: 'Query compiled successfully'
-                  });
-                }
-                break;
-              }
-
-              case 'data': {
-                currentAiMsg.data = data.content;
-                const stepId = data.id;
-                const stepIndex = currentAiMsg.steps.findIndex(s => s.id === stepId);
-                if (stepIndex !== -1) {
-                  currentAiMsg.steps[stepIndex].status = 'complete';
-                }
-                break;
-              }
-
-              case 'error': {
-                currentAiMsg.error = data.error || data.content;
-                const stepId = data.id;
-                if (stepId) {
-                  const stepIndex = currentAiMsg.steps.findIndex(s => s.id === stepId);
-                  if (stepIndex !== -1) {
-                    currentAiMsg.steps[stepIndex].status = 'failed';
-                  }
-                }
-                break;
-              }
-              default:
-                if (data.error) currentAiMsg.error = data.error;
-            }
-
-            setStreamingMessage({ ...currentAiMsg });
-
+            const parsed = JSON.parse(rawData);
+            handleSSEEvent(parsed, currentAiMsg);
           } catch (e) {
-            console.warn('Parsing error:', e, rawData);
+            console.warn('SSE parse error:', e, rawData);
           }
         }
       }
 
-      setMessages(prev => [...prev, { ...currentAiMsg }]);
+      // Final flush & move to permanent messages.
       setStreamingMessage(null);
+      setMessages(prev => [...prev, { ...currentAiMsg }]);
       setIsThinking(false);
+      streamingRef.current = null;
 
     } catch (err) {
-      currentAiMsg.error = err.message;
-      setMessages(prev => [...prev, { ...currentAiMsg, isError: true }]);
+      currentAiMsg.error = err.message || 'Connection failed';
       setStreamingMessage(null);
+      setMessages(prev => [...prev, { ...currentAiMsg, isError: true }]);
       setIsThinking(false);
+      streamingRef.current = null;
     }
-  };
+  }, [handleSSEEvent]);
 
-  const MessageBubble = ({ msg }) => {
-    const isUser = msg.role === 'user';
+  // ── Input handlers ─────────────────────────────────────────────────
+  const handleSearch = useCallback(() => {
+    performSearch(query);
+  }, [query, performSearch]);
 
-    if (isUser) {
-      return (
-        <div className="flex w-full mb-8 justify-end animate-in fade-in duration-300">
-          <div className="max-w-2xl px-5 py-3.5 bg-gray-100 rounded-[20px] text-[15px] leading-relaxed text-gray-800 shadow-sm border border-gray-200">
-            {msg.content}
-          </div>
-        </div>
-      );
+  const handleAccountChange = useCallback((e) => {
+    const accountId = e.target.value;
+    const account = accounts.find(a => a.id === accountId);
+    if (account) {
+      setSelectedAccount(account);
+      performSearch(`Activate context for "${account.name}".`);
     }
+  }, [accounts, performSearch]);
 
-    return (
-      <div className="flex w-full mb-10 justify-start animate-in fade-in duration-500">
-        <div className="flex gap-4 w-full max-w-4xl">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200 shadow-sm mt-1">
-            <Sparkles size={14} className="text-gray-600" />
-          </div>
+  const handleInputChange = useCallback((e) => {
+    setQuery(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
+  }, []);
 
-          <div className="flex-1 min-w-0">
-            <div className="w-full">
-              {msg.steps && msg.steps.length > 0 && (
-                <div className="mb-6">
-                  <div className="space-y-2">
-                    {msg.steps.map((step, idx) => (
-                      <StepCard key={step.id || idx} step={step} />
-                    ))}
-                  </div>
-                </div>
-              )}
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      performSearch(query);
+    }
+  }, [query, performSearch]);
 
-              {msg.sql && <SQLBlock query={msg.sql} />}
+  // ── Cleanup throttle timer on unmount ──────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (throttleTimerRef.current !== null) {
+        clearTimeout(throttleTimerRef.current);
+      }
+    };
+  }, []);
 
-              {msg.data && (
-                <div className="animate-in fade-in duration-500 overflow-hidden mt-6 mb-6">
-                  <DataTable data={msg.data} />
-                </div>
-              )}
-
-              {(msg.content || (msg.reasoning && !msg.sql && !msg.data && msg.steps?.length === 0)) && (
-                <div className="text-[15px] text-gray-800 leading-relaxed font-normal prose prose-gray max-w-none prose-p:mb-4 prose-a:text-blue-600 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-mono">
-                  <ReactMarkdown>
-                    {msg.content || msg.reasoning}
-                  </ReactMarkdown>
-                </div>
-              )}
-
-              {msg.error && (
-                <div className="mt-4 p-4 bg-red-50/50 border border-red-100 rounded-xl flex items-start gap-3 text-red-600">
-                  <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
-                  <div className="text-[14px] font-medium leading-relaxed">{msg.error}</div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
+  // ════════════════════════════════════════════════════════════════════
+  //  RENDER
+  // ════════════════════════════════════════════════════════════════════
   return (
     <div className="w-full max-w-5xl mx-auto bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900 min-h-[500px] max-h-[80vh] border border-gray-200 rounded-[24px] shadow-sm mt-2 mb-8 overflow-hidden">
       <div className="flex-1 w-full flex flex-col relative overflow-hidden">
@@ -492,7 +590,6 @@ export default function ChatInterface() {
         >
           {messages.length === 0 && !streamingMessage && (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8 animate-in fade-in duration-700">
-
               <div>
                 <h3 className="text-2xl font-medium text-gray-900 mb-2 tracking-tight">How can I help?</h3>
                 <p className="text-gray-500 text-[15px] leading-relaxed">
@@ -502,8 +599,12 @@ export default function ChatInterface() {
             </div>
           )}
 
-          {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
-          {streamingMessage && <MessageBubble msg={streamingMessage} />}
+          {messages.map(msg => (
+            <MessageBubble key={msg.id} msg={msg} />
+          ))}
+          {streamingMessage && (
+            <MessageBubble key={`streaming-${streamingMessage.id}`} msg={streamingMessage} />
+          )}
 
           {isThinking && (
             <div className="flex w-full mb-8 justify-start animate-in fade-in duration-300">
@@ -516,24 +617,15 @@ export default function ChatInterface() {
           )}
         </div>
 
-        {/*  */}
+        {/* Input */}
         <div className="p-4 md:p-6 bg-white border-t border-gray-100">
           <div className="max-w-3xl mx-auto relative">
             <div className="relative flex items-center gap-3 bg-white border border-gray-200 rounded-[24px] p-2 pl-6 shadow-sm transition-all focus-within:shadow-md focus-within:border-gray-300">
               <textarea
                 ref={inputRef}
                 value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  e.target.style.height = 'auto';
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSearch();
-                  }
-                }}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
                 placeholder="Ask a question..."
                 className="flex-1 bg-transparent border-none outline-none py-3 text-[15px] text-gray-900 placeholder:text-gray-400 resize-none max-h-32 min-h-[44px]"
                 rows={1}
@@ -543,10 +635,11 @@ export default function ChatInterface() {
               <button
                 onClick={handleSearch}
                 disabled={!query.trim() || isThinking}
-                className={`flex items-center justify-center w-10 h-10 mb-0.5 rounded-full transition-all duration-300 self-end ${!query.trim() || isThinking
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95'
-                  }`}
+                className={`flex items-center justify-center w-10 h-10 mb-0.5 rounded-full transition-all duration-300 self-end ${
+                  !query.trim() || isThinking
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95'
+                }`}
               >
                 <Send size={16} className={isThinking ? 'animate-pulse translate-x-0.5' : 'translate-x-0.5'} />
               </button>
