@@ -13,7 +13,7 @@ import {
   Check,
   X,
 } from 'lucide-react';
-import { getOrCreateSessionId } from '../../services/session.js';
+import { getActiveAccountId } from '../../services/session.js';
 import { conversationAPI } from '../../services/api.js';
 
 /**
@@ -72,7 +72,7 @@ export default function ConversationSidebar({
     setLoading(true);
     setError(null);
     try {
-      const data = await conversationAPI.list(1, 50, search);
+      const data = await conversationAPI.list(getActiveAccountId(), 1, 50, search);
       setConversations(data.items || []);
     } catch (err) {
       setError(err.message || 'Failed to load conversations');
@@ -116,7 +116,7 @@ export default function ConversationSidebar({
     const trimmed = renameValue.trim();
     if (trimmed && trimmed !== conv.title) {
       try {
-        await conversationAPI.rename(conv.id, trimmed);
+        await conversationAPI.rename(conv.id, getActiveAccountId(), trimmed);
         setConversations(prev =>
           prev.map(c => (c.id === conv.id ? { ...c, title: trimmed } : c))
         );
@@ -144,7 +144,7 @@ export default function ConversationSidebar({
     e.stopPropagation();
     setDeletingId(conv.id);
     try {
-      await conversationAPI.delete(conv.id);
+      await conversationAPI.delete(conv.id, getActiveAccountId());
       setConversations(prev => prev.filter(c => c.id !== conv.id));
       if (onDelete) onDelete(conv.id);
     } catch (err) {

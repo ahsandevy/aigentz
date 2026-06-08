@@ -511,10 +511,10 @@ const conversationApi = axios.create({
 });
 
 export const conversationAPI = {
-    /** List conversations for the current session. */
-    list: async (page = 1, pageSize = 20, search = '') => {
+    /** List conversations for an ad account. */
+    list: async (accountId, page = 1, pageSize = 20, search = '') => {
         const params = {
-            session_id: _getSessionId(),
+            account_id: accountId,
             page,
             page_size: pageSize,
         };
@@ -524,34 +524,34 @@ export const conversationAPI = {
     },
 
     /** Get a single conversation with its messages. */
-    get: async (conversationId) => {
+    get: async (conversationId, accountId) => {
         const res = await conversationApi.get(`/conversations/${conversationId}`, {
-            params: { session_id: _getSessionId() },
+            params: { account_id: accountId },
         });
         return res.data;
     },
 
-    /** Create a new conversation. */
-    create: async (title = null) => {
-        const body = { session_id: _getSessionId() };
+    /** Create a new conversation for an ad account. */
+    create: async (accountId, title = null) => {
+        const body = { account_id: accountId };
         if (title) body.title = title;
         const res = await conversationApi.post('/conversations', body);
         return res.data;
     },
 
     /** Rename a conversation. */
-    rename: async (conversationId, title) => {
+    rename: async (conversationId, accountId, title) => {
         const res = await conversationApi.patch(`/conversations/${conversationId}`, {
-            session_id: _getSessionId(),
+            account_id: accountId,
             title,
         });
         return res.data;
     },
 
     /** Soft-delete a conversation. */
-    delete: async (conversationId) => {
+    delete: async (conversationId, accountId) => {
         const res = await conversationApi.delete(`/conversations/${conversationId}`, {
-            data: { session_id: _getSessionId() },
+            data: { account_id: accountId },
         });
         return res.data;
     },
@@ -560,10 +560,10 @@ export const conversationAPI = {
 /** Message-level operations. */
 export const messageAPI = {
     /** Delete a single message from a conversation. */
-    delete: async (conversationId, messageId) => {
+    delete: async (conversationId, messageId, accountId) => {
         const res = await conversationApi.delete(
             `/conversations/${conversationId}/messages/${messageId}`,
-            { data: { session_id: _getSessionId() } }
+            { data: { account_id: accountId } }
         );
         return res.data;
     },

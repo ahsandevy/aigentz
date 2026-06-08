@@ -4,24 +4,29 @@ import HeroSection from './homepage/HeroSection'
 import ChatInterface from './homepage/ChatInterface'
 import ConversationSidebar from './homepage/ConversationSidebar'
 import FeatureCards from './homepage/FeatureCards'
-import { refreshSessionId } from '../services/session.js'
+import { refreshSessionId, getActiveConversationId, setActiveConversationId as persistConversationId } from '../services/session.js'
 
 function HomePage() {
-  const [activeConversationId, setActiveConversationId] = useState(null);
-  const [sidebarKey, setSidebarKey] = useState(0); // force sidebar refresh
+  const [activeConversationId, setActiveConversationId] = useState(
+    () => getActiveConversationId() // restore from localStorage on mount
+  );
+  const [sidebarKey, setSidebarKey] = useState(0);
 
   const handleSelectConversation = useCallback((conv) => {
     setActiveConversationId(conv.id);
+    persistConversationId(conv.id);
   }, []);
 
   const handleConversationCreated = useCallback((conv) => {
     setActiveConversationId(conv.id);
-    setSidebarKey(k => k + 1); // refresh sidebar list
+    persistConversationId(conv.id);
+    setSidebarKey(k => k + 1);
   }, []);
 
   const handleDeleteConversation = useCallback((deletedId) => {
     if (activeConversationId === deletedId) {
       setActiveConversationId(null);
+      persistConversationId(null);
     }
     setSidebarKey(k => k + 1);
   }, [activeConversationId]);
@@ -29,6 +34,7 @@ function HomePage() {
   const handleNewChat = useCallback(() => {
     refreshSessionId();
     setActiveConversationId(null);
+    persistConversationId(null);
     setSidebarKey(k => k + 1);
   }, []);
 

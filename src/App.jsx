@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard'
 import AdminLoginPage from './components/AdminLoginPage'
 import AdminRoute from './components/AdminRoute'
 import TrainingDataPage from './components/TrainingDataPage'
+import ChatDemo from './components/homepage/ChatDemo'
 
 import { ModalProvider } from './context/ModalContext'
 
@@ -28,6 +29,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/chat-demo" element={<ChatDemo />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route
               path="/admin/training-data"
