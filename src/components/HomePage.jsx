@@ -11,6 +11,7 @@ function HomePage() {
     () => getActiveConversationId() // restore from localStorage on mount
   );
   const [sidebarKey, setSidebarKey] = useState(0);
+  const [chatKey, setChatKey] = useState(0); // force ChatInterface remount
 
   const handleSelectConversation = useCallback((conv) => {
     setActiveConversationId(conv.id);
@@ -36,6 +37,7 @@ function HomePage() {
     setActiveConversationId(null);
     persistConversationId(null);
     setSidebarKey(k => k + 1);
+    setChatKey(k => k + 1); // force ChatInterface remount → fresh session
   }, []);
 
   return (
@@ -93,6 +95,7 @@ function HomePage() {
             />
             <div className="flex-1 min-w-0">
               <ChatInterface
+                key={chatKey}
                 activeConversationId={activeConversationId}
                 onConversationCreated={handleConversationCreated}
               />
