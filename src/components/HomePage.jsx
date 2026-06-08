@@ -1,9 +1,37 @@
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom'
 import HeroSection from './homepage/HeroSection'
 import ChatInterface from './homepage/ChatInterface'
+import ConversationSidebar from './homepage/ConversationSidebar'
 import FeatureCards from './homepage/FeatureCards'
+import { refreshSessionId } from '../services/session.js'
 
 function HomePage() {
+  const [activeConversationId, setActiveConversationId] = useState(null);
+  const [sidebarKey, setSidebarKey] = useState(0); // force sidebar refresh
+
+  const handleSelectConversation = useCallback((conv) => {
+    setActiveConversationId(conv.id);
+  }, []);
+
+  const handleConversationCreated = useCallback((conv) => {
+    setActiveConversationId(conv.id);
+    setSidebarKey(k => k + 1); // refresh sidebar list
+  }, []);
+
+  const handleDeleteConversation = useCallback((deletedId) => {
+    if (activeConversationId === deletedId) {
+      setActiveConversationId(null);
+    }
+    setSidebarKey(k => k + 1);
+  }, [activeConversationId]);
+
+  const handleNewChat = useCallback(() => {
+    refreshSessionId();
+    setActiveConversationId(null);
+    setSidebarKey(k => k + 1);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-white to-[#ededae] relative overflow-hidden">
       {/* Background Pattern */}
@@ -48,7 +76,22 @@ function HomePage() {
       <div className="relative z-10 pt-16 sm:pt-20 md:pt-20 pb-12 md:pb-20">
         <HeroSection />
         <div className="max-w-[1370px] mx-auto">
-          <ChatInterface />
+          {/* Chat + Sidebar Layout */}
+          <div className="flex bg-white rounded-[24px] border border-gray-200 shadow-sm overflow-hidden min-h-[500px] max-h-[80vh] mt-2 mb-8">
+            <ConversationSidebar
+              key={sidebarKey}
+              activeConversationId={activeConversationId}
+              onSelect={handleSelectConversation}
+              onDelete={handleDeleteConversation}
+              onNewChat={handleNewChat}
+            />
+            <div className="flex-1 min-w-0">
+              <ChatInterface
+                activeConversationId={activeConversationId}
+                onConversationCreated={handleConversationCreated}
+              />
+            </div>
+          </div>
           <FeatureCards />
         </div>
       </div>

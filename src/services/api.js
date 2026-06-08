@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getOrCreateSessionId } from './session.js';
 
 // Get backend API base URL from environment variable
 // VITE_API_BASE_URL should be set in .env file (e.g., http://localhost:8000)
@@ -468,31 +469,21 @@ export const analyticsAPI = {
 };
 
 // Session ID management for agent conversation isolation
-const getOrCreateSessionId = () => {
-    if (!window._agentSessionId) {
-        // Generate a UUID v4
-        window._agentSessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-
-    return window._agentSessionId;
-};
+// Now unified in services/session.js — kept for backward compatibility
+const _getSessionId = () => getOrCreateSessionId();
 
 export const agentAPI = {
     // Get current session ID (useful for debugging)
-    getSessionId: () => getOrCreateSessionId(),
+    getSessionId: () => _getSessionId(),
 
     // Clear session to start fresh conversation
     clearSession: () => {
-        window._agentSessionId = null;
+        localStorage.removeItem('ascend_agent_session_id');
     },
 
     chatWithAgent: async (query, signal) => {
         try {
-            const sessionId = getOrCreateSessionId();
+            const sessionId = _getSessionId();
             const response = await agentApi.post('/chat', {
                 query,
                 session_id: sessionId
@@ -504,6 +495,78 @@ export const agentAPI = {
             throw error;
         }
     }
+};
+
+// ============ Conversation API ============
+
+const CONVERSATION_BASE_URL = VITE_API_BASE_URL
+    ? `${VITE_API_BASE_URL}/api`
+    : import.meta.env.PROD
+        ? 'http://localhost:8000/api'
+        : '/api';
+
+const conversationApi = axios.create({
+    baseURL: CONVERSATION_BASE_URL,
+    headers: { 'Content-Type': 'application/json' },
+});
+
+export const conversationAPI = {
+    /** List conversations for the current session. */
+    list: async (page = 1, pageSize = 20, search = '') => {
+        const params = {
+            session_id: _getSessionId(),
+            page,
+            page_size: pageSize,
+        };
+        if (search) params.search = search;
+        const res = await conversationApi.get('/conversations', { params });
+        return res.data;
+    },
+
+    /** Get a single conversation with its messages. */
+    get: async (conversationId) => {
+        const res = await conversationApi.get(`/conversations/${conversationId}`, {
+            params: { session_id: _getSessionId() },
+        });
+        return res.data;
+    },
+
+    /** Create a new conversation. */
+    create: async (title = null) => {
+        const body = { session_id: _getSessionId() };
+        if (title) body.title = title;
+        const res = await conversationApi.post('/conversations', body);
+        return res.data;
+    },
+
+    /** Rename a conversation. */
+    rename: async (conversationId, title) => {
+        const res = await conversationApi.patch(`/conversations/${conversationId}`, {
+            session_id: _getSessionId(),
+            title,
+        });
+        return res.data;
+    },
+
+    /** Soft-delete a conversation. */
+    delete: async (conversationId) => {
+        const res = await conversationApi.delete(`/conversations/${conversationId}`, {
+            data: { session_id: _getSessionId() },
+        });
+        return res.data;
+    },
+};
+
+/** Message-level operations. */
+export const messageAPI = {
+    /** Delete a single message from a conversation. */
+    delete: async (conversationId, messageId) => {
+        const res = await conversationApi.delete(
+            `/conversations/${conversationId}/messages/${messageId}`,
+            { data: { session_id: _getSessionId() } }
+        );
+        return res.data;
+    },
 };
 
 export default api;

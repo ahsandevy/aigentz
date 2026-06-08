@@ -12,6 +12,8 @@ import {
   Cpu,
   Sparkles
 } from 'lucide-react';
+import { getOrCreateSessionId, refreshSessionId } from '../../services/session.js';
+import { conversationAPI } from '../../services/api.js';
 
 // ═══════════════════════════════════════════════════════════════════════
 //  MEMOISED SUB-COMPONENTS (defined OUTSIDE ChatInterface to preserve
@@ -142,8 +144,9 @@ const StepCard = memo(function StepCard({ step }) {
   );
 });
 
-const MessageBubble = memo(function MessageBubble({ msg }) {
+const MessageBubble = memo(function MessageBubble({ msg, isStreaming = false }) {
   const isUser = msg.role === 'user';
+  const [thinkingExpanded, setThinkingExpanded] = useState(true);
 
   if (isUser) {
     return (
@@ -155,6 +158,9 @@ const MessageBubble = memo(function MessageBubble({ msg }) {
     );
   }
 
+  const hasThinking = msg.thinking && msg.thinking.trim().length > 0;
+  const thinkingFinished = !isStreaming && hasThinking;
+
   return (
     <div className="flex w-full mb-10 justify-start animate-in fade-in duration-500">
       <div className="flex gap-4 w-full max-w-4xl">
@@ -164,6 +170,51 @@ const MessageBubble = memo(function MessageBubble({ msg }) {
 
         <div className="flex-1 min-w-0">
           <div className="w-full">
+            {/* ── Thinking (shown during streaming; collapsed after) ─── */}
+            {hasThinking && (
+              <div className="mb-4">
+                {isStreaming ? (
+                  <div className="flex items-center gap-2">
+                    <span className="flex gap-1">
+                      <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></span>
+                      <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                      <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                    </span>
+                    <span className="text-[13px] text-gray-400 italic font-light leading-relaxed">
+                      {msg.thinking}
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <button
+                      onClick={() => setThinkingExpanded(!thinkingExpanded)}
+                      className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-gray-600 transition-colors font-medium tracking-wide uppercase"
+                    >
+                      {thinkingExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                      {thinkingExpanded ? 'Hide reasoning' : 'Show reasoning'}
+                    </button>
+                    {thinkingExpanded && (
+                      <div className="mt-2 pl-3 border-l-2 border-gray-100 text-[12px] text-gray-400 italic leading-relaxed">
+                        {msg.thinking}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Thinking active but no text yet (initial phase) ─────── */}
+            {isStreaming && !hasThinking && !msg.content && (!msg.steps || msg.steps.length === 0) && (
+              <div className="mb-4 flex items-center gap-2">
+                <span className="flex gap-1">
+                  <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></span>
+                  <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                  <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                </span>
+                <span className="text-[13px] text-gray-400 italic font-light">Thinking…</span>
+              </div>
+            )}
+
             {msg.steps && msg.steps.length > 0 && (
               <div className="mb-6">
                 <div className="space-y-2">
@@ -219,7 +270,10 @@ const STRUCTURAL_EVENTS = new Set([
 //  CHAT INTERFACE
 // ═══════════════════════════════════════════════════════════════════════
 
-export default function ChatInterface() {
+export default function ChatInterface({
+  activeConversationId = null,
+  onConversationCreated = null,
+}) {
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState([]);
   const [isThinking, setIsThinking] = useState(false);
@@ -227,9 +281,10 @@ export default function ChatInterface() {
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
 
   const scrollRef = useRef(null);
-  const sessionIdRef = useRef(null);
+  const conversationIdRef = useRef(activeConversationId);
   const inputRef = useRef(null);
 
   // ── Streaming throttle refs ──
@@ -247,13 +302,56 @@ export default function ChatInterface() {
 
   // ── Initialization ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!sessionIdRef.current) {
-      sessionIdRef.current = crypto.randomUUID
-        ? crypto.randomUUID()
-        : 'session-' + Date.now();
-    }
+    // Ensure a session exists in localStorage
+    getOrCreateSessionId();
     fetchAccounts();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Sync conversationIdRef with prop ────────────────────────────────
+  useEffect(() => {
+    conversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  // ── Load messages when activeConversationId changes ─────────────────
+  useEffect(() => {
+    if (!activeConversationId) {
+      setMessages([]);
+      return;
+    }
+    let cancelled = false;
+    setMessagesLoading(true);
+    conversationAPI.get(activeConversationId)
+      .then(data => {
+        if (!cancelled) {
+          const msgs = (data.messages || []).map(m => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            steps: m.tool_calls
+              ? m.tool_calls.map((tc, i) => ({
+                  id: `${m.id}-tc-${i}`,
+                  tool: tc.name || tc.tool || 'Tool',
+                  status: 'complete',
+                  output: tc.output || tc.args || null,
+                  args: tc.args || null,
+                }))
+              : [],
+            sql: null,
+            data: null,
+            error: null,
+          }));
+          setMessages(msgs);
+          setMessagesLoading(false);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          console.error('Failed to load messages:', err);
+          setMessagesLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [activeConversationId]);
 
   const fetchAccounts = useCallback(async () => {
     setIsLoadingAccounts(true);
@@ -423,6 +521,22 @@ export default function ChatInterface() {
 
     setIsThinking(true);
 
+    // Ensure a conversation exists — create one if this is the first message
+    // in this session or if no conversation is currently active.
+    let convId = conversationIdRef.current;
+    if (!convId) {
+      try {
+        const conv = await conversationAPI.create(trimmedQuery.slice(0, 100));
+        convId = conv.id;
+        conversationIdRef.current = convId;
+        if (onConversationCreated) onConversationCreated(conv);
+      } catch (err) {
+        console.error('Failed to create conversation:', err);
+        // Continue without conversation tracking — the backend will still
+        // persist via agent_service if DB is available.
+      }
+    }
+
     const aiMsgId = Date.now() + 1;
     const currentAiMsg = {
       id: aiMsgId,
@@ -450,7 +564,7 @@ export default function ChatInterface() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: trimmedQuery,
-          session_id: sessionIdRef.current,
+          session_id: getOrCreateSessionId(),
         }),
       });
 
@@ -542,7 +656,7 @@ export default function ChatInterface() {
   //  RENDER
   // ════════════════════════════════════════════════════════════════════
   return (
-    <div className="w-full max-w-5xl mx-auto bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900 min-h-[500px] max-h-[80vh] border border-gray-200 rounded-[24px] shadow-sm mt-2 mb-8 overflow-hidden">
+    <div className="w-full bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900 h-full overflow-hidden">
       <div className="flex-1 w-full flex flex-col relative overflow-hidden">
 
         {/* Header */}
@@ -588,7 +702,14 @@ export default function ChatInterface() {
           ref={scrollRef}
           className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
         >
-          {messages.length === 0 && !streamingMessage && (
+          {messagesLoading && (
+            <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-4">
+              <Loader2 size={24} className="animate-spin text-gray-400" />
+              <p className="text-[14px] text-gray-400">Loading conversation...</p>
+            </div>
+          )}
+
+          {!messagesLoading && messages.length === 0 && !streamingMessage && (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8 animate-in fade-in duration-700">
               <div>
                 <h3 className="text-2xl font-medium text-gray-900 mb-2 tracking-tight">How can I help?</h3>
@@ -603,15 +724,33 @@ export default function ChatInterface() {
             <MessageBubble key={msg.id} msg={msg} />
           ))}
           {streamingMessage && (
-            <MessageBubble key={`streaming-${streamingMessage.id}`} msg={streamingMessage} />
+            <MessageBubble key={`streaming-${streamingMessage.id}`} msg={streamingMessage} isStreaming={true} />
           )}
 
-          {isThinking && (
-            <div className="flex w-full mb-8 justify-start animate-in fade-in duration-300">
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200 shadow-sm mt-1">
+          {/* Agent is still responding indicator — shown during streaming but after initial thinking */}
+          {streamingMessage && !isThinking && (
+            <div className="flex w-full mb-4 justify-start animate-in fade-in duration-300">
+              <div className="flex gap-4 items-center">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200 shadow-sm">
                   <Loader2 size={14} className="animate-spin text-gray-400" />
                 </div>
+                <span className="text-[12px] text-gray-400 italic font-light">
+                  Agent is still responding…
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Thinking-only phase (streaming hasn't started producing content yet) — subtle indicator */}
+          {isThinking && !streamingMessage && (
+            <div className="flex w-full mb-8 justify-start animate-in fade-in duration-300">
+              <div className="flex gap-4 items-center">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200 shadow-sm">
+                  <Loader2 size={14} className="animate-spin text-gray-400" />
+                </div>
+                <span className="text-[12px] text-gray-400 italic font-light">
+                  Thinking…
+                </span>
               </div>
             </div>
           )}
@@ -626,22 +765,26 @@ export default function ChatInterface() {
                 value={query}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a question..."
+                placeholder={
+                  streamingMessage ? "Agent is responding…" :
+                  isThinking ? "Thinking…" :
+                  "Ask a question..."
+                }
                 className="flex-1 bg-transparent border-none outline-none py-3 text-[15px] text-gray-900 placeholder:text-gray-400 resize-none max-h-32 min-h-[44px]"
                 rows={1}
-                disabled={isThinking}
+                disabled={isThinking || streamingMessage !== null}
               />
 
               <button
                 onClick={handleSearch}
-                disabled={!query.trim() || isThinking}
+                disabled={!query.trim() || isThinking || streamingMessage !== null}
                 className={`flex items-center justify-center w-10 h-10 mb-0.5 rounded-full transition-all duration-300 self-end ${
-                  !query.trim() || isThinking
+                  !query.trim() || isThinking || streamingMessage !== null
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-black text-white hover:bg-gray-800 hover:scale-105 active:scale-95'
                 }`}
               >
-                <Send size={16} className={isThinking ? 'animate-pulse translate-x-0.5' : 'translate-x-0.5'} />
+                <Send size={16} className={(isThinking || streamingMessage) ? 'animate-pulse translate-x-0.5' : 'translate-x-0.5'} />
               </button>
             </div>
             <div className="text-center mt-3">
