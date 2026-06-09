@@ -1,19 +1,18 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AuthProvider } from './context/AuthContext'
+import AuthRoute from './components/AuthRoute'
 import HomePage from './components/HomePage'
 import Dashboard from './components/Dashboard'
-import AdminLoginPage from './components/AdminLoginPage'
-import AdminRoute from './components/AdminRoute'
-import TrainingDataPage from './components/TrainingDataPage'
-
+import LoginPage from './components/LoginPage'
+import NotFoundPage from './components/NotFoundPage'
 import { ModalProvider } from './context/ModalContext'
 
-// Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30 * 60 * 1000, // 30 minutes
-      gcTime: 60 * 60 * 1000, // 1 hour (formerly cacheTime)
+      staleTime: 30 * 60 * 1000,
+      gcTime: 60 * 60 * 1000,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
     },
@@ -23,23 +22,23 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ModalProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
-            <Route
-              path="/admin/training-data"
-              element={
-                <AdminRoute>
-                  <TrainingDataPage />
-                </AdminRoute>
-              }
-            />
-          </Routes>
-        </Router>
-      </ModalProvider>
+      <AuthProvider>
+        <ModalProvider>
+          <Router>
+            <Routes>
+              {/* Public — login only */}
+              <Route path="/login" element={<LoginPage />} />
+
+              {/* Protected — all business routes */}
+              <Route path="/" element={<AuthRoute><HomePage /></AuthRoute>} />
+              <Route path="/dashboard" element={<AuthRoute><Dashboard /></AuthRoute>} />
+
+              {/* Catch-all — 404 */}
+              <Route path="*" element={<AuthRoute><NotFoundPage /></AuthRoute>} />
+            </Routes>
+          </Router>
+        </ModalProvider>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

@@ -54,6 +54,7 @@ export default function ConversationSidebar({
   onSelect,
   onDelete,
   onNewChat,
+  refreshTrigger = 0,
 }) {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,10 +67,11 @@ export default function ConversationSidebar({
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const inputRef = useRef(null);
+  const initialLoadDone = useRef(false);
 
   // ─── Fetch conversations ────────────────────────────────────────────
-  const fetchConversations = useCallback(async () => {
-    setLoading(true);
+  const fetchConversations = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       const data = await conversationAPI.list(getActiveAccountId(), 1, 50, search);
@@ -81,9 +83,16 @@ export default function ConversationSidebar({
     }
   }, [search]);
 
+  // Initial load
   useEffect(() => {
-    fetchConversations();
+    fetchConversations(true);
   }, [fetchConversations]);
+
+  // Silent refresh when triggered (e.g. new conversation created)
+  useEffect(() => {
+    if (!initialLoadDone.current) { initialLoadDone.current = true; return; }
+    fetchConversations(false); // no loading state — keep existing list visible
+  }, [refreshTrigger]);
 
   // Focus rename input when entering rename mode
   useEffect(() => {

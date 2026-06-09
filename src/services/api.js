@@ -1,23 +1,21 @@
 import axios from 'axios';
 import { getOrCreateSessionId } from './session.js';
 
-// Get backend API base URL from environment variable
-// VITE_API_BASE_URL should be set in .env file (e.g., http://localhost:8000)
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Use VITE_API_BASE_URL if set, otherwise use relative URL in dev (via proxy) or default in production
+// Shared config for all axios instances: send HttpOnly auth cookies
+const axiosDefaults = {
+    withCredentials: true,
+    headers: { 'Content-Type': 'application/json' },
+};
+
 const API_BASE_URL = VITE_API_BASE_URL
     ? `${VITE_API_BASE_URL}/api/analytics`
     : import.meta.env.PROD
         ? 'http://localhost:8000/api/analytics'
         : '/api/analytics';
 
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+const api = axios.create({ baseURL: API_BASE_URL, ...axiosDefaults });
 
 const AGENT_BASE_URL = VITE_API_BASE_URL
     ? `${VITE_API_BASE_URL}/api/agent`
@@ -25,12 +23,33 @@ const AGENT_BASE_URL = VITE_API_BASE_URL
         ? 'http://localhost:8000/api/agent'
         : '/api/agent';
 
-const agentApi = axios.create({
-    baseURL: AGENT_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+const agentApi = axios.create({ baseURL: AGENT_BASE_URL, ...axiosDefaults });
+
+// 401 interceptor: auto-refresh + retry
+function setupAuthInterceptor(instance) {
+    instance.interceptors.response.use(
+        response => response,
+        async (error) => {
+            if (error.response?.status === 401 && !error.config._retry) {
+                error.config._retry = true;
+                try {
+                    const refreshUrl = VITE_API_BASE_URL
+                        ? `${VITE_API_BASE_URL}/api/auth/refresh`
+                        : '/api/auth/refresh';
+                    await axios.post(refreshUrl, {}, { withCredentials: true });
+                    return instance(error.config);
+                } catch (refreshError) {
+                    window.location.href = '/login';
+                    return Promise.reject(refreshError);
+                }
+            }
+            return Promise.reject(error);
+        }
+    );
+}
+
+setupAuthInterceptor(api);
+setupAuthInterceptor(agentApi);
 
 export const analyticsAPI = {
     // Header Metrics
@@ -507,7 +526,7 @@ const CONVERSATION_BASE_URL = VITE_API_BASE_URL
 
 const conversationApi = axios.create({
     baseURL: CONVERSATION_BASE_URL,
-    headers: { 'Content-Type': 'application/json' },
+    ...axiosDefaults,
 });
 
 export const conversationAPI = {

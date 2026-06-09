@@ -234,9 +234,10 @@ export default function ChatInterface({
   const inputRef = useRef(null);
   const conversationIdRef = useRef(activeConversationId);
 
-  // Session ID: regenerated fresh on every page mount (NOT from localStorage).
-  // This ensures a refresh = clean slate for the LangGraph thread.
+  // Session ID: used for SSE thread_id.
+  // For new conversations: fresh UUID. For existing conversations: loaded from DB.
   const sessionIdRef = useRef(crypto.randomUUID?.() ?? ('session-' + Date.now()));
+  const threadIdRef = useRef(null); // loaded from conversation detail
 
   // Prevent double-sends
   const busyRef = useRef(false);
@@ -251,14 +252,18 @@ export default function ChatInterface({
 
   /* ── Load messages when sidebar selects a conversation ──────────── */
   useEffect(() => {
-    if (!activeConversationId) { setMessages([]); return; }
+    if (!activeConversationId) { setMessages([]); threadIdRef.current = null; return; }
     if (selfCreatedConvRef.current) { selfCreatedConvRef.current = false; return; }
     let cancelled = false;
     setMessagesLoading(true);
     conversationAPI.get(activeConversationId, getActiveAccountId())
       .then(data => {
         if (cancelled) return;
-        setMessages((data.messages || []).map(toBlocks));
+        // Store thread_id so SSE reuses LangGraph context
+        if (data.thread_id) {
+          threadIdRef.current = data.thread_id;
+        }
+        setMessages((data.messages || []).map(m => toBlocks(m)));
         setMessagesLoading(false);
       })
       .catch(err => { if (!cancelled) { console.error(err); setMessagesLoading(false); } });
@@ -295,14 +300,35 @@ export default function ChatInterface({
     finally { setIsLoadingAccounts(false); }
   }, []);
 
-  /* ── Scroll to bottom ───────────────────────────────────────────── */
+  /* ── Smart scroll: only auto-scroll if user is near bottom ──────── */
+  const isNearBottom = useRef(true);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const threshold = 80; // px from bottom
+    isNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+  }, []);
+
   useEffect(() => {
-    if (scrollRef.current) {
+    if (isNearBottom.current && scrollRef.current) {
       requestAnimationFrame(() => {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       });
     }
   }, [messages]);
+
+  // Force scroll to bottom when opening a different conversation
+  useEffect(() => {
+    if (activeConversationId) {
+      isNearBottom.current = true;
+      if (scrollRef.current) {
+        requestAnimationFrame(() => {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        });
+      }
+    }
+  }, [activeConversationId]);
 
   /* ── performSearch ──────────────────────────────────────────────── */
   const performSearch = useCallback(async (searchQuery) => {
@@ -323,6 +349,7 @@ export default function ChatInterface({
         const conv = await conversationAPI.create(getActiveAccountId(), trimmed.slice(0, 100));
         convId = conv.id;
         conversationIdRef.current = convId;
+        threadIdRef.current = conv.thread_id || sessionIdRef.current;
         selfCreatedConvRef.current = true;
         if (onConversationCreated) onConversationCreated(conv);
       } catch (e) { console.error('Failed to create conversation:', e); }
@@ -366,8 +393,12 @@ export default function ChatInterface({
 
       const res = await fetch(apiUrl, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: trimmed, session_id: sessionIdRef.current }),
+        body: JSON.stringify({
+          query: trimmed,
+          session_id: threadIdRef.current || sessionIdRef.current,
+        }),
       });
       if (!res.ok) throw new Error(`Server Error: ${res.status}`);
 
@@ -524,11 +555,24 @@ export default function ChatInterface({
         </div>
 
         {/* Chat Area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent relative">
+          {/* Loading overlay — always visible during load, covers everything */}
           {messagesLoading && (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
-              <Loader2 size={24} className="animate-spin text-gray-400" />
-              <p className="text-[14px] text-gray-400">Loading conversation...</p>
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#FAFAFA]/80 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-full border-[3px] border-gray-200 border-t-gray-400 animate-spin" />
+                </div>
+                <div>
+                  <p className="text-[15px] font-medium text-gray-700">Opening conversation…</p>
+                  <p className="text-[13px] text-gray-400 mt-0.5">Loading messages</p>
+                </div>
+                <div className="space-y-2 w-56">
+                  <div className="h-2.5 bg-gray-200 rounded-full animate-pulse w-full" />
+                  <div className="h-2.5 bg-gray-200 rounded-full animate-pulse w-3/4" style={{ animationDelay: '0.1s' }} />
+                  <div className="h-2.5 bg-gray-200 rounded-full animate-pulse w-1/2" style={{ animationDelay: '0.2s' }} />
+                </div>
+              </div>
             </div>
           )}
 

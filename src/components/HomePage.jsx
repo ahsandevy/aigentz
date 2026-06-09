@@ -87,7 +87,7 @@ function HomePage() {
           {/* Chat + Sidebar Layout */}
           <div className="flex bg-white rounded-[24px] border border-gray-200 shadow-sm overflow-hidden min-h-[500px] max-h-[80vh] mt-2 mb-8">
             <ConversationSidebar
-              key={sidebarKey}
+              refreshTrigger={sidebarKey}
               activeConversationId={activeConversationId}
               onSelect={handleSelectConversation}
               onDelete={handleDeleteConversation}
