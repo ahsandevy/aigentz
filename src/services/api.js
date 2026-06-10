@@ -551,9 +551,10 @@ export const conversationAPI = {
     },
 
     /** Create a new conversation for an ad account. */
-    create: async (accountId, title = null) => {
+    create: async (accountId, title = null, threadId = null) => {
         const body = { account_id: accountId };
         if (title) body.title = title;
+        if (threadId) body.thread_id = threadId;
         const res = await conversationApi.post('/conversations', body);
         return res.data;
     },

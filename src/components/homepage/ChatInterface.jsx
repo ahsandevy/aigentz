@@ -346,7 +346,7 @@ export default function ChatInterface({
     let convId = conversationIdRef.current;
     if (!convId) {
       try {
-        const conv = await conversationAPI.create(getActiveAccountId(), trimmed.slice(0, 100));
+        const conv = await conversationAPI.create(getActiveAccountId(), trimmed.slice(0, 100), sessionIdRef.current);
         convId = conv.id;
         conversationIdRef.current = convId;
         threadIdRef.current = conv.thread_id || sessionIdRef.current;
