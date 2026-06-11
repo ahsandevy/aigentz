@@ -290,7 +290,7 @@ export default function ChatInterface({
     try {
       const url = (import.meta.env.VITE_API_BASE_URL || '') + '/api/analytics/meta/accounts'
         || '/api/analytics/meta/accounts';
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setAccounts(data.data || []);
