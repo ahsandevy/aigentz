@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Send, ChevronDown, ChevronUp, AlertCircle, Loader2,
   CheckCircle2, Terminal, Cpu, Sparkles, Database,
@@ -150,9 +151,37 @@ const DataBlock = memo(function DataBlock({ data }) {
 
 const TextBlock = memo(function TextBlock({ text }) {
   if (!text) return null;
+
+  // ── Safety net: fix single-line markdown tables ──
+  // LLMs sometimes concatenate table rows without newlines.
+  // GFM requires each row on its own line.
+  function fixTableFormatting(input) {
+    if (!input || typeof input !== 'string') return input;
+    // Only process if this looks like a table without newlines between rows
+    const pipeSegments = input.match(/\|[^|\n]+\|/g);
+    if (!pipeSegments || pipeSegments.length < 3) return input;
+    // Already has newlines between rows? Leave it.
+    if (/\|\s*\n/.test(input)) return input;
+    // Insert newline before each pipe that starts a new row
+    // Pattern: content after a pipe followed by space then another pipe
+    return input.replace(/(\|\s+)(?=\|)/g, '$&\n');
+  }
+
+  const processedText = fixTableFormatting(text);
+
   return (
-    <div className="text-[15px] text-gray-800 leading-relaxed prose prose-gray max-w-none prose-p:mb-3 prose-a:text-blue-600 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-mono prose-code:text-[13px] prose-table:text-[13px] prose-th:font-medium prose-th:text-[11px] prose-th:uppercase prose-th:tracking-wider prose-th:text-gray-500 prose-td:text-gray-700">
-      <ReactMarkdown>{text}</ReactMarkdown>
+    <div className="text-[15px] text-gray-800 leading-relaxed max-w-none markdown-chat
+      [&_p]:mb-3 [&_a]:text-blue-600
+      [&_code]:text-gray-800 [&_code]:bg-gray-100 [&_code]:px-1.5 [&_code]:py-0.5
+      [&_code]:rounded-md [&_code]:font-mono [&_code]:text-[13px]
+      [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3
+      [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3
+      [&_li]:mb-1
+      [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-2
+      [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1
+      [&_strong]:font-semibold [&_strong]:text-gray-900
+      [&_blockquote]:border-l-[3px] [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:text-gray-500 [&_blockquote]:italic [&_blockquote]:my-3">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{processedText}</ReactMarkdown>
     </div>
   );
 });
