@@ -1,70 +1,177 @@
 @import "tailwindcss";
 
+/* ── Fonts ─────────────────────────────────────────────────────────────── */
+:root {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* ── Colors ─────────────────────────────────────────────────────────── */
+  --color-bg:        #f8fafc;
+  --color-surface:   #ffffff;
+  --color-user:      #0f172a;
+  --color-accent:    #1e4a79;
+  --color-amber:     #d97706;
+  --color-text:      #0f172a;
+  --color-text-dim:  #64748b;
+  --color-text-faint:#94a3b8;
+  --color-border:    #e2e8f0;
+  --color-border-sub:#f1f5f9;
+  --shadow-card:     0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-elevated: 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 .animate-fadeIn {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.25s ease-out forwards;
 }
 
-.markdown-chat table {
-  width: 100%;
-  min-width: 400px;
-  margin: 1rem 0;
-  border-collapse: collapse;
-  font-size: 13px;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  border: 1px solid #f3f4f6; /* gray-100 */
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out forwards;
 }
 
-.markdown-chat thead {
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.markdown-chat th {
-  padding: 0.625rem 1rem;
-  text-align: left;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #9ca3af; /* gray-400 */
-  background: rgba(249, 250, 251, 0.5); /* gray-50/50 */
-}
-
-.markdown-chat tbody tr {
-  border-bottom: 1px solid #f9fafb; /* gray-50 */
-  transition: background-color 0.15s;
-}
-
-.markdown-chat tbody tr:hover {
-  background: rgba(249, 250, 251, 0.5);
-}
-
-.markdown-chat td {
-  padding: 0.625rem 1rem;
-  color: #374151; /* gray-700 */
-  vertical-align: top;
-}
-
-/* Numeric columns: right-align for readability */
-.markdown-chat td:not(:first-child) {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.markdown-chat th:not(:first-child) {
-  text-align: right;
-}
-
-/* Horizontal scroll for wide tables on mobile */
+/* ── Markdown Chat ──────────────────────────────────────────────────────── */
 .markdown-chat {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
+}
+
+.markdown-chat p {
+  margin-bottom: 0.625rem;
+}
+.markdown-chat p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-chat a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-chat strong {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.markdown-chat ul, .markdown-chat ol {
+  padding-left: 1.25rem;
+  margin-bottom: 0.625rem;
+}
+
+.markdown-chat li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-chat h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.markdown-chat h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.markdown-chat blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 1rem;
+  color: var(--color-text-dim);
+  font-style: italic;
+  margin: 0.75rem 0;
+}
+
+.markdown-chat code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: var(--color-border-sub);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  color: var(--color-text);
+}
+
+.markdown-chat pre {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--color-border-sub);
+  padding: 0.75rem 1rem;
+  border-radius: 0.625rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+/* ── Markdown Tables ──────────────────────────────────────────────────── */
+.markdown-chat table {
+  width: 100%;
+  min-width: 400px;
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  border-radius: 0.625rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border-sub);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.markdown-chat thead {
+  border-bottom: 1px solid var(--color-border-sub);
+}
+
+.markdown-chat th {
+  padding: 0.5rem 0.875rem;
+  text-align: left;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-dim);
+  background: rgba(241, 245, 249, 0.6);
+}
+
+.markdown-chat tbody tr {
+  border-bottom: 1px solid var(--color-border-sub);
+  transition: background-color 0.12s;
+}
+
+.markdown-chat tbody tr:last-child {
+  border-bottom: none;
+}
+
+.markdown-chat tbody tr:hover {
+  background: rgba(241, 245, 249, 0.4);
+}
+
+.markdown-chat td {
+  padding: 0.5rem 0.875rem;
+  color: var(--color-text);
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-chat td:not(:first-child),
+.markdown-chat th:not(:first-child) {
+  text-align: right;
 }

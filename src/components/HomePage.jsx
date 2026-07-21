@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom'
 import HeroSection from './homepage/HeroSection'
 import ChatInterface from './homepage/ChatInterface'
@@ -12,6 +12,7 @@ function HomePage() {
   );
   const [sidebarKey, setSidebarKey] = useState(0);
   const [chatKey, setChatKey] = useState(0); // force ChatInterface remount
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleSelectConversation = useCallback((conv) => {
     setActiveConversationId(conv.id);
@@ -40,6 +41,14 @@ function HomePage() {
     setChatKey(k => k + 1); // force ChatInterface remount → fresh session
   }, []);
 
+  // Escape key exits fullscreen
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handler = (e) => { if (e.key === 'Escape') setIsFullscreen(false); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isFullscreen]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-white to-[#ededae] relative overflow-hidden">
       {/* Background Pattern */}
@@ -50,7 +59,8 @@ function HomePage() {
       </div>
 
       {/* Header Area */}
-      <div className="absolute top-4 md:top-[38px] left-4 md:left-[46px] right-4 md:right-[46px] z-20 flex flex-col md:flex-row justify-between items-center gap-4">
+      {!isFullscreen && (
+        <div className="absolute top-4 md:top-[38px] left-4 md:left-[46px] right-4 md:right-[46px] z-20 flex flex-col md:flex-row justify-between items-center gap-4">
         {/* Logo */}
         <div className="flex justify-between items-center w-full md:w-auto">
           <img 
@@ -79,13 +89,21 @@ function HomePage() {
           </svg>
         </Link>
       </div>
+      )}
 
       {/* Main Content */}
       <div className="relative z-10 pt-16 sm:pt-20 md:pt-20 pb-12 md:pb-20">
-        <HeroSection />
+        {!isFullscreen && <HeroSection />}
         <div className="max-w-[1370px] mx-auto">
           {/* Chat + Sidebar Layout */}
-          <div className="flex bg-white rounded-[24px] border border-gray-200 shadow-sm overflow-hidden min-h-[500px] max-h-[80vh] mt-2 mb-8">
+          {isFullscreen && (
+            <div className="fixed inset-0 z-[99] bg-black/30 backdrop-blur-sm" onClick={() => setIsFullscreen(false)} />
+          )}
+          <div className={`flex bg-white overflow-hidden transition-all duration-300 ${
+            isFullscreen
+              ? 'fixed inset-0 z-[100] rounded-none p-4'
+              : 'rounded-[24px] border border-gray-200 shadow-sm min-h-[500px] max-h-[80vh] mt-2 mb-8'
+          }`}>
             <ConversationSidebar
               refreshTrigger={sidebarKey}
               activeConversationId={activeConversationId}
@@ -98,10 +116,12 @@ function HomePage() {
                 key={chatKey}
                 activeConversationId={activeConversationId}
                 onConversationCreated={handleConversationCreated}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
               />
             </div>
           </div>
-          <FeatureCards />
+          {!isFullscreen && <FeatureCards />}
         </div>
       </div>
     </div>

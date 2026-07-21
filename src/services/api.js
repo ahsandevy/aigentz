@@ -575,6 +575,15 @@ export const conversationAPI = {
         });
         return res.data;
     },
+
+    /** Get recommendations extracted from a conversation. */
+    getRecommendations: async (conversationId, accountId) => {
+        const res = await conversationApi.get(
+            `/conversations/${conversationId}/recommendations`,
+            { params: { account_id: accountId } }
+        );
+        return res.data;
+    },
 };
 
 /** Message-level operations. */

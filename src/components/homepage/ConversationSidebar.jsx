@@ -183,7 +183,7 @@ export default function ConversationSidebar({
         </button>
         <button
           onClick={handleNewChat}
-          className="mt-4 p-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors"
+          className="mt-4 p-2 rounded-lg bg-[#345C86] text-white hover:bg-[#2a4a6e] transition-colors"
           title="New Chat"
         >
           <Plus size={16} />
@@ -203,7 +203,7 @@ export default function ConversationSidebar({
           <div className="flex items-center gap-1">
             <button
               onClick={handleNewChat}
-              className="p-1.5 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors"
+              className="p-1.5 rounded-lg bg-[#345C86] text-white hover:bg-[#2a4a6e] transition-colors"
               title="New Chat"
             >
               <Plus size={14} />
@@ -295,7 +295,7 @@ export default function ConversationSidebar({
                 disabled={isDeleting}
                 className={`w-full text-left px-4 py-3 transition-colors border-b border-gray-50 ${
                   isActive
-                    ? 'bg-gray-50 border-l-[3px] border-l-black'
+                    ? 'bg-gray-50 border-l-[3px] border-l-[#345C86]'
                     : 'border-l-[3px] border-l-transparent hover:bg-gray-50/50'
                 }`}
               >
@@ -323,7 +323,7 @@ export default function ConversationSidebar({
                             if (e.key === 'Enter') handleConfirmRename(e, conv);
                             if (e.key === 'Escape') handleCancelRename(e);
                           }}
-                          className="flex-1 text-[13px] font-medium px-1.5 py-0.5 border border-gray-300 rounded outline-none focus:border-black transition-colors"
+                          className="flex-1 text-[13px] font-medium px-1.5 py-0.5 border border-gray-300 rounded outline-none focus:border-[#345C86] transition-colors"
                           maxLength={200}
                         />
                         <button
