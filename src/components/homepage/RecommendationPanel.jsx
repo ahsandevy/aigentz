@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Inbox, RefreshCw, TrendingUp } from 'lucide-react';
-import RecommendationCard from '../RecommendationCard';
+import ChatRecommendationCard from './ChatRecommendationCard';
 import { conversationAPI } from '../../services/api';
 
 const POLL_INTERVAL_MS = 2000;
@@ -199,7 +199,7 @@ export default function RecommendationPanel({
       {!loading && !error && recommendations.length > 0 && (
         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
           {recommendations.slice().reverse().map(rec => (
-            <RecommendationCard key={rec.id} recommendation={rec} compact onStatusChange={handleCardAction} />
+            <ChatRecommendationCard key={rec.id} recommendation={rec} compact onStatusChange={handleCardAction} />
           ))}
         </div>
       )}
