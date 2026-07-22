@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { getActiveAccountId } from '../../services/session.js';
 import { conversationAPI } from '../../services/api.js';
+import { usePanelResize } from '../../hooks/usePanelResize.js';
 
 /**
  * ConversationSidebar — Persistent chat history list.
@@ -65,6 +66,7 @@ export default function ConversationSidebar({
   const [renameValue, setRenameValue] = useState('');
   const [deletingId, setDeletingId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const { width: panelWidth, dragProps } = usePanelResize(288, 200, 420);
 
   const inputRef = useRef(null);
   const initialLoadDone = useRef(false);
@@ -193,7 +195,9 @@ export default function ConversationSidebar({
   }
 
   return (
-    <div className="flex-shrink-0 w-72 border-r border-gray-200 bg-white flex flex-col h-full transition-all duration-300">
+    <div className="flex-shrink-0 border-r border-gray-200 bg-white flex flex-col h-full transition-[width] duration-75 relative" style={{ width: panelWidth }}>
+      {/* Drag handle — right edge */}
+      <div {...dragProps} style={{ right: -2 }} />
       {/* ─── Header ──────────────────────────────────────────────────── */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Inbox, RefreshCw, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import ChatRecommendationCard from './ChatRecommendationCard';
 import { conversationAPI } from '../../services/api';
+import { usePanelResize } from '../../hooks/usePanelResize.js';
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_MAX_ATTEMPTS = 5;
@@ -33,6 +34,7 @@ export default function RecommendationPanel({
   const [error, setError] = useState(null);
   const [selectedRec, setSelectedRec] = useState(null);  // popup state
   const [collapsed, setCollapsed] = useState(false);
+  const { width: panelWidth, dragProps } = usePanelResize(290, 200, 420, 'left');
 
   const fetchedForId = useRef(null);
   const prevStreaming = useRef(false);
@@ -176,7 +178,9 @@ export default function RecommendationPanel({
   // Empty state
   if (isIdle) {
     return (
-      <div className="flex flex-col h-full w-[290px] transition-all duration-300">
+      <div className="flex flex-col h-full transition-[width] duration-75 relative" style={{ width: panelWidth }}>
+        {/* Drag handle — left edge */}
+        <div {...dragProps} style={{ left: -2 }} />
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -206,7 +210,9 @@ export default function RecommendationPanel({
   }
 
   return (
-    <div className="flex flex-col h-full w-[290px] transition-all duration-300">
+    <div className="flex flex-col h-full transition-[width] duration-75 relative" style={{ width: panelWidth }}>
+      {/* Drag handle — left edge */}
+      <div {...dragProps} style={{ left: -2 }} />
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
