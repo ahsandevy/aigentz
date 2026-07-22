@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Inbox, RefreshCw, TrendingUp } from 'lucide-react';
+import { Inbox, RefreshCw, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import ChatRecommendationCard from './ChatRecommendationCard';
 import { conversationAPI } from '../../services/api';
 
@@ -32,6 +32,7 @@ export default function RecommendationPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedRec, setSelectedRec] = useState(null);  // popup state
+  const [collapsed, setCollapsed] = useState(false);
 
   const fetchedForId = useRef(null);
   const prevStreaming = useRef(false);
@@ -148,25 +149,64 @@ export default function RecommendationPanel({
 
   // ── Render ──
 
+  const recCount = recommendations.length;
+
+  // Collapsed state — narrow bar like the ConversationSidebar
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center py-4 w-11 flex-shrink-0 transition-all duration-300">
+        <button
+          onClick={() => setCollapsed(false)}
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+          title="Expand recommendations"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        {recCount > 0 && (
+          <span className="mt-2 text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+            {recCount}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   const isIdle = !loading && recommendations.length === 0 && !isStreaming && !isPolling.current;
 
   // Empty state
   if (isIdle) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-6">
-        <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3">
-          <Inbox size={20} className="text-gray-300" />
+      <div className="flex flex-col h-full w-[290px] transition-all duration-300">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[12px] font-semibold text-gray-900 tracking-tight">
+              Recommendations
+            </h3>
+          </div>
+          <button
+            onClick={() => setCollapsed(true)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+            title="Collapse panel"
+          >
+            <ChevronRight size={14} />
+          </button>
         </div>
-        <p className="text-[13px] text-gray-500 font-medium mb-1">No recommendations yet</p>
-        <p className="text-[11px] text-gray-400 leading-relaxed max-w-[200px]">
-          Recommendations from this conversation will appear here.
-        </p>
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+          <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+            <Inbox size={20} className="text-gray-300" />
+          </div>
+          <p className="text-[13px] text-gray-500 font-medium mb-1">No recommendations yet</p>
+          <p className="text-[11px] text-gray-400 leading-relaxed max-w-[200px]">
+            Recommendations from this conversation will appear here.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-[290px] transition-all duration-300">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -179,6 +219,13 @@ export default function RecommendationPanel({
             </span>
           )}
         </div>
+        <button
+          onClick={() => setCollapsed(true)}
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+          title="Collapse panel"
+        >
+          <ChevronRight size={14} />
+        </button>
       </div>
 
       {/* Error state */}

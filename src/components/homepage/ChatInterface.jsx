@@ -532,7 +532,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
           </div>
 
           {activeConversationId && (
-            <div className={`w-[290px] flex-shrink-0 border-l border-slate-200 bg-white overflow-y-auto ${isFullscreen ? 'block' : 'hidden xl:block'}`}>
+            <div className={`w-auto flex-shrink-0 border-l border-slate-200 bg-white ${isFullscreen ? 'block' : 'hidden xl:block'}`}>
               <RecommendationPanel
                 conversationId={activeConversationId}
                 accountId={accounts.length > 0 ? accounts[0]?.id : null}
