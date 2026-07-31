@@ -117,14 +117,15 @@ export const analyticsAPI = {
     getHeaderMetricsBySelection: async (days, campaign = 'total', account = 'total', signal) => {
         try {
             let response;
+            const params = account === 'total' ? { days } : { days };
             if (campaign && campaign !== 'total') {
                 response = await api.get(`/campaign/${campaign}/header-metrics`, {
-                    params: { days },
+                    params,
                     signal
                 });
             } else {
                 response = await api.get('/header-metrics', {
-                    params: { days },
+                    params,
                     signal
                 });
             }
@@ -577,10 +578,10 @@ export const conversationAPI = {
     },
 
     /** Get recommendations extracted from a conversation. */
-    getRecommendations: async (conversationId, accountId) => {
+    getRecommendations: async (conversationId, accountId, signal) => {
         const res = await conversationApi.get(
             `/conversations/${conversationId}/recommendations`,
-            { params: { account_id: accountId } }
+            { params: { account_id: accountId }, signal }
         );
         return res.data;
     },

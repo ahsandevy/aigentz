@@ -88,22 +88,22 @@ export const usePerformanceExplorer = (days = 30) => {
     queries: [
       {
         queryKey: [...PERFORMANCE_EXPLORER_QUERY_KEY, 'campaigns', days],
-        queryFn: () => analyticsAPI.getPerformanceExplorer(days),
+        queryFn: ({ signal }) => analyticsAPI.getPerformanceExplorer(days, signal),
         ...sharedQueryOptions,
       },
       {
         queryKey: [...PERFORMANCE_EXPLORER_QUERY_KEY, 'adsets', days],
-        queryFn: () => analyticsAPI.getPerformanceAdSets(days),
+        queryFn: ({ signal }) => analyticsAPI.getPerformanceAdSets(days, signal),
         ...sharedQueryOptions,
       },
       {
         queryKey: [...PERFORMANCE_EXPLORER_QUERY_KEY, 'ads', days],
-        queryFn: () => analyticsAPI.getPerformanceAds(days),
+        queryFn: ({ signal }) => analyticsAPI.getPerformanceAds(days, signal),
         ...sharedQueryOptions,
       },
       {
         queryKey: [...PERFORMANCE_EXPLORER_QUERY_KEY, 'audiences', days],
-        queryFn: () => analyticsAPI.getPerformanceAudiences(days),
+        queryFn: ({ signal }) => analyticsAPI.getPerformanceAudiences(days, null, signal),
         ...sharedQueryOptions,
       },
     ],

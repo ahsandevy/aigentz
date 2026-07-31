@@ -224,6 +224,10 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   const sessionIdRef = useRef(crypto.randomUUID?.() ?? ('session-' + Date.now()));
   const threadIdRef = useRef(null);
   const busyRef = useRef(false);
+  const streamAbortControllerRef = useRef(null);
+  const streamReaderRef = useRef(null);
+  const streamingConversationIdRef = useRef(null);
+  const isMountedRef = useRef(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const [extractionSkipped, setExtractionSkipped] = useState(false);
   const [sseRecommendations, setSseRecommendations] = useState(null);
@@ -232,6 +236,27 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   /* ── Init ─────────────────────────────────────────────────────────── */
   useEffect(() => { fetchAccounts(); }, []);
   useEffect(() => { conversationIdRef.current = activeConversationId; }, [activeConversationId]);
+
+  // A stream can outlive this component when the user navigates away. Abort the
+  // HTTP request and release the reader so the browser and server can stop work.
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      streamAbortControllerRef.current?.abort();
+      void streamReaderRef.current?.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      streamingConversationIdRef.current &&
+      activeConversationId !== streamingConversationIdRef.current
+    ) {
+      streamAbortControllerRef.current?.abort();
+      void streamReaderRef.current?.cancel();
+    }
+  }, [activeConversationId]);
 
   useEffect(() => {
     if (!activeConversationId) { setMessages([]); threadIdRef.current = null; setSseRecommendations(null); return; }
@@ -315,10 +340,12 @@ export default function ChatInterface({ activeConversationId = null, onConversat
         convId = conv.id;
         conversationIdRef.current = convId;
         threadIdRef.current = conv.thread_id || sessionIdRef.current;
+        streamingConversationIdRef.current = convId;
         selfCreatedConvRef.current = true;
         if (onConversationCreated) onConversationCreated(conv);
       } catch (e) { console.error('Failed to create conversation:', e); }
     }
+    streamingConversationIdRef.current = convId;
 
     const streamId = 'stream-' + Date.now();
     const streamRef = {
@@ -342,16 +369,40 @@ export default function ChatInterface({ activeConversationId = null, onConversat
     }
 
     const sseBuf = { current: '' };
+    const abortController = new AbortController();
+    streamAbortControllerRef.current = abortController;
+    let reader = null;
+    let renderFrame = null;
+    let renderQueued = false;
+    const renderStream = () => {
+      if (!isMountedRef.current) return;
+      setMessages(prev => {
+        const copy = [...prev];
+        const last = copy[copy.length - 1];
+        if (last && last.id === streamId) copy[copy.length - 1] = { ...streamRef, blocks: buildBlocks() };
+        return copy;
+      });
+    };
+    const scheduleStreamRender = () => {
+      if (renderQueued) return;
+      renderQueued = true;
+      renderFrame = requestAnimationFrame(() => {
+        renderQueued = false;
+        renderStream();
+      });
+    };
     try {
       const apiUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/agent/chat' || '/api/agent/chat';
       const res = await fetch(apiUrl, {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: trimmed, session_id: threadIdRef.current || sessionIdRef.current }),
+        signal: abortController.signal,
       });
       if (!res.ok) throw new Error(`Server Error: ${res.status}`);
 
-      const reader = res.body.getReader();
+      reader = res.body.getReader();
+      streamReaderRef.current = reader;
       const decoder = new TextDecoder();
       while (true) {
         const { value, done } = await reader.read();
@@ -380,31 +431,25 @@ export default function ChatInterface({ activeConversationId = null, onConversat
           if (etype === 'extraction_skipped') { setExtractionSkipped(true); continue; }
           if (etype === 'error' || evt.error) { streamRef.thinkingDone = true; flushCurrentText(); continue; }
         }
-        setMessages(prev => {
-          const copy = [...prev];
-          const last = copy[copy.length - 1];
-          if (last && last.id === streamId) copy[copy.length - 1] = { ...streamRef, blocks: buildBlocks() };
-          return copy;
-        });
+        scheduleStreamRender();
       }
       flushCurrentText();
-      setMessages(prev => {
-        const copy = [...prev];
-        const last = copy[copy.length - 1];
-        if (last && last.id === streamId) copy[copy.length - 1] = { ...streamRef, blocks: buildBlocks() };
-        return copy;
-      });
+      if (renderFrame !== null) cancelAnimationFrame(renderFrame);
+      renderStream();
     } catch (err) {
       flushCurrentText();
-      if (err.message && !err.message.includes('Server Error')) streamRef.currentText += '> ' + (err.message || 'Connection failed');
-      setMessages(prev => {
-        const copy = [...prev]; const last = copy[copy.length - 1];
-        if (last && last.id === streamId) copy[copy.length - 1] = { ...streamRef, blocks: buildBlocks() };
-        return copy;
-      });
+      if (err.name !== 'AbortError' && err.message && !err.message.includes('Server Error')) {
+        streamRef.currentText += '> ' + (err.message || 'Connection failed');
+      }
+      if (renderFrame !== null) cancelAnimationFrame(renderFrame);
+      renderStream();
     } finally {
+      if (renderFrame !== null) cancelAnimationFrame(renderFrame);
+      if (streamReaderRef.current === reader) streamReaderRef.current = null;
+      if (streamAbortControllerRef.current === abortController) streamAbortControllerRef.current = null;
+      streamingConversationIdRef.current = null;
       busyRef.current = false;
-      setIsStreaming(false);
+      if (isMountedRef.current) setIsStreaming(false);
     }
   }, [onConversationCreated]);
 

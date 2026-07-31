@@ -12,6 +12,7 @@ function PieChart({ data, size = 200 }) {
   const colors = ['#1e4a79', '#78a3cd', '#16a34a'];
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const svgRef = useRef(null);
   
   const total = data.reduce((sum, item) => sum + item.count, 0);
   
@@ -23,7 +24,6 @@ function PieChart({ data, size = 200 }) {
     );
   }
 
-  let currentAngle = -90; // Start from top
   const radius = size / 2 - 10;
   const centerX = size / 2;
   const centerY = size / 2;
@@ -32,8 +32,11 @@ function PieChart({ data, size = 200 }) {
     const percentage = (item.count / total) * 100;
     const angle = (item.count / total) * 360;
     
-    const startAngle = currentAngle;
-    const endAngle = currentAngle + angle;
+    const priorAngle = data
+      .slice(0, index)
+      .reduce((sum, previousItem) => sum + (previousItem.count / total) * 360, 0);
+    const startAngle = -90 + priorAngle;
+    const endAngle = startAngle + angle;
     
     const x1 = centerX + radius * Math.cos((startAngle * Math.PI) / 180);
     const y1 = centerY + radius * Math.sin((startAngle * Math.PI) / 180);
@@ -48,8 +51,6 @@ function PieChart({ data, size = 200 }) {
       `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
       'Z'
     ].join(' ');
-
-    currentAngle += angle;
 
     return {
       path: pathData,
@@ -75,8 +76,6 @@ function PieChart({ data, size = 200 }) {
   const handleMouseLeave = () => {
     setHoveredIndex(null);
   };
-
-  const svgRef = useRef(null);
 
   return (
     <div className="flex flex-col items-center relative">
@@ -148,7 +147,7 @@ function EfficiencyDrivers({ days = 30 }) {
     isLoading: loading,
   } = useQuery({
     queryKey: getEfficiencyDriversQueryKey(days),
-    queryFn: () => analyticsAPI.getEfficiencyDrivers(days),
+    queryFn: ({ signal }) => analyticsAPI.getEfficiencyDrivers(days, signal),
     staleTime: EFFICIENCY_DRIVERS_STALE_MS,
     gcTime: 48 * 60 * 60 * 1000, // 48 hours
     refetchOnWindowFocus: false,

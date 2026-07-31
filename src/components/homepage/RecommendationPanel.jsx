@@ -39,6 +39,7 @@ export default function RecommendationPanel({
   const fetchedForId = useRef(null);
   const prevStreaming = useRef(false);
   const pollTimer = useRef(null);
+  const requestController = useRef(null);
   const pollAttempts = useRef(0);
   // ponytail: track which recommendation IDs existed before the current stream.
   // The poll loop stops only when a NEW ID appears — old recs from previous
@@ -46,6 +47,16 @@ export default function RecommendationPanel({
   const recIdsBeforeStream = useRef(new Set());
   // Silent poll — skips loading state to avoid re-renders breaking the timer.
   const isPolling = useRef(false);
+  const recommendationsRef = useRef([]);
+
+  useEffect(() => {
+    recommendationsRef.current = recommendations;
+  }, [recommendations]);
+
+  const cancelRequest = useCallback(() => {
+    requestController.current?.abort();
+    requestController.current = null;
+  }, []);
 
   const handleCardAction = useCallback((action, rec) => {
     if (action === 'open') {
@@ -60,26 +71,30 @@ export default function RecommendationPanel({
       return;
     }
     fetchedForId.current = conversationId;
+    cancelRequest();
+    const controller = new AbortController();
+    requestController.current = controller;
     setLoading(true);
     setError(null);
     try {
-      const data = await conversationAPI.getRecommendations(conversationId, accountId);
-      if (fetchedForId.current === conversationId) {
+      const data = await conversationAPI.getRecommendations(conversationId, accountId, controller.signal);
+      if (!controller.signal.aborted && fetchedForId.current === conversationId) {
         const items = Array.isArray(data) ? data : [];
         setRecommendations(items);
         return items;
       }
     } catch (err) {
-      if (fetchedForId.current === conversationId) {
+      if (!controller.signal.aborted && fetchedForId.current === conversationId) {
         setError(err.message || 'Failed to load recommendations');
       }
     } finally {
+      if (requestController.current === controller) requestController.current = null;
       if (fetchedForId.current === conversationId) {
         setLoading(false);
       }
     }
     return null;
-  }, [conversationId, accountId]);
+  }, [conversationId, accountId, cancelRequest]);
 
   // Fetch when conversation changes
   useEffect(() => {
@@ -88,11 +103,16 @@ export default function RecommendationPanel({
     pollAttempts.current = 0;
     isPolling.current = false;
     fetchRecommendations();
-  }, [fetchRecommendations]);
+    return () => {
+      if (pollTimer.current) { clearTimeout(pollTimer.current); pollTimer.current = null; }
+      cancelRequest();
+    };
+  }, [fetchRecommendations, cancelRequest]);
 
   // Poll after streaming ends — extraction runs in background, data may
   // not be in the DB immediately.
   useEffect(() => {
+    let cancelled = false;
     const wasStreaming = prevStreaming.current;
     prevStreaming.current = isStreaming;
 
@@ -101,7 +121,7 @@ export default function RecommendationPanel({
 
     if (wasStreaming && !isStreaming) {
       if (extractionSkipped) { isPolling.current = false; return; }
-      recIdsBeforeStream.current = new Set(recommendations.map(r => r.id));
+      recIdsBeforeStream.current = new Set(recommendationsRef.current.map(r => r.id));
       pollAttempts.current = 0;
       isPolling.current = true;
 
@@ -109,13 +129,16 @@ export default function RecommendationPanel({
       // Calls the API directly to avoid fetchRecommendations' setLoading side-effects
       // which trigger re-renders that can kill the setTimeout chain.
       const run = async () => {
-        if (!conversationId || pollAttempts.current >= POLL_MAX_ATTEMPTS) {
+        if (cancelled || !conversationId || !accountId || pollAttempts.current >= POLL_MAX_ATTEMPTS) {
           isPolling.current = false;
           return;
         }
         pollAttempts.current += 1;
+        const controller = new AbortController();
+        requestController.current = controller;
         try {
-          const data = await conversationAPI.getRecommendations(conversationId, accountId);
+          const data = await conversationAPI.getRecommendations(conversationId, accountId, controller.signal);
+          if (cancelled || controller.signal.aborted) return;
           const items = Array.isArray(data) ? data : [];
           const hasNew = items.some(r => !recIdsBeforeStream.current.has(r.id));
           if (hasNew) {
@@ -128,12 +151,21 @@ export default function RecommendationPanel({
           }
         } catch {
           // API error during poll — retry until max attempts.
-          pollTimer.current = setTimeout(run, POLL_INTERVAL_MS);
+          if (!cancelled && !controller.signal.aborted) {
+            pollTimer.current = setTimeout(run, POLL_INTERVAL_MS);
+          }
+        } finally {
+          if (requestController.current === controller) requestController.current = null;
         }
       };
       pollTimer.current = setTimeout(run, POLL_INTERVAL_MS);
     }
-  }, [isStreaming, conversationId, accountId, extractionSkipped, recommendations]);
+    return () => {
+      cancelled = true;
+      if (pollTimer.current) { clearTimeout(pollTimer.current); pollTimer.current = null; }
+      cancelRequest();
+    };
+  }, [isStreaming, conversationId, accountId, extractionSkipped, cancelRequest]);
 
   // Merge SSE recommendations — dedupe by id and prepend
   useEffect(() => {

@@ -87,6 +87,24 @@ function SectionWithFreshness({ freshnessAgo, children }) {
   )
 }
 
+function DeferredSectionPrompt({ title, onLoad }) {
+  return (
+    <div className="rounded-xl border border-dashed border-[#c8d6e8] bg-white/70 px-5 py-6 text-center">
+      <p className="text-sm font-medium text-[#334155]">{title} loads on demand.</p>
+      <p className="mt-1 text-xs text-[#64748b]">
+        Load this analysis when you are ready to review it.
+      </p>
+      <button
+        type="button"
+        onClick={onLoad}
+        className="mt-4 rounded-lg bg-[#1e4a79] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1e3a69]"
+      >
+        Load {title}
+      </button>
+    </div>
+  )
+}
+
 function getFreshnessAgo(latestUpdatedAt) {
   if (latestUpdatedAt == null) return null
   return formatRelativeAgo(Date.now() - latestUpdatedAt)
@@ -109,6 +127,8 @@ function Dashboard() {
   const [selectedDays, setSelectedDays] = useState(30)
   const [efficiencyDriversDays, setEfficiencyDriversDays] = useState(30)
   const [performanceExplorerDays, setPerformanceExplorerDays] = useState(30)
+  const [efficiencyDriversLoaded, setEfficiencyDriversLoaded] = useState(false)
+  const [performanceExplorerLoaded, setPerformanceExplorerLoaded] = useState(false)
   const [freshnessTick, setFreshnessTick] = useState(0)
   const [refreshKeys, setRefreshKeys] = useState({
     efficiencyDrivers: 0,
@@ -215,6 +235,10 @@ function Dashboard() {
   const performanceExplorerSection = (
     <RefreshableSection
       title="Performance Explorer"
+      onRefresh={() => {
+        setPerformanceExplorerLoaded(true)
+        handlePerformanceExplorerSectionRefresh()
+      }}
       extraControls={
         <select
           value={performanceExplorerDays}
@@ -229,10 +253,17 @@ function Dashboard() {
         </select>
       }
     >
-      <PerformanceExplorer
-        days={performanceExplorerDays}
-        key={`performance-explorer-${refreshKeys.performanceExplorer}-${performanceExplorerDays}`}
-      />
+      {performanceExplorerLoaded || PERFORMANCE_EXPLORER_ONLY_DEBUG_MODE ? (
+        <PerformanceExplorer
+          days={performanceExplorerDays}
+          key={`performance-explorer-${refreshKeys.performanceExplorer}-${performanceExplorerDays}`}
+        />
+      ) : (
+        <DeferredSectionPrompt
+          title="Performance Explorer"
+          onLoad={() => setPerformanceExplorerLoaded(true)}
+        />
+      )}
     </RefreshableSection>
   )
 
@@ -264,6 +295,10 @@ function Dashboard() {
 
               <RefreshableSection
                 title="Efficiency Drivers"
+                onRefresh={() => {
+                  setEfficiencyDriversLoaded(true)
+                  handleEfficiencyDriversSectionRefresh()
+                }}
                 extraControls={
                   <select
                     value={efficiencyDriversDays}
@@ -278,10 +313,17 @@ function Dashboard() {
                   </select>
                 }
               >
-                <EfficiencyDrivers
-                  days={efficiencyDriversDays}
-                  key={`efficiency-drivers-${refreshKeys.efficiencyDrivers}-${efficiencyDriversDays}`}
-                />
+                {efficiencyDriversLoaded ? (
+                  <EfficiencyDrivers
+                    days={efficiencyDriversDays}
+                    key={`efficiency-drivers-${refreshKeys.efficiencyDrivers}-${efficiencyDriversDays}`}
+                  />
+                ) : (
+                  <DeferredSectionPrompt
+                    title="Efficiency Drivers"
+                    onLoad={() => setEfficiencyDriversLoaded(true)}
+                  />
+                )}
               </RefreshableSection>
 
               <RefreshableSection title="Change Control">
@@ -290,6 +332,7 @@ function Dashboard() {
 
               <RefreshableSection
                 title="Weekly AI Summary"
+                onRefresh={handleWeeklySummarySectionRefresh}
               >
                 <WeeklyAISummary
                   days={selectedDays}
