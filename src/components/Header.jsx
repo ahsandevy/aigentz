@@ -260,14 +260,14 @@ function Header({ days, onDaysChange }) {
                     ? 'Last 90 days'
                     : 'Today'
                 }
-                className="w-full md:w-auto appearance-none bg-[#EDF0A8] border-none rounded-full px-4 md:px-6 py-2.5 pr-10 text-xs md:text-sm font-medium text-[#374151] shadow-sm focus:outline-none cursor-pointer"
+                className="w-full md:w-auto appearance-none bg-[#EDF0A8] border-none rounded-full pl-5 pr-14 py-2.5 text-xs md:text-sm font-medium text-[#374151] shadow-sm focus:outline-none cursor-pointer"
               >
                 <option value="Today">Today</option>
                 <option value="Last 7 days">Last 7 days</option>
                 <option value="Last 30 days">Last 30 days</option>
                 <option value="Last 90 days">Last 90 days</option>
               </select>
-              <svg className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#374151] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute right-6 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#374151] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
