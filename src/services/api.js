@@ -1,6 +1,20 @@
 import axios from 'axios';
 import { getOrCreateSessionId } from './session.js';
 
+// ── Bearer token fallback for browsers that block third-party cookies ──
+// Stored in sessionStorage so it survives page refresh but not tab close.
+// AuthContext sets/clears this; axios interceptor reads it.
+const TOKEN_KEY = 'access_token';
+
+export function setAccessToken(token) {
+    if (token) sessionStorage.setItem(TOKEN_KEY, token);
+    else sessionStorage.removeItem(TOKEN_KEY);
+}
+
+function _getAccessToken() {
+    return sessionStorage.getItem(TOKEN_KEY);
+}
+
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Shared config for all axios instances: send HttpOnly auth cookies
@@ -25,8 +39,20 @@ const AGENT_BASE_URL = VITE_API_BASE_URL
 
 const agentApi = axios.create({ baseURL: AGENT_BASE_URL, ...axiosDefaults });
 
-// 401 interceptor: auto-refresh + retry
+// Request interceptor: attach Bearer token as cookie bypass fallback.
+// Response interceptor: auto-refresh on 401, retry original request.
 function setupAuthInterceptor(instance) {
+    // ── Request: attach access token as Bearer header ──
+    instance.interceptors.request.use(config => {
+        const token = _getAccessToken();
+        if (token) {
+            config.headers = config.headers || {};
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    });
+
+    // ── Response: 401 → refresh + retry ──
     instance.interceptors.response.use(
         response => response,
         async (error) => {
@@ -36,9 +62,14 @@ function setupAuthInterceptor(instance) {
                     const refreshUrl = VITE_API_BASE_URL
                         ? `${VITE_API_BASE_URL}/api/auth/refresh`
                         : '/api/auth/refresh';
-                    await axios.post(refreshUrl, {}, { withCredentials: true });
+                    const refreshRes = await axios.post(refreshUrl, {}, { withCredentials: true });
+                    // Store the new access token from refresh response
+                    if (refreshRes.data?.access_token) {
+                        setAccessToken(refreshRes.data.access_token);
+                    }
                     return instance(error.config);
                 } catch (refreshError) {
+                    setAccessToken(null);
                     window.location.href = '/login';
                     return Promise.reject(refreshError);
                 }
@@ -529,6 +560,7 @@ const conversationApi = axios.create({
     baseURL: CONVERSATION_BASE_URL,
     ...axiosDefaults,
 });
+setupAuthInterceptor(conversationApi);
 
 export const conversationAPI = {
     /** List conversations for an ad account. */

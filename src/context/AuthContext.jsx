@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { setAccessToken } from '../services/api.js';
 
 const AuthContext = createContext(null);
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const TOKEN_KEY = 'access_token';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -15,13 +17,22 @@ export function AuthProvider({ children }) {
 
   async function checkSession() {
     try {
+      // ponytail: also send stored Bearer token as fallback for browsers that block cookies
+      const headers = { 'Content-Type': 'application/json' };
+      const storedToken = sessionStorage.getItem(TOKEN_KEY);
+      if (storedToken) {
+        headers['Authorization'] = `Bearer ${storedToken}`;
+      }
       const res = await fetch(`${API_BASE}/api/auth/status`, {
         credentials: 'include',
+        headers,
       });
       if (res.ok) {
         const data = await res.json();
         if (data.authenticated) {
           setUser(data.user);
+        } else {
+          setAccessToken(null);
         }
       }
     } catch (e) {
@@ -46,10 +57,14 @@ export function AuthProvider({ children }) {
 
     const data = await res.json();
     setUser(data.user);
+    if (data.access_token) {
+      setAccessToken(data.access_token);
+    }
     return data.user;
   }
 
   async function logout() {
+    setAccessToken(null);
     try {
       await fetch(`${API_BASE}/api/auth/logout`, {
         method: 'POST',
