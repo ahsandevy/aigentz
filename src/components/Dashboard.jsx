@@ -127,8 +127,8 @@ function Dashboard() {
   const [selectedDays, setSelectedDays] = useState(30)
   const [efficiencyDriversDays, setEfficiencyDriversDays] = useState(30)
   const [performanceExplorerDays, setPerformanceExplorerDays] = useState(30)
-  const [efficiencyDriversLoaded, setEfficiencyDriversLoaded] = useState(false)
-  const [performanceExplorerLoaded, setPerformanceExplorerLoaded] = useState(false)
+  const [efficiencyDriversLoaded, setEfficiencyDriversLoaded] = useState(true)
+  const [performanceExplorerLoaded, setPerformanceExplorerLoaded] = useState(true)
   const [freshnessTick, setFreshnessTick] = useState(0)
   const [refreshKeys, setRefreshKeys] = useState({
     efficiencyDrivers: 0,
