@@ -13,6 +13,7 @@ function HomePage() {
   const [sidebarKey, setSidebarKey] = useState(0);
   const [chatKey, setChatKey] = useState(0); // force ChatInterface remount
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const handleSelectConversation = useCallback((conv) => {
     setActiveConversationId(conv.id);
@@ -104,12 +105,21 @@ function HomePage() {
               ? 'fixed inset-0 z-[100] rounded-none p-4'
               : 'rounded-[24px] border border-gray-200 shadow-sm min-h-[500px] max-h-[80vh] mt-2 mb-8'
           }`}>
+            {/* Mobile sidebar overlay backdrop */}
+            {mobileSidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black/40 z-40 md:hidden"
+                onClick={() => setMobileSidebarOpen(false)}
+              />
+            )}
             <ConversationSidebar
               refreshTrigger={sidebarKey}
               activeConversationId={activeConversationId}
               onSelect={handleSelectConversation}
               onDelete={handleDeleteConversation}
               onNewChat={handleNewChat}
+              mobileOpen={mobileSidebarOpen}
+              onMobileClose={() => setMobileSidebarOpen(false)}
             />
             <div className="flex-1 min-w-0">
               <ChatInterface
@@ -118,6 +128,7 @@ function HomePage() {
                 onConversationCreated={handleConversationCreated}
                 isFullscreen={isFullscreen}
                 onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                onMenuClick={() => setMobileSidebarOpen(true)}
               />
             </div>
           </div>

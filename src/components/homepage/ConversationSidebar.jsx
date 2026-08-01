@@ -56,6 +56,8 @@ export default function ConversationSidebar({
   onDelete,
   onNewChat,
   refreshTrigger = 0,
+  mobileOpen = false,
+  onMobileClose,
 }) {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,6 +115,7 @@ export default function ConversationSidebar({
   const handleSelect = (conv) => {
     if (renamingId) return; // don't switch while renaming
     if (onSelect) onSelect(conv);
+    if (onMobileClose) onMobileClose();
   };
 
   const handleStartRename = (e, conv) => {
@@ -175,7 +178,7 @@ export default function ConversationSidebar({
   // ─── Sidebar width ──────────────────────────────────────────────────
   if (collapsed) {
     return (
-      <div className="flex-shrink-0 border-r border-gray-200 bg-white flex flex-col items-center py-4 w-14 transition-all duration-300">
+      <div className="hidden md:flex flex-shrink-0 border-r border-gray-200 bg-white flex-col items-center py-4 w-14 transition-all duration-300">
         <button
           onClick={() => setCollapsed(false)}
           className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
@@ -195,9 +198,16 @@ export default function ConversationSidebar({
   }
 
   return (
-    <div className="flex-shrink-0 border-r border-gray-200 bg-white flex flex-col h-full transition-[width] duration-75 relative" style={{ width: panelWidth }}>
-      {/* Drag handle — right edge */}
-      <div {...dragProps} style={{ right: -2 }} />
+    <div
+      className={`flex-shrink-0 border-r border-gray-200 bg-white flex flex-col h-full
+        fixed inset-y-0 left-0 z-50 md:relative md:inset-auto md:z-auto
+        transition-all duration-200
+        ${!mobileOpen ? 'hidden' : ''} md:flex
+        ${mobileOpen ? 'shadow-2xl md:shadow-none' : ''}`}
+      style={{ width: panelWidth }}
+    >
+      {/* Drag handle — right edge (desktop only) */}
+      <div {...dragProps} className="hidden md:block" style={{ right: -2 }} />
       {/* ─── Header ──────────────────────────────────────────────────── */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
@@ -212,9 +222,17 @@ export default function ConversationSidebar({
             >
               <Plus size={14} />
             </button>
+            {/* Close button on mobile */}
+            <button
+              onClick={onMobileClose}
+              className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+              title="Close sidebar"
+            >
+              <X size={14} />
+            </button>
             <button
               onClick={() => setCollapsed(true)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+              className="hidden md:flex p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
               title="Collapse sidebar"
             >
               <ChevronLeft size={14} />

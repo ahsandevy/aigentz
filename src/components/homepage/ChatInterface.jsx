@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import {
   Send, ChevronDown, ChevronRight, AlertCircle, Loader2,
   CheckCircle2, Terminal, Cpu, Sparkles,
-  Brain, Wrench, BarChart3, Maximize2, Minimize2,
+  Brain, Wrench, BarChart3, Maximize2, Minimize2, Menu,
 } from 'lucide-react';
 import { getActiveAccountId, setActiveAccountId } from '../../services/session.js';
 import { conversationAPI } from '../../services/api.js';
@@ -210,7 +210,7 @@ function sseLines(chunk, buffer) {
   return events;
 }
 
-export default function ChatInterface({ activeConversationId = null, onConversationCreated = null, isFullscreen = false, onToggleFullscreen = null }) {
+export default function ChatInterface({ activeConversationId = null, onConversationCreated = null, isFullscreen = false, onToggleFullscreen = null, onMenuClick = null }) {
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState([]);
   const [accounts, setAccounts] = useState([]);
@@ -477,6 +477,15 @@ export default function ChatInterface({ activeConversationId = null, onConversat
         {/* Header — slim */}
         <div className="flex justify-between items-center py-2.5 px-5 md:px-6 border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-2.5">
+            {onMenuClick && (
+              <button
+                onClick={onMenuClick}
+                className="md:hidden p-1.5 -ml-1 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"
+                title="Conversations"
+              >
+                <Menu size={18} />
+              </button>
+            )}
             <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#345C86] shadow-sm">
               <Cpu size={13} className="text-white" />
             </div>
