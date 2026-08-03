@@ -136,13 +136,13 @@
             </span>
           )}
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 xl:flex-nowrap xl:gap-2">
           {status === 'pending' && (
             <>
               <button 
                 onClick={() => onApprove && onApprove(recommendationId)}
                 disabled={isApproving || isSimulating || !recommendationId}
-                className="bg-[#EDF0A8] hover:opacity-90 text-[#374151] px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#EDF0A8] hover:opacity-90 text-[#374151] px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                 title={!recommendationId ? 'Recommendation ID missing - cannot approve' : ''}
               >
                 {isApproving ? (
