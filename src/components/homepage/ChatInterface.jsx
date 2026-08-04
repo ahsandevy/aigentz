@@ -231,6 +231,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   const [isStreaming, setIsStreaming] = useState(false);
   const [extractionSkipped, setExtractionSkipped] = useState(false);
   const [sseRecommendations, setSseRecommendations] = useState(null);
+  const [commandInfo, setCommandInfo] = useState(null); // {name, args, sections} from /command SSE events
   const selfCreatedConvRef = useRef(false);
 
   /* ── Init ─────────────────────────────────────────────────────────── */
@@ -327,6 +328,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
     busyRef.current = true;
     setIsStreaming(true);
     setExtractionSkipped(false);
+    setCommandInfo(null);
 
     const userMsg = { id: Date.now(), role: 'user', content: trimmed };
     setMessages(prev => [...prev, userMsg]);
@@ -429,6 +431,8 @@ export default function ChatInterface({ activeConversationId = null, onConversat
             continue;
           }
           if (etype === 'extraction_skipped') { setExtractionSkipped(true); continue; }
+          if (etype === 'command_start') { setCommandInfo({ name: evt.command, args: evt.args, sections: null }); continue; }
+          if (etype === 'command_complete') { setCommandInfo(prev => (prev ? { ...prev, sections: evt.sections || [] } : prev)); continue; }
           if (etype === 'error' || evt.error) { streamRef.thinkingDone = true; flushCurrentText(); continue; }
         }
         scheduleStreamRender();
@@ -551,10 +555,19 @@ export default function ChatInterface({ activeConversationId = null, onConversat
                 <div className="flex w-full mb-8 justify-start">
                   <div className="flex gap-3.5 items-center">
                     <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-slate-200 shadow-sm opacity-0" />
-                    <div className="flex items-center gap-1.5 border-l-2 border-amber-400/30 pl-4 py-1">
-                      <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-                      <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                      <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                    <div className="border-l-2 border-amber-400/30 pl-4 py-1 space-y-1.5">
+                      {commandInfo?.name && !commandInfo.sections && (
+                        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-full px-3 py-1 text-[11px] font-semibold">
+                          <Sparkles size={11} className="animate-pulse" />
+                          Running /{commandInfo.name}
+                          {commandInfo.args ? <span className="font-normal text-amber-600 truncate max-w-[40ch]">— {String(commandInfo.args)}</span> : null}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                      </div>
                     </div>
                   </div>
                 </div>
