@@ -28,8 +28,11 @@ function HomePage() {
 
   const handleDeleteConversation = useCallback((deletedId) => {
     if (activeConversationId === deletedId) {
+      // Start a new conversation instead of leaving an empty state
+      refreshSessionId();
       setActiveConversationId(null);
       persistConversationId(null);
+      setChatKey(k => k + 1);
     }
     setSidebarKey(k => k + 1);
   }, [activeConversationId]);
