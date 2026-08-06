@@ -320,7 +320,10 @@ export default function ChatInterface({ activeConversationId = null, onConversat
     setIsLoadingAccounts(true);
     try {
       const url = (import.meta.env.VITE_API_BASE_URL || '') + '/api/analytics/meta/accounts' || '/api/analytics/meta/accounts';
-      const res = await fetch(url, { credentials: 'include' });
+      const res = await fetch(url, {
+        credentials: 'include',
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}` },
+      });
       if (res.ok) {
         const data = await res.json();
         setAccounts(data.data || []);
