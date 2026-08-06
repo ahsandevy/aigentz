@@ -11,6 +11,33 @@ import { conversationAPI } from '../../services/api.js';
 import RecommendationPanel from './RecommendationPanel';
 
 /* ──────────────────────────────────────────────────────────────────────
+   SLASH COMMANDS
+   ponytail: hardcoded per request — keep in sync with the backend command
+   registry (app/commands/skills, SKILL.md front matter). No discovery
+   endpoint yet; add a GET /api/agent/commands when the list grows.
+   ─────────────────────────────────────────────────────────────────── */
+
+const AVAILABLE_COMMANDS = [
+  {
+    name: 'meta-audit',
+    description: 'Comprehensive account audit — health score, campaign performance, creative health, audience & targeting, and prioritized recommendations.',
+  },
+];
+
+// Commands whose names match the current "/..." prefix being typed.
+// Only the name-typing state shows the menu (no spaces — that's args mode).
+function commandCandidatesFor(query) {
+  if (!/^\/[a-zA-Z0-9-]*$/.test(query)) return [];
+  const prefix = query.slice(1).toLowerCase();
+  return AVAILABLE_COMMANDS.filter(c => c.name.toLowerCase().startsWith(prefix));
+}
+
+function pickCommand(candidates, index) {
+  if (candidates.length === 0) return null;
+  return candidates[Math.min(Math.max(index, 0), candidates.length - 1)];
+}
+
+/* ──────────────────────────────────────────────────────────────────────
    BLOCK RENDERERS
    ─────────────────────────────────────────────────────────────────── */
 
@@ -232,6 +259,8 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   const [extractionSkipped, setExtractionSkipped] = useState(false);
   const [sseRecommendations, setSseRecommendations] = useState(null);
   const [commandInfo, setCommandInfo] = useState(null); // {name, args, sections} from /command SSE events
+  const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+  const [commandMenuIndex, setCommandMenuIndex] = useState(-1);
   const selfCreatedConvRef = useRef(false);
 
   /* ── Init ─────────────────────────────────────────────────────────── */
@@ -397,7 +426,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
       const apiUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/agent/chat' || '/api/agent/chat';
       const res = await fetch(apiUrl, {
         method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}` },
         body: JSON.stringify({ query: trimmed, session_id: threadIdRef.current || sessionIdRef.current }),
         signal: abortController.signal,
       });
@@ -432,7 +461,10 @@ export default function ChatInterface({ activeConversationId = null, onConversat
           }
           if (etype === 'extraction_skipped') { setExtractionSkipped(true); continue; }
           if (etype === 'command_start') { setCommandInfo({ name: evt.command, args: evt.args, sections: null }); continue; }
-          if (etype === 'command_complete') { setCommandInfo(prev => (prev ? { ...prev, sections: evt.sections || [] } : prev)); continue; }
+          if (etype === 'command_complete') {
+            setCommandInfo(prev => (prev ? { ...prev, sections: evt.sections || [] } : prev));
+            continue;
+          }
           if (etype === 'error' || evt.error) { streamRef.thinkingDone = true; flushCurrentText(); continue; }
         }
         scheduleStreamRender();
@@ -458,19 +490,48 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   }, [onConversationCreated]);
 
   /* ── Input handlers ───────────────────────────────────────────────── */
-  const handleSearch  = useCallback(() => performSearch(query), [query, performSearch]);
+  const selectCommand = useCallback((cmd) => {
+    setQuery(`/${cmd.name} `);
+    setCommandMenuOpen(false);
+    setCommandMenuIndex(-1);
+    const el = inputRef.current;
+    if (el) { el.style.height = 'auto'; el.focus(); }
+  }, []);
+  const handleSearch  = useCallback(() => {
+    // With the /-menu open, Send picks the highlighted command instead of
+    // sending a bare "/" — otherwise the agent gets a nonsense query.
+    const candidates = commandCandidatesFor(query);
+    if (commandMenuOpen && candidates.length > 0) {
+      const picked = pickCommand(candidates, commandMenuIndex);
+      if (picked) { selectCommand(picked); return; }
+    }
+    performSearch(query);
+  }, [query, commandMenuOpen, commandMenuIndex, selectCommand, performSearch]);
   const handleAccountChange = useCallback((e) => {
     const acct = accounts.find(a => a.id === e.target.value);
     if (acct) { setSelectedAccount(acct); setActiveAccountId(acct.id); }
   }, [accounts]);
   const handleInputChange = useCallback((e) => {
-    setQuery(e.target.value);
+    const value = e.target.value;
+    setQuery(value);
+    setCommandMenuOpen(/^\/[a-zA-Z0-9-]*$/.test(value));
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
   }, []);
   const handleKeyDown = useCallback((e) => {
+    const candidates = commandCandidatesFor(query);
+    if (candidates.length > 0) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); const len = candidates.length; setCommandMenuIndex(i => (i < 0 ? 0 : Math.min(i + 1, len - 1))); return; }
+      if (e.key === 'ArrowUp') { e.preventDefault(); const len = candidates.length; setCommandMenuIndex(i => (i < 0 ? len - 1 : Math.max(i - 1, 0))); return; }
+      if (e.key === 'Escape') { e.preventDefault(); setCommandMenuOpen(false); setCommandMenuIndex(-1); return; }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const picked = pickCommand(candidates, commandMenuIndex);
+        if (picked) { selectCommand(picked); return; }
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); performSearch(query); }
-  }, [query, performSearch]);
+  }, [query, commandMenuIndex, selectCommand, performSearch]);
 
   /* ── Render ───────────────────────────────────────────────────────── */
   return (
@@ -578,6 +639,23 @@ export default function ChatInterface({ activeConversationId = null, onConversat
             <div className="px-5 md:px-8 py-3.5 bg-gradient-to-t from-slate-50 via-white to-white border-t border-slate-100">
               <div className="max-w-3xl mx-auto">
                 <div className="relative flex items-center gap-3 bg-white border border-slate-200 rounded-3xl py-1.5 pl-5 pr-1.5 shadow-sm transition-all duration-200 focus-within:shadow-md focus-within:border-slate-300 focus-within:ring-1 focus-within:ring-slate-200">
+                  {commandMenuOpen && commandCandidatesFor(query).length > 0 && (
+                    <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-30">
+                      <div className="px-3.5 py-1.5 bg-slate-50 border-b border-slate-100 text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Commands</div>
+                      {commandCandidatesFor(query).map((cmd, i) => (
+                        <button
+                          key={cmd.name}
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); selectCommand(cmd); }}
+                          onMouseEnter={() => setCommandMenuIndex(i)}
+                          className={`w-full text-left px-3.5 py-2 flex flex-col gap-0.5 transition-colors ${i === commandMenuIndex ? 'bg-[#345C86]/5' : 'bg-white'} hover:bg-[#345C86]/5`}
+                        >
+                          <span className="text-[13px] font-semibold text-slate-900">/{cmd.name}</span>
+                          <span className="text-[11px] text-slate-500 leading-snug">{cmd.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <textarea ref={inputRef} value={query}
                     onChange={handleInputChange} onKeyDown={handleKeyDown}
                     placeholder={busyRef.current ? "Agent is responding…" : "Ask anything about your ad account…"}
