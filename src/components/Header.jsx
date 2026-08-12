@@ -4,6 +4,7 @@ import MetricsGrid from './MetricsGrid'
 import CampaignsDropdown from './CampaignsDropdown'
 import AccountsDropdown from './AccountsDropdown'
 import { analyticsAPI } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 function formatDateLabel(dateStr) {
   if (!dateStr) return null
@@ -42,6 +43,7 @@ const SYNC_TOAST_DISMISS_MS = 6000
 
 function Header({ days, onDaysChange }) {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   // const [isSyncing, setIsSyncing] = useState(false)
   const [dataStatus, setDataStatus] = useState(null)
   const [syncMessage, setSyncMessage] = useState(null)
@@ -210,18 +212,30 @@ function Header({ days, onDaysChange }) {
           </div>
 
           {/* Client Status + Last synced */}
-          <div className="flex flex-col items-end gap-0.5 text-sm text-[#4b5563]">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-[#1e4a79]">Servis Shoes</span>
-              <span>·</span>
-              <span>Live Analysis</span>
-              <span className="w-2 h-2 bg-[#84cc16] rounded-full"></span>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end gap-0.5 text-sm text-[#4b5563]">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-[#1e4a79]">Servis Shoes</span>
+                <span>·</span>
+                <span>Live Analysis</span>
+                <span className="w-2 h-2 bg-[#84cc16] rounded-full"></span>
+              </div>
+              <div className="text-xs text-[#64748b]">
+                {dataStatus?.last_synced_date
+                  ? `Last synced: ${formatDateLabel(dataStatus.last_synced_date)}`
+                  : 'No sync yet — Sync to load data'}
+              </div>
             </div>
-            <div className="text-xs text-[#64748b]">
-              {dataStatus?.last_synced_date
-                ? `Last synced: ${formatDateLabel(dataStatus.last_synced_date)}`
-                : 'No sync yet — Sync to load data'}
-            </div>
+            <button
+              onClick={() => { logout(); navigate('/login') }}
+              className="flex items-center gap-1.5 text-sm text-[#64748b] hover:text-[#dc2626] hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-red-200"
+              title="Logout"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Logout</span>
+            </button>
           </div>
         </div>
 
