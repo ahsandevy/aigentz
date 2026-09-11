@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './context/AuthContext'
 import AuthRoute from './components/AuthRoute'
@@ -30,8 +30,12 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
 
               {/* Protected — all business routes */}
-              <Route path="/" element={<AuthRoute><HomePage /></AuthRoute>} />
+              <Route path="/chat" element={<AuthRoute><HomePage /></AuthRoute>} />
+              <Route path="/chat/:conversationId" element={<AuthRoute><HomePage /></AuthRoute>} />
               <Route path="/dashboard" element={<AuthRoute><Dashboard /></AuthRoute>} />
+
+              {/* Redirect root to /chat */}
+              <Route path="/" element={<Navigate to="/chat" replace />} />
 
               {/* Catch-all — 404 */}
               <Route path="*" element={<AuthRoute><NotFoundPage /></AuthRoute>} />
