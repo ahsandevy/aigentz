@@ -71,6 +71,7 @@ export default function ConversationSidebar({
   const { width: panelWidth, dragProps } = usePanelResize(288, 200, 420);
 
   const inputRef = useRef(null);
+  const initialLoadDone = useRef(false);
 
   // ─── Fetch conversations ────────────────────────────────────────────
   const fetchConversations = useCallback(async (showLoading = true) => {
@@ -93,6 +94,7 @@ export default function ConversationSidebar({
 
   // Silent refresh when triggered (e.g. new conversation created)
   useEffect(() => {
+    if (!initialLoadDone.current) { initialLoadDone.current = true; return; }
     fetchConversations(false); // no loading state — keep existing list visible
   }, [refreshTrigger]);
 

@@ -1,73 +1,52 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import HeroSection from './homepage/HeroSection'
 import ChatInterface from './homepage/ChatInterface'
 import ConversationSidebar from './homepage/ConversationSidebar'
 import FeatureCards from './homepage/FeatureCards'
-import { refreshSessionId, getActiveConversationId, setActiveConversationId as persistConversationId, getActiveAccountId } from '../services/session.js'
-import { conversationAPI } from '../services/api.js'
+import { refreshSessionId, getActiveConversationId, setActiveConversationId as persistConversationId } from '../services/session.js'
 
 function HomePage() {
   const navigate = useNavigate()
-  const { conversationId: urlConversationId } = useParams()
   const { logout } = useAuth()
   const [activeConversationId, setActiveConversationId] = useState(
-    () => urlConversationId || getActiveConversationId()
+    () => getActiveConversationId() // restore from localStorage on mount
   );
   const [sidebarKey, setSidebarKey] = useState(0);
   const [chatKey, setChatKey] = useState(0); // force ChatInterface remount
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    if (urlConversationId) {
-      setActiveConversationId(urlConversationId);
-      persistConversationId(urlConversationId);
-    }
-  }, [urlConversationId]);
-
-  useEffect(() => {
-    if (urlConversationId && activeConversationId === urlConversationId) {
-      conversationAPI.get(urlConversationId, getActiveAccountId())
-        .catch(() => {
-          navigate('/chat', { replace: true });
-        });
-    }
-  }, [urlConversationId, activeConversationId, navigate]);
-
   const handleSelectConversation = useCallback((conv) => {
     setActiveConversationId(conv.id);
     persistConversationId(conv.id);
-    navigate(`/chat/${conv.id}`, { replace: true });
-  }, [navigate]);
+  }, []);
 
   const handleConversationCreated = useCallback((conv) => {
     setActiveConversationId(conv.id);
     persistConversationId(conv.id);
     setSidebarKey(k => k + 1);
-    navigate(`/chat/${conv.id}`, { replace: true });
-  }, [navigate]);
+  }, []);
 
   const handleDeleteConversation = useCallback((deletedId) => {
     if (activeConversationId === deletedId) {
+      // Start a new conversation instead of leaving an empty state
       refreshSessionId();
       setActiveConversationId(null);
       persistConversationId(null);
       setChatKey(k => k + 1);
-      navigate('/chat', { replace: true });
     }
     setSidebarKey(k => k + 1);
-  }, [activeConversationId, navigate]);
+  }, [activeConversationId]);
 
   const handleNewChat = useCallback(() => {
     refreshSessionId();
     setActiveConversationId(null);
     persistConversationId(null);
     setSidebarKey(k => k + 1);
-    setChatKey(k => k + 1);
-    navigate('/chat', { replace: true });
-  }, [navigate]);
+    setChatKey(k => k + 1); // force ChatInterface remount → fresh session
+  }, []);
 
   // Escape key exits fullscreen
   useEffect(() => {
@@ -179,4 +158,3 @@ function HomePage() {
 }
 
 export default HomePage
-
