@@ -37,7 +37,7 @@ const AGENT_BASE_URL = VITE_API_BASE_URL
         ? 'http://localhost:8000/api/agent'
         : '/api/agent';
 
-const agentApi = axios.create({ baseURL: AGENT_BASE_URL, ...axiosDefaults });
+export const agentApi = axios.create({ baseURL: AGENT_BASE_URL, ...axiosDefaults });
 
 // Request interceptor: attach Bearer token as cookie bypass fallback.
 // Response interceptor: auto-refresh on 401, retry original request.
@@ -556,7 +556,7 @@ const CONVERSATION_BASE_URL = VITE_API_BASE_URL
         ? 'http://localhost:8000/api'
         : '/api';
 
-const conversationApi = axios.create({
+export const conversationApi = axios.create({
     baseURL: CONVERSATION_BASE_URL,
     ...axiosDefaults,
 });
@@ -576,16 +576,18 @@ export const conversationAPI = {
     },
 
     /** Get a single conversation with its messages. */
-    get: async (conversationId, accountId) => {
+    get: async (conversationId, accountId, signal) => {
         const res = await conversationApi.get(`/conversations/${conversationId}`, {
             params: { account_id: accountId },
+            signal,
         });
         return res.data;
     },
 
     /** Create a new conversation for an ad account. */
-    create: async (accountId, title = null, threadId = null) => {
+    create: async (accountId, title = null, threadId = null, explanationStyle = undefined) => {
         const body = { account_id: accountId };
+        if (explanationStyle !== undefined) body.explanation_style = explanationStyle;
         if (title) body.title = title;
         if (threadId) body.thread_id = threadId;
         const res = await conversationApi.post('/conversations', body);

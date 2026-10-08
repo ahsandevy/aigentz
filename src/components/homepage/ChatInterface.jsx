@@ -9,6 +9,9 @@ import {
 import { getActiveAccountId, setActiveAccountId } from '../../services/session.js';
 import { conversationAPI } from '../../services/api.js';
 import RecommendationPanel from './RecommendationPanel';
+import ExplanationStyleControl from './ExplanationStyleControl';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { useExplanationPreferences } from '../../hooks/useExplanationPreferences.js';
 
 /* ──────────────────────────────────────────────────────────────────────
    SLASH COMMANDS
@@ -262,9 +265,13 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   const [commandMenuOpen, setCommandMenuOpen] = useState(false);
   const [commandMenuIndex, setCommandMenuIndex] = useState(-1);
   const selfCreatedConvRef = useRef(false);
+  const { user } = useAuth();
+  const explanationPreferences = useExplanationPreferences({
+    userId: user?.id, conversationId: activeConversationId,
+  });
+  const { getRequestFields, adoptConversation, applyPresentationEvent } = explanationPreferences;
 
   /* ── Init ─────────────────────────────────────────────────────────── */
-  useEffect(() => { fetchAccounts(); }, []);
   useEffect(() => { conversationIdRef.current = activeConversationId; }, [activeConversationId]);
 
   // A stream can outlive this component when the user navigates away. Abort the
@@ -333,6 +340,8 @@ export default function ChatInterface({ activeConversationId = null, onConversat
     finally { setIsLoadingAccounts(false); }
   }, []);
 
+  useEffect(() => { fetchAccounts(); }, [fetchAccounts]);
+
   const isNearBottom = useRef(true);
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -342,14 +351,20 @@ export default function ChatInterface({ activeConversationId = null, onConversat
 
   useEffect(() => {
     if (isNearBottom.current && scrollRef.current) {
-      if (scrollRef.current) requestAnimationFrame(() => { scrollRef.current.scrollTop = scrollRef.current.scrollHeight; });
+      const frame = requestAnimationFrame(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      });
+      return () => cancelAnimationFrame(frame);
     }
   }, [messages]);
 
   useEffect(() => {
     if (activeConversationId) {
       isNearBottom.current = true;
-      if (scrollRef.current) requestAnimationFrame(() => { scrollRef.current.scrollTop = scrollRef.current.scrollHeight; });
+      const frame = requestAnimationFrame(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      });
+      return () => cancelAnimationFrame(frame);
     }
   }, [activeConversationId]);
 
@@ -368,9 +383,11 @@ export default function ChatInterface({ activeConversationId = null, onConversat
     if (inputRef.current) inputRef.current.style.height = 'auto';
 
     let convId = conversationIdRef.current;
+    const preferenceFields = getRequestFields();
     if (!convId) {
       try {
-        const conv = await conversationAPI.create(getActiveAccountId(), trimmed.slice(0, 100), sessionIdRef.current);
+        const conv = await conversationAPI.create(getActiveAccountId(), trimmed.slice(0, 100), sessionIdRef.current, preferenceFields.explanation_style);
+        adoptConversation(conv);
         convId = conv.id;
         conversationIdRef.current = convId;
         threadIdRef.current = conv.thread_id || sessionIdRef.current;
@@ -430,7 +447,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
       const res = await fetch(apiUrl, {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionStorage.getItem('access_token') || ''}` },
-        body: JSON.stringify({ query: trimmed, session_id: threadIdRef.current || sessionIdRef.current }),
+        body: JSON.stringify({ query: trimmed, session_id: threadIdRef.current || sessionIdRef.current, ...preferenceFields }),
         signal: abortController.signal,
       });
       if (!res.ok) throw new Error(`Server Error: ${res.status}`);
@@ -444,6 +461,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
         for (const evt of sseLines(decoder.decode(value, { stream: true }), sseBuf)) {
           if (evt === '__DONE__') break;
           const etype = evt.type;
+          if (etype === 'presentation_preference') { applyPresentationEvent(evt, convId); continue; }
           if (etype === 'thinking') { streamRef.thinking += ' ' + (evt.content || ''); continue; }
           if (etype === 'text') { streamRef.thinkingDone = true; streamRef.currentText += (evt.content || ''); continue; }
           if (etype === 'tool_call') {
@@ -490,7 +508,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
       busyRef.current = false;
       if (isMountedRef.current) setIsStreaming(false);
     }
-  }, [onConversationCreated]);
+  }, [onConversationCreated, getRequestFields, adoptConversation, applyPresentationEvent]);
 
   /* ── Input handlers ───────────────────────────────────────────────── */
   const selectCommand = useCallback((cmd) => {
@@ -641,7 +659,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
             {/* Input — under chat area only */}
             <div className="px-5 md:px-8 py-3.5 bg-gradient-to-t from-slate-50 via-white to-white border-t border-slate-100">
               <div className="max-w-3xl mx-auto">
-                <div className="relative flex items-center gap-3 bg-white border border-slate-200 rounded-3xl py-1.5 pl-5 pr-1.5 shadow-sm transition-all duration-200 focus-within:shadow-md focus-within:border-slate-300 focus-within:ring-1 focus-within:ring-slate-200">
+                <div className="relative bg-white border border-slate-200 rounded-2xl p-2 shadow-sm transition-all duration-200 focus-within:shadow-md focus-within:border-slate-300 focus-within:ring-1 focus-within:ring-slate-200">
                   {commandMenuOpen && commandCandidatesFor(query).length > 0 && (
                     <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-30">
                       <div className="px-3.5 py-1.5 bg-slate-50 border-b border-slate-100 text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Commands</div>
@@ -662,9 +680,12 @@ export default function ChatInterface({ activeConversationId = null, onConversat
                   <textarea ref={inputRef} value={query}
                     onChange={handleInputChange} onKeyDown={handleKeyDown}
                     placeholder={busyRef.current ? "Agent is responding…" : "Ask anything about your ad account…"}
-                    className="flex-1 bg-transparent border-none outline-none py-2.5 text-[14px] text-slate-900 placeholder:text-slate-400 resize-none max-h-32 min-h-[40px]"
+                    className="block w-full bg-transparent border-none outline-none px-3 py-2.5 text-[14px] text-slate-900 placeholder:text-slate-400 resize-none max-h-32 min-h-[40px]"
                     rows={1} disabled={busyRef.current} />
+                  <div className="flex items-end justify-between gap-3 pt-1">
+                    <ExplanationStyleControl preferences={explanationPreferences} disabled={isStreaming || messagesLoading || isLoadingAccounts || !user} />
                   <button onClick={handleSearch}
+                    aria-label="Send message"
                     disabled={!query.trim() || busyRef.current}
                     className={`flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 self-end flex-shrink-0 ${
                       !query.trim() || busyRef.current
@@ -673,6 +694,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
                     }`}>
                     <Send size={14} />
                   </button>
+                  </div>
                 </div>
                 <p className="text-center mt-2 text-[10px] text-slate-400">AI can make mistakes. Verify important data.</p>
               </div>
