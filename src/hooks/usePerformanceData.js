@@ -6,7 +6,7 @@ import { analyticsAPI } from '../services/api'
 export const PERFORMANCE_EXPLORER_STALE_MS = 24 * 60 * 60 * 1000
 
 /** Prefix for all Performance Explorer queries */
-export const PERFORMANCE_EXPLORER_QUERY_KEY = ['performance-explorer']
+export const PERFORMANCE_EXPLORER_QUERY_KEY = ['performance-explorer', 'configured-intent-three-stage-v2']
 
 export const getPerformanceExplorerQueryKeys = (days) => [
   [...PERFORMANCE_EXPLORER_QUERY_KEY, 'campaigns', days],

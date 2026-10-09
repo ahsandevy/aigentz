@@ -1,3 +1,4 @@
+import { funnelStageLabel } from '../utils/funnelClassification';
 import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { analyticsAPI } from '../services/api';
@@ -198,13 +199,14 @@ function EfficiencyDrivers({ days = 30 }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Funnel Mix */}
         <div className="bg-white border border-[#e5e7eb] rounded-lg p-6 shadow-[4px_4px_11.5px_0px_rgba(0,0,0,0.05)]">
-          <h3 className="text-sm font-semibold text-[#374151] mb-4">Funnel Mix</h3>
+          <h3 className="text-sm font-semibold text-[#374151] mb-2">Configured Audience Stage Spend</h3>
+          <p className="text-[10px] text-gray-500 mb-4">Audience relationship, independent of campaign objective. Delivered composition is unobserved.</p>
           <div className="space-y-4">
             {data.funnelMix && data.funnelMix.length > 0 ? (
               data.funnelMix.map((item, idx) => (
                 <div key={idx}>
                   <div className="flex justify-between mb-1">
-                    <span className="text-[15px] font-bold text-[#111827]">{item.label}</span>
+                    <span title={item.description} className="text-[15px] font-bold text-[#111827]">{funnelStageLabel(item.label)}</span>
                     <div className="text-right">
                       <span className="text-[10px] font-bold text-[#78a3cd] block">{item.roas}</span>
                       <span className="text-[10px] text-[#374151]">{item.spend}</span>

@@ -1,3 +1,5 @@
+import { funnelStageLabel, usesEngagementTargets } from '../utils/funnelClassification'
+import FunnelContext from './FunnelContext'
 import { useState, useMemo, useEffect } from 'react'
 import { analyticsAPI } from '../services/api'
 import { usePerformanceExplorer } from '../hooks/usePerformanceData'
@@ -145,14 +147,14 @@ function PerformanceExplorer({ days = 30 }) {
   const filteredAdSets = useMemo(() => {
     return adSets.filter(a =>
       a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.funnel_stage.toLowerCase().includes(search.toLowerCase())
+      (a.funnel_stage || 'UNKNOWN').toLowerCase().includes(search.toLowerCase())
     )
   }, [adSets, search])
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(c =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.funnel_stage.toLowerCase().includes(search.toLowerCase())
+      (c.funnel_stage || 'UNKNOWN').toLowerCase().includes(search.toLowerCase())
     )
   }, [campaigns, search])
 
@@ -478,8 +480,9 @@ function PerformanceExplorer({ days = 30 }) {
                         <td className="px-6 py-8 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <span className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm uppercase">
-                              {as.funnel_stage}
+                              {funnelStageLabel(as.funnel_stage)}
                             </span>
+                            <FunnelContext item={as} />
                           </div>
                         </td>
                         <td className="px-6 py-8 text-center text-[12px] text-[#64748b] font-bold tracking-tight">
@@ -851,7 +854,8 @@ function PerformanceExplorer({ days = 30 }) {
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap hidden lg:table-cell">
                           <div className="flex flex-col items-center gap-1">
-                            <span className="px-3 py-1 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-full shadow-sm font-bold uppercase tracking-tight">{cp.funnel_stage}</span>
+                            <span className="px-3 py-1 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-full shadow-sm font-bold uppercase tracking-tight">{funnelStageLabel(cp.funnel_stage)}</span>
+                            <FunnelContext item={cp} />
                           </div>
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-700 text-center hidden sm:table-cell font-bold">
@@ -1898,6 +1902,7 @@ function PerformanceExplorer({ days = 30 }) {
                         {selectedAssessment.assessment.targets && (
                           <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
                             <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Targets</h4>
+                            <FunnelContext item={selectedAssessment} showStage />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                               <div className="flex flex-col sm:flex-row sm:items-center">
                                 <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Stage:</span>
@@ -1908,7 +1913,7 @@ function PerformanceExplorer({ days = 30 }) {
                               <div className="flex flex-col sm:flex-row sm:items-center">
                                 <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">ROAS Target:</span>
                                 <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.targets.roas_target}x
+                                  {selectedAssessment.assessment.targets.roas_target != null ? `${selectedAssessment.assessment.targets.roas_target}x` : 'Not configured'}
                                 </span>
                               </div>
                               <div className="flex flex-col sm:flex-row sm:items-center">
@@ -1920,7 +1925,7 @@ function PerformanceExplorer({ days = 30 }) {
                               <div className="flex flex-col sm:flex-row sm:items-center">
                                 <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPA Cap:</span>
                                 <span className="font-bold text-gray-800">
-                                  {selectedAssessment.assessment.targets.cpa_cap}
+                                  {selectedAssessment.assessment.targets.cpa_cap ?? 'Not configured'}
                                 </span>
                               </div>
                               <div className="flex flex-col sm:flex-row sm:items-center">
@@ -3091,15 +3096,16 @@ function PerformanceExplorer({ days = 30 }) {
                         {selectedAssessment.assessment.targets && (
                           <div className="bg-[#f8fafc] p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border border-[#e2e8f0]">
                             <h4 className="text-xs sm:text-sm font-bold text-[#1e4a79] mb-3 sm:mb-4 uppercase tracking-wide">Targets</h4>
+                            <FunnelContext item={selectedAssessment} showStage />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                               <div className="flex flex-col sm:flex-row sm:items-center">
                                 <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">Stage:</span>
                                 <span className="font-bold text-gray-800 uppercase break-words">
-                                  {selectedAssessment.assessment.targets.stage}
+                                  {funnelStageLabel(selectedAssessment.assessment.targets.stage)}
                                 </span>
                               </div>
 
-                              {selectedAssessment.assessment.targets.stage === 'TOFU' ? (
+                              {usesEngagementTargets(selectedAssessment) ? (
                                 <>
                                   <div className="flex flex-col sm:flex-row sm:items-center">
                                     <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPC Target:</span>
@@ -3131,7 +3137,7 @@ function PerformanceExplorer({ days = 30 }) {
                                   <div className="flex flex-col sm:flex-row sm:items-center">
                                     <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">ROAS Target:</span>
                                     <span className="font-bold text-gray-800 break-words">
-                                      {selectedAssessment.assessment.targets.roas_target}x
+                                      {selectedAssessment.assessment.targets.roas_target != null ? `${selectedAssessment.assessment.targets.roas_target}x` : 'Not configured'}
                                     </span>
                                   </div>
                                   <div className="flex flex-col sm:flex-row sm:items-center">
@@ -3143,7 +3149,7 @@ function PerformanceExplorer({ days = 30 }) {
                                   <div className="flex flex-col sm:flex-row sm:items-center">
                                     <span className="text-gray-600 mb-1 sm:mb-0 sm:mr-2">CPA Cap:</span>
                                     <span className="font-bold text-gray-800 break-words">
-                                      {selectedAssessment.assessment.targets.cpa_cap}
+                                      {selectedAssessment.assessment.targets.cpa_cap ?? 'Not configured'}
                                     </span>
                                   </div>
                                   <div className="flex flex-col sm:flex-row sm:items-center">
@@ -3165,9 +3171,9 @@ function PerformanceExplorer({ days = 30 }) {
                               </div>
                             </div>
 
-                            {selectedAssessment.assessment.targets.stage === 'TOFU' && (
+                            {usesEngagementTargets(selectedAssessment) && (
                               <div className="mt-4 pt-3 border-t border-gray-100 text-[10px] text-gray-500 leading-relaxed italic">
-                                <span className="font-bold text-[#1e4a79]">ROAS/CPA Exemption:</span> TOFU campaigns are optimized for engagement (CTR/CPC) rather than raw conversions. Overall status reflects efficiency in reaching new audiences cheaply.
+                                <span className="font-bold text-[#1e4a79]">ROAS/CPA Exemption:</span> The configured optimization goal uses engagement metrics. Audience stage describes targeting configuration and does not imply awareness or measured customer status.
                               </div>
                             )}
                           </div>
@@ -3279,7 +3285,7 @@ function PerformanceExplorer({ days = 30 }) {
                     {/* Funnel Stage */}
                     {selectedAI.funnel_stage && (
                       <span className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
-                        {selectedAI.funnel_stage}
+                        {funnelStageLabel(selectedAI.funnel_stage)}
                       </span>
                     )}
                     {/* Priority */}
