@@ -479,9 +479,6 @@ function PerformanceExplorer({ days = 30 }) {
                         </td>
                         <td className="px-6 py-8 text-center">
                           <div className="flex flex-col items-center gap-2">
-                            <span className="px-5 py-1 bg-white border border-[#e2e8f0] text-[#64748b] text-[11px] font-bold rounded-full shadow-sm uppercase">
-                              {funnelStageLabel(as.funnel_stage)}
-                            </span>
                             <FunnelContext item={as} />
                           </div>
                         </td>
@@ -854,7 +851,6 @@ function PerformanceExplorer({ days = 30 }) {
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap hidden lg:table-cell">
                           <div className="flex flex-col items-center gap-1">
-                            <span className="px-3 py-1 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-full shadow-sm font-bold uppercase tracking-tight">{funnelStageLabel(cp.funnel_stage)}</span>
                             <FunnelContext item={cp} />
                           </div>
                         </td>

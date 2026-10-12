@@ -1,52 +1,48 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import HeroSection from './homepage/HeroSection'
 import ChatInterface from './homepage/ChatInterface'
 import ConversationSidebar from './homepage/ConversationSidebar'
 import FeatureCards from './homepage/FeatureCards'
-import { refreshSessionId, getActiveConversationId, setActiveConversationId as persistConversationId } from '../services/session.js'
 
 function HomePage() {
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const [activeConversationId, setActiveConversationId] = useState(
-    () => getActiveConversationId() // restore from localStorage on mount
-  );
+  const { conversationId } = useParams();
+  const activeConversationId = conversationId || null;
+  // Keep the first reply mounted when its draft receives a persisted URL.
+  const [createdConversation, setCreatedConversation] = useState(null);
   const [sidebarKey, setSidebarKey] = useState(0);
   const [chatKey, setChatKey] = useState(0); // force ChatInterface remount
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const handleSelectConversation = useCallback((conv) => {
-    setActiveConversationId(conv.id);
-    persistConversationId(conv.id);
-  }, []);
+    navigate(`/chat/${encodeURIComponent(conv.id)}`);
+  }, [navigate]);
 
   const handleConversationCreated = useCallback((conv) => {
-    setActiveConversationId(conv.id);
-    persistConversationId(conv.id);
+    setCreatedConversation({ id: conv.id, draftKey: chatKey });
+    navigate(`/chat/${encodeURIComponent(conv.id)}`, { replace: true });
     setSidebarKey(k => k + 1);
-  }, []);
+  }, [navigate, chatKey]);
 
   const handleDeleteConversation = useCallback((deletedId) => {
     if (activeConversationId === deletedId) {
       // Start a new conversation instead of leaving an empty state
-      refreshSessionId();
-      setActiveConversationId(null);
-      persistConversationId(null);
+      navigate('/');
       setChatKey(k => k + 1);
     }
     setSidebarKey(k => k + 1);
-  }, [activeConversationId]);
+  }, [activeConversationId, navigate]);
 
   const handleNewChat = useCallback(() => {
-    refreshSessionId();
-    setActiveConversationId(null);
-    persistConversationId(null);
+    navigate('/');
     setSidebarKey(k => k + 1);
-    setChatKey(k => k + 1); // force ChatInterface remount → fresh session
-  }, []);
+    setChatKey(k => k + 1);
+    setMobileSidebarOpen(false);
+  }, [navigate]);
 
   // Escape key exits fullscreen
   useEffect(() => {
@@ -141,7 +137,9 @@ function HomePage() {
             />
             <div className="flex-1 min-w-0">
               <ChatInterface
-                key={chatKey}
+                key={activeConversationId
+                  ? activeConversationId === createdConversation?.id ? `draft:${createdConversation.draftKey}` : activeConversationId
+                  : `draft:${chatKey}`}
                 activeConversationId={activeConversationId}
                 onConversationCreated={handleConversationCreated}
                 isFullscreen={isFullscreen}
