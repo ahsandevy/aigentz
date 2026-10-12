@@ -31,6 +31,7 @@ function App() {
 
               {/* Protected — all business routes */}
               <Route path="/" element={<AuthRoute><HomePage /></AuthRoute>} />
+              <Route path="/chat/:conversationId" element={<AuthRoute><HomePage /></AuthRoute>} />
               <Route path="/dashboard" element={<AuthRoute><Dashboard /></AuthRoute>} />
 
               {/* Catch-all — 404 */}

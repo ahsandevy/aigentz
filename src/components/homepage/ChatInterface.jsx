@@ -247,6 +247,8 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [conversationError, setConversationError] = useState('');
+  const conversationReadyRef = useRef(!activeConversationId);
 
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
@@ -296,18 +298,30 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   }, [activeConversationId]);
 
   useEffect(() => {
-    if (!activeConversationId) { setMessages([]); threadIdRef.current = null; setSseRecommendations(null); return; }
     if (selfCreatedConvRef.current) { selfCreatedConvRef.current = false; return; }
+    threadIdRef.current = null;
+    setMessages([]);
+    setConversationError('');
+    conversationReadyRef.current = !activeConversationId;
+    if (!activeConversationId) { setMessagesLoading(false); setSseRecommendations(null); return; }
     let cancelled = false;
+    const controller = new AbortController();
     setMessagesLoading(true);
     setSseRecommendations(null);
-    conversationAPI.get(activeConversationId, getActiveAccountId()).then(data => {
+    conversationAPI.get(activeConversationId, getActiveAccountId(), controller.signal).then(data => {
       if (cancelled) return;
-      if (data.thread_id) threadIdRef.current = data.thread_id;
+      if (!data.thread_id) throw new Error('Conversation has no thread');
+      threadIdRef.current = data.thread_id;
+      conversationReadyRef.current = true;
       setMessages((data.messages || []).map(m => toBlocks(m)));
       setMessagesLoading(false);
-    }).catch(err => { if (!cancelled) { console.error(err); setMessagesLoading(false); } });
-    return () => { cancelled = true; };
+    }).catch(() => {
+      if (!cancelled) {
+        setConversationError('Could not open this conversation. Select another conversation or start a new chat.');
+        setMessagesLoading(false);
+      }
+    });
+    return () => { cancelled = true; controller.abort(); };
   }, [activeConversationId]);
 
   function toBlocks(m) {
@@ -371,7 +385,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
   /* ── performSearch ────────────────────────────────────────────────── */
   const performSearch = useCallback(async (searchQuery) => {
     const trimmed = (searchQuery || '').trim();
-    if (!trimmed || busyRef.current) return;
+    if (!trimmed || busyRef.current || !conversationReadyRef.current) return;
     busyRef.current = true;
     setIsStreaming(true);
     setExtractionSkipped(false);
@@ -387,6 +401,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
     if (!convId) {
       try {
         const conv = await conversationAPI.create(getActiveAccountId(), trimmed.slice(0, 100), sessionIdRef.current, preferenceFields.explanation_style);
+        if (!isMountedRef.current) return;
         adoptConversation(conv);
         convId = conv.id;
         conversationIdRef.current = convId;
@@ -394,8 +409,17 @@ export default function ChatInterface({ activeConversationId = null, onConversat
         streamingConversationIdRef.current = convId;
         selfCreatedConvRef.current = true;
         if (onConversationCreated) onConversationCreated(conv);
-      } catch (e) { console.error('Failed to create conversation:', e); }
+      } catch {
+        if (!isMountedRef.current) return;
+        setConversationError('Could not create this conversation. Please try sending your message again.');
+        setMessages(prev => prev.filter(message => message !== userMsg));
+        setQuery(trimmed);
+        busyRef.current = false;
+        setIsStreaming(false);
+        return;
+      }
     }
+    setConversationError('');
     streamingConversationIdRef.current = convId;
 
     const streamId = 'stream-' + Date.now();
@@ -457,6 +481,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
       const decoder = new TextDecoder();
       while (true) {
         const { value, done } = await reader.read();
+        if (!isMountedRef.current || abortController.signal.aborted) break;
         if (done) break;
         for (const evt of sseLines(decoder.decode(value, { stream: true }), sseBuf)) {
           if (evt === '__DONE__') break;
@@ -681,12 +706,13 @@ export default function ChatInterface({ activeConversationId = null, onConversat
                     onChange={handleInputChange} onKeyDown={handleKeyDown}
                     placeholder={busyRef.current ? "Agent is responding…" : "Ask anything about your ad account…"}
                     className="block w-full bg-transparent border-none outline-none px-3 py-2.5 text-[14px] text-slate-900 placeholder:text-slate-400 resize-none max-h-32 min-h-[40px]"
-                    rows={1} disabled={busyRef.current} />
+                    rows={1} disabled={busyRef.current || messagesLoading || !conversationReadyRef.current} />
+                  {conversationError && <p role="alert" className="px-3 text-sm text-red-600">{conversationError}</p>}
                   <div className="flex items-end justify-between gap-3 pt-1">
                     <ExplanationStyleControl preferences={explanationPreferences} disabled={isStreaming || messagesLoading || isLoadingAccounts || !user} />
                   <button onClick={handleSearch}
                     aria-label="Send message"
-                    disabled={!query.trim() || busyRef.current}
+                    disabled={!query.trim() || busyRef.current || messagesLoading || !conversationReadyRef.current}
                     className={`flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 self-end flex-shrink-0 ${
                       !query.trim() || busyRef.current
                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
