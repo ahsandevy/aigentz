@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { hasCompletedOnboarding } from '../services/onboarding';
 import { Loader2, AlertCircle } from 'lucide-react';
 import BrandLogo from './BrandLogo';
+import { DEMO_MODE } from '../services/demoMode';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -67,7 +68,7 @@ export default function LoginPage() {
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
-          <p className="login-form-foot">A clearer view of your marketing starts here.</p>
+          <p className="login-form-foot">{DEMO_MODE ? 'Demo workspace · Use any email and password. Your details stay in this browser.' : 'A clearer view of your marketing starts here.'}</p>
         </div>
       </section>
 

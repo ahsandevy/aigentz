@@ -69,6 +69,8 @@ function BriefCard({ section, expanded, onToggle }) {
 export default function ReportsPage() {
   const [expanded, setExpanded] = useState({})
   const [modal, setModal] = useState(null)
+  const [reminderDate, setReminderDate] = useState(() => new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10))
+  const [reminderTime, setReminderTime] = useState('09:00')
   useEffect(() => {
     if (!modal) return undefined
     const closeOnEscape = (event) => { if (event.key === 'Escape') setModal(null) }
@@ -91,8 +93,23 @@ export default function ReportsPage() {
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()))
   }
 
+  const downloadReminder = () => {
+    const start = new Date(`${reminderDate}T${reminderTime}:00`)
+    if (Number.isNaN(start.getTime())) return
+    const end = new Date(start.getTime() + 30 * 60000)
+    const stamp = (date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+    const calendar = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//AIGENTZ//Demo Report Reminder//EN', 'BEGIN:VEVENT', `UID:aigentz-report-${stamp(start)}@demo.local`, `DTSTAMP:${stamp(new Date())}`, `DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`, 'SUMMARY:Review AIGENTZ executive report', 'DESCRIPTION:Open the sample AIGENTZ Reports page to review or export the report.', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
+    const url = URL.createObjectURL(new Blob([calendar], { type: 'text/calendar;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'aigentz-report-reminder.ics'
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    setModal(null)
+  }
+
   return <div className={`reports-page${modal === 'summary' ? ' print-summary' : ''}`}>
-    <header className="report-heading"><div><div className="report-title-row"><h1>Reports</h1><span>Executive Edition</span></div><p>Executive intelligence briefings, diagnostic analyses, and board-ready deliverables.</p></div><div className="report-actions"><span className="report-generated"><CalendarDays size={16} />Sample generated Oct 15, 2025</span><button type="button" onClick={() => setModal('schedule')}><CalendarDays size={16} />Schedule Delivery</button><button type="button" className="primary" onClick={printFullReport}><Download size={16} />Export PDF</button></div></header>
+    <header className="report-heading"><div><div className="report-title-row"><h1>Reports</h1><span>Executive Edition</span></div><p>Executive intelligence briefings, diagnostic analyses, and board-ready deliverables.</p></div><div className="report-actions"><span className="report-generated"><CalendarDays size={16} />Sample generated Oct 15, 2025</span><button type="button" onClick={() => setModal('schedule')}><CalendarDays size={16} />Set Reminder</button><button type="button" className="primary" onClick={printFullReport}><Download size={16} />Export PDF</button></div></header>
 
     <section className="report-synthesis"><div className="report-synthesis-top"><div><span className="report-synthesis-pill"><Sparkles size={14} />Weekly Synthesis</span><small>Period: <strong>Last 7 days</strong></small></div><span>Conf: 99.4% · Sample diagnosis</span></div><h2>Stable ROAS with creative fatigue emerging in mid-funnel retargeting.</h2><div className="report-synthesis-grid"><div><span className="report-icon blue"><CheckCircle2 size={18} /></span><div><small>Approved Actions</small><strong>4 actions applied</strong><p>Rules executed across campaigns</p></div></div><div><span className="report-icon blue"><RefreshCw size={18} /></span><div><small>Budget Shift</small><strong>AED +14,200 reallocated</strong><p>Directed to top catalog feed</p></div></div><div className="risk"><span className="report-icon red"><AlertTriangle size={18} /></span><div><small>Primary Risk</small><strong>Ad saturation on Summer Hero</strong><p>9:16 video frequency reached 3.4x</p></div></div></div></section>
 
@@ -103,6 +120,6 @@ export default function ReportsPage() {
     <section className="report-governance"><div className="report-governance-icon"><Sparkles size={27} /></div><h2>Executive Governance Ready</h2><p>Consolidate insights, recommendations, and forward exposure modeling into a presentation document.</p><button type="button" onClick={() => setModal('summary')}><FileText size={18} />Generate Board-Ready Summary</button><small>Sample executive PDF or Markdown for leadership and stakeholders.</small></section>
     <footer className="report-footer"><span>© 2025 AIGENTX · Sample report</span><span>Know Exactly What to Do Next</span></footer>
 
-    {modal && <div className="report-modal-backdrop" onClick={() => setModal(null)}><div className="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" onClick={(event) => event.stopPropagation()}><div className="report-modal-head"><div><span className="report-icon blue">{modal === 'summary' ? <BadgeCheck size={18} /> : <CalendarDays size={18} />}</span><h2 id="report-modal-title">{modal === 'summary' ? 'Board-Ready Executive Briefing' : 'Schedule Delivery'}</h2></div><button type="button" aria-label="Close" onClick={() => setModal(null)}><X size={19} /></button></div>{modal === 'summary' ? <><div className="report-modal-body"><p className="report-modal-note">Sample synthesis · Sep 15–Oct 14, 2025</p>{boardSummary.map(([title, body]) => <section key={title}><h3><ArrowUpRight size={15} />{title}</h3><p>{body}</p></section>)}</div><div className="report-modal-actions"><button type="button" onClick={downloadMarkdown}><Download size={16} />Download Markdown</button><button type="button" className="primary" onClick={() => window.print()}><Download size={16} />Export PDF</button></div></> : <div className="report-modal-body"><p>Delivery scheduling needs a connected report service. This sample report can be exported now as a PDF or Markdown file.</p><button type="button" className="report-modal-dismiss" onClick={() => setModal(null)}>Close</button></div>}</div></div>}
+    {modal && <div className="report-modal-backdrop" onClick={() => setModal(null)}><div className="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" onClick={(event) => event.stopPropagation()}><div className="report-modal-head"><div><span className="report-icon blue">{modal === 'summary' ? <BadgeCheck size={18} /> : <CalendarDays size={18} />}</span><h2 id="report-modal-title">{modal === 'summary' ? 'Board-Ready Executive Briefing' : 'Set a report reminder'}</h2></div><button type="button" aria-label="Close" onClick={() => setModal(null)}><X size={19} /></button></div>{modal === 'summary' ? <><div className="report-modal-body"><p className="report-modal-note">Sample synthesis · Sep 15–Oct 14, 2025</p>{boardSummary.map(([title, body]) => <section key={title}><h3><ArrowUpRight size={15} />{title}</h3><p>{body}</p></section>)}</div><div className="report-modal-actions"><button type="button" onClick={downloadMarkdown}><Download size={16} />Download Markdown</button><button type="button" className="primary" onClick={() => window.print()}><Download size={16} />Export PDF</button></div></> : <div className="report-modal-body"><p>Download a calendar reminder to review this sample report. Automatic delivery requires a connected report service.</p><div className="report-reminder-fields"><label>Reminder date <input type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} /></label><label>Time <input type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value)} /></label></div><button type="button" className="report-modal-dismiss" disabled={!reminderDate || !reminderTime} onClick={downloadReminder}><Download size={16} /> Download calendar reminder</button></div>}</div></div>}
   </div>
 }

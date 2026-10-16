@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getOrCreateSessionId } from './session.js';
+import { DEMO_MODE, getDemoRecommendation, getDemoPriorities, getDemoApplied, getDemoSpendTrend, simulateDemoRecommendation, approveDemoRecommendation } from './demoMode.js';
 
 // ── Bearer token fallback for browsers that block third-party cookies ──
 // Stored in sessionStorage so it survives page refresh but not tab close.
@@ -108,6 +109,7 @@ export const analyticsAPI = {
     },
 
     getDailyTrend: async (days, signal) => {
+        if (DEMO_MODE) return getDemoSpendTrend();
         const response = await api.get('/daily-trend', { params: { days }, signal });
         return response.data;
     },
@@ -339,6 +341,7 @@ export const analyticsAPI = {
 
     // Budget Reallocation Recommendation
     getBudgetReallocationRecommendation: async (signal) => {
+        if (DEMO_MODE) return getDemoRecommendation('budget_reallocation');
         try {
             const response = await api.get('/budget-reallocation/recommendation', { signal });
             return response.data;
@@ -351,6 +354,7 @@ export const analyticsAPI = {
 
     // Creative Analysis Recommendation
     getCreativeAnalysisRecommendation: async (signal) => {
+        if (DEMO_MODE) return getDemoRecommendation('creative_analysis');
         try {
             const response = await api.get('/creative-analysis/recommendation', { signal });
             return response.data;
@@ -363,6 +367,7 @@ export const analyticsAPI = {
 
     // Placement Optimization Recommendation
     getPlacementOptimizationRecommendation: async (signal) => {
+        if (DEMO_MODE) return getDemoRecommendation('placement_optimization');
         try {
             const response = await api.get('/placement-optimization/recommendation', { signal });
             return response.data;
@@ -375,6 +380,7 @@ export const analyticsAPI = {
 
     // Audience Optimization Recommendation
     getAudienceOptimizationRecommendation: async (signal) => {
+        if (DEMO_MODE) return getDemoRecommendation('audience_optimization');
         try {
             const response = await api.get('/audience-optimization/recommendation', { signal });
             return response.data;
@@ -387,6 +393,7 @@ export const analyticsAPI = {
 
     // Bidding Strategy Optimization Recommendation
     getBiddingStrategyOptimizationRecommendation: async (signal) => {
+        if (DEMO_MODE) return getDemoRecommendation('bidding_strategy_optimization');
         try {
             const response = await api.get('/bidding-strategy-optimization/recommendation', { signal });
             return response.data;
@@ -399,6 +406,7 @@ export const analyticsAPI = {
 
     // Dayparting Optimization Recommendation
     getDaypartingOptimizationRecommendation: async (signal) => {
+        if (DEMO_MODE) return getDemoRecommendation('dayparting_optimization');
         try {
             const response = await api.get('/dayparting/recommendation', { signal });
             return response.data;
@@ -411,6 +419,7 @@ export const analyticsAPI = {
 
     // Get All Recommendations Priorities
     getAllRecommendationsPriorities: async (days = 7, signal) => {
+        if (DEMO_MODE) return getDemoPriorities();
         try {
             const response = await api.get('/ai-recommendations/all', { params: { days }, signal });
             return response.data;
@@ -467,6 +476,7 @@ export const analyticsAPI = {
 
     // Recommendation Execution
     simulateRecommendation: async (recommendationId, tokenBearer = null, signal) => {
+        if (DEMO_MODE) return simulateDemoRecommendation(recommendationId);
         try {
             const body = {};
             if (tokenBearer) {
@@ -482,6 +492,7 @@ export const analyticsAPI = {
     },
 
     approveRecommendation: async (recommendationId, tokenBearer = null, signal) => {
+        if (DEMO_MODE) return approveDemoRecommendation(recommendationId);
         try {
             const body = {};
             if (tokenBearer) {
@@ -528,6 +539,7 @@ export const analyticsAPI = {
 
     // Get Applied Recommendations
     getAppliedRecommendations: async (limit = 50, signal) => {
+        if (DEMO_MODE) return getDemoApplied();
         try {
             const response = await api.get('/recommendations/applied', { params: { limit }, signal });
             return response.data;

@@ -1,16 +1,17 @@
-# React + Vite
+# AIGENTZ frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Run the standalone frontend:
 
-Currently, two official plugins are available:
+```bash
+npm install
+npm run dev
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Open the local address printed by Vite. Sign in with any email and nonempty password. This is a **browser-only demo**: the password is never sent or saved. Your demo session, onboarding choices, and recommendation approvals are stored in this browser. Dashboard, performance, reports, and assistant examples use illustrative data. Approving a recommendation changes only the local demo state; it does not update an ad account. Reports can be exported or added as a calendar reminder, but automatic delivery requires a server.
 
-## React Compiler
+To use a connected backend instead, set `VITE_API_BASE_URL` to its origin before starting Vite. `VITE_DEMO_MODE=true` explicitly forces the standalone demo; `VITE_DEMO_MODE=false` explicitly disables it.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm run build
+npm test
+```
