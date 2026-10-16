@@ -197,7 +197,7 @@ const MessageBubble = memo(function MessageBubble({ msg }) {
   if (msg.role === 'user') {
     return (
       <div className="flex w-full mb-6 justify-end">
-        <div className="max-w-[70%] px-5 py-3 bg-[#345C86] text-white rounded-2xl rounded-br-md text-[14px] leading-relaxed shadow-sm">
+        <div className="workspace-user-message max-w-[70%] px-5 py-3 text-white rounded-2xl rounded-br-md text-[14px] leading-relaxed">
           {msg.content}
         </div>
       </div>
@@ -206,10 +206,10 @@ const MessageBubble = memo(function MessageBubble({ msg }) {
   return (
     <div className="flex w-full mb-8 justify-start">
       <div className="flex gap-3.5 w-full max-w-[90%]">
-        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-slate-200 shadow-sm mt-0.5">
+        <div className="workspace-assistant-avatar w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
           <Sparkles size={12} className="text-slate-500" />
         </div>
-        <div className="flex-1 min-w-0 border-l-2 border-amber-400/30 pl-4">
+        <div className="workspace-assistant-message flex-1 min-w-0 pl-2">
           {msg.blocks && msg.blocks.map((block, i) => (
             <BlockRenderer key={`${msg.id}-${i}`} block={block} />
           ))}
@@ -581,12 +581,12 @@ export default function ChatInterface({ activeConversationId = null, onConversat
 
   /* ── Render ───────────────────────────────────────────────────────── */
   return (
-    <div className="w-full bg-slate-50 flex flex-col selection:bg-amber-100 selection:text-amber-900 h-full overflow-hidden" style={{ fontFamily: "'DM Sans', ui-sans-serif, system-ui, sans-serif" }}>
+    <div className="workspace-chat w-full flex flex-col h-full overflow-hidden">
 
       <div className="flex-1 w-full flex flex-col relative overflow-hidden">
 
         {/* Header — slim */}
-        <div className="flex justify-between items-center py-2.5 px-5 md:px-6 border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-20">
+        <div className="workspace-chat-header flex justify-between items-center px-5 md:px-8 sticky top-0 z-20">
           <div className="flex items-center gap-2.5">
             {onMenuClick && (
               <button
@@ -597,15 +597,15 @@ export default function ChatInterface({ activeConversationId = null, onConversat
                 <Menu size={18} />
               </button>
             )}
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#345C86] shadow-sm">
+            <div className="workspace-chat-icon w-8 h-8 rounded-lg flex items-center justify-center">
               <Cpu size={13} className="text-white" />
             </div>
-            <h2 className="text-[14px] font-semibold text-slate-900 tracking-tight">Analytics Assistant</h2>
+            <div className="workspace-chat-title"><h1>Analytics Assistant</h1><span>Campaign intelligence</span></div>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative group">
               <select
-                className="appearance-none bg-slate-100 border-0 rounded-full px-3.5 py-1.5 pr-8 text-[12px] font-medium text-slate-600 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-slate-200 cursor-pointer disabled:opacity-50"
+                className="workspace-account-select appearance-none rounded-lg px-3.5 py-1.5 pr-8 text-[12px] font-medium outline-none cursor-pointer disabled:opacity-50"
                 value={selectedAccount?.id || ''}
                 onChange={handleAccountChange}
                 disabled={isLoadingAccounts || busyRef.current}
@@ -632,7 +632,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
           {/* Chat column: messages + input stacked vertically */}
           <div className="flex-1 flex flex-col min-w-0">
             <div ref={scrollRef} onScroll={handleScroll}
-              className="flex-1 overflow-y-auto px-5 md:px-8 py-5 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent relative">
+              className="workspace-messages flex-1 overflow-y-auto px-5 md:px-8 py-5 relative">
 
               {messagesLoading && (
                 <div className={`z-30 flex flex-col items-center justify-center bg-slate-50/80 backdrop-blur-sm ${
@@ -644,11 +644,11 @@ export default function ChatInterface({ activeConversationId = null, onConversat
               )}
 
               {!messagesLoading && messages.length === 0 && (
-                <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#345C86] flex items-center justify-center shadow-md">
+                <div className="workspace-empty h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-4">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
                     <Sparkles size={20} className="text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-900 tracking-tight">How can I help?</h3>
+                  <h2 className="text-xl font-semibold text-slate-900 tracking-tight">What would you like to explore?</h2>
                   <p className="text-slate-500 text-[14px] leading-relaxed">
                     Query your campaigns, run diagnostics, and get AI-powered recommendations.
                   </p>
@@ -682,9 +682,9 @@ export default function ChatInterface({ activeConversationId = null, onConversat
             </div>
 
             {/* Input — under chat area only */}
-            <div className="px-5 md:px-8 py-3.5 bg-gradient-to-t from-slate-50 via-white to-white border-t border-slate-100">
+            <div className="workspace-composer-wrap px-5 md:px-8 py-3.5">
               <div className="max-w-3xl mx-auto">
-                <div className="relative bg-white border border-slate-200 rounded-2xl p-2 shadow-sm transition-all duration-200 focus-within:shadow-md focus-within:border-slate-300 focus-within:ring-1 focus-within:ring-slate-200">
+                <div className="workspace-composer relative rounded-2xl p-2 transition-all duration-200">
                   {commandMenuOpen && commandCandidatesFor(query).length > 0 && (
                     <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-30">
                       <div className="px-3.5 py-1.5 bg-slate-50 border-b border-slate-100 text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Commands</div>
@@ -716,7 +716,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
                     className={`flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200 self-end flex-shrink-0 ${
                       !query.trim() || busyRef.current
                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        : 'bg-[#345C86] text-white hover:bg-[#2a4a6e] active:scale-95 shadow-sm'
+                        : 'workspace-send text-white active:scale-95'
                     }`}>
                     <Send size={14} />
                   </button>
@@ -728,7 +728,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
           </div>
 
           {activeConversationId && (
-            <div className={`w-auto flex-shrink-0 border-l border-slate-200 bg-white ${isFullscreen ? 'block' : 'hidden xl:block'}`}>
+            <div className={`workspace-recommendations-shell w-auto flex-shrink-0 ${isFullscreen ? 'block' : 'hidden xl:block'}`}>
               <RecommendationPanel
                 conversationId={activeConversationId}
                 accountId={accounts.length > 0 ? accounts[0]?.id : null}

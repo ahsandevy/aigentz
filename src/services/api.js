@@ -107,6 +107,26 @@ export const analyticsAPI = {
         }
     },
 
+    getDailyTrend: async (days, signal) => {
+        const response = await api.get('/daily-trend', { params: { days }, signal });
+        return response.data;
+    },
+
+    getPlatformBreakdown: async (days, signal) => {
+        const response = await api.get('/platform', { params: { days }, signal });
+        return response.data;
+    },
+
+    getAgeBreakdown: async (days, signal) => {
+        const response = await api.get('/age', { params: { days }, signal });
+        return response.data;
+    },
+
+    getTopAds: async (days, signal) => {
+        const response = await api.get('/top-ads', { params: { days, limit: 8 }, signal });
+        return response.data;
+    },
+
     // Campaigns
     getCampaigns: async (signal) => {
         try {

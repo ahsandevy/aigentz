@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   MessageSquare,
   Plus,
@@ -12,6 +13,8 @@ import {
   Pencil,
   Check,
   X,
+  LayoutDashboard,
+  LogOut,
 } from 'lucide-react';
 import { getActiveAccountId } from '../../services/session.js';
 import { conversationAPI } from '../../services/api.js';
@@ -55,6 +58,7 @@ export default function ConversationSidebar({
   onSelect,
   onDelete,
   onNewChat,
+  onLogout,
   refreshTrigger = 0,
   mobileOpen = false,
   onMobileClose,
@@ -68,7 +72,7 @@ export default function ConversationSidebar({
   const [renameValue, setRenameValue] = useState('');
   const [deletingId, setDeletingId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-  const { width: panelWidth, dragProps } = usePanelResize(288, 200, 420);
+  const { width: panelWidth, dragProps } = usePanelResize(256, 220, 380);
 
   const inputRef = useRef(null);
   const initialLoadDone = useRef(false);
@@ -178,7 +182,7 @@ export default function ConversationSidebar({
   // ─── Sidebar width ──────────────────────────────────────────────────
   if (collapsed) {
     return (
-      <div className="hidden md:flex flex-shrink-0 border-r border-gray-200 bg-white flex-col items-center py-4 w-14 transition-all duration-300">
+      <div className="workspace-sidebar workspace-sidebar-collapsed hidden md:flex flex-shrink-0 flex-col items-center py-4 w-14 transition-all duration-300">
         <button
           onClick={() => setCollapsed(false)}
           className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
@@ -193,13 +197,15 @@ export default function ConversationSidebar({
         >
           <Plus size={16} />
         </button>
+        <Link to="/dashboard" className="mt-auto workspace-sidebar-icon" aria-label="Dashboard" title="Dashboard"><LayoutDashboard size={17} /></Link>
+        <button onClick={onLogout} className="workspace-sidebar-icon" aria-label="Sign out" title="Sign out"><LogOut size={17} /></button>
       </div>
     );
   }
 
   return (
     <div
-      className={`flex-shrink-0 border-r border-gray-200 bg-white flex flex-col h-full
+      className={`workspace-sidebar flex-shrink-0 flex flex-col h-full
         fixed inset-y-0 left-0 z-50 md:relative md:inset-auto md:z-auto
         transition-all duration-200
         ${!mobileOpen ? 'hidden' : ''} md:flex
@@ -209,15 +215,19 @@ export default function ConversationSidebar({
       {/* Drag handle — right edge (desktop only) */}
       <div {...dragProps} className="hidden md:block" style={{ right: -2 }} />
       {/* ─── Header ──────────────────────────────────────────────────── */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="workspace-sidebar-header">
+        <div className="workspace-brand">
+          <span className="workspace-brand-mark" aria-hidden="true">A</span>
+          <span className="workspace-brand-name">Ascend<span>Analytics</span></span>
+        </div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 tracking-tight">
+          <h2 className="workspace-sidebar-heading text-sm font-semibold tracking-tight">
             Conversations
           </h2>
           <div className="flex items-center gap-1">
             <button
               onClick={handleNewChat}
-              className="p-1.5 rounded-lg bg-[#345C86] text-white hover:bg-[#2a4a6e] transition-colors"
+              className="workspace-new-chat p-1.5 rounded-lg transition-colors"
               title="New Chat"
             >
               <Plus size={14} />
@@ -252,13 +262,13 @@ export default function ConversationSidebar({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={handleSearchKeyDown}
-            className="w-full pl-9 pr-3 py-2 text-[13px] bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-300 focus:bg-white transition-colors placeholder:text-gray-400"
+            className="workspace-search w-full pl-9 pr-3 py-2 text-[13px] rounded-lg outline-none transition-colors"
           />
         </div>
       </div>
 
       {/* ─── List ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+      <div className="workspace-conversation-list flex-1 overflow-y-auto">
         {/* Loading */}
         {loading && (
           <div className="p-4 space-y-3">
@@ -273,7 +283,7 @@ export default function ConversationSidebar({
 
         {/* Error */}
         {!loading && error && (
-          <div className="p-6 flex flex-col items-center text-center gap-3">
+          <div className="workspace-sidebar-notice p-6 flex flex-col items-center text-center gap-3">
             <p className="text-[13px] text-red-500">{error}</p>
             <button
               onClick={fetchConversations}
@@ -287,7 +297,7 @@ export default function ConversationSidebar({
 
         {/* Empty */}
         {!loading && !error && conversations.length === 0 && (
-          <div className="p-6 flex flex-col items-center text-center gap-3">
+          <div className="workspace-sidebar-notice p-6 flex flex-col items-center text-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
               <Inbox size={20} className="text-gray-300" />
             </div>
@@ -315,7 +325,7 @@ export default function ConversationSidebar({
               <button
                 onClick={() => handleSelect(conv)}
                 disabled={isDeleting}
-                className={`w-full text-left px-4 py-3 transition-colors border-b border-gray-50 ${
+                className={`workspace-conversation-item w-full text-left px-4 py-3 transition-colors ${
                   isActive
                     ? 'bg-gray-50 border-l-[3px] border-l-[#345C86]'
                     : 'border-l-[3px] border-l-transparent hover:bg-gray-50/50'
@@ -457,6 +467,10 @@ export default function ConversationSidebar({
             </div>
           );
         })}
+      </div>
+      <div className="workspace-sidebar-footer">
+        <Link to="/dashboard"><LayoutDashboard size={16} /><span>Dashboard</span></Link>
+        <button type="button" onClick={onLogout}><LogOut size={16} /><span>Sign out</span></button>
       </div>
     </div>
   );

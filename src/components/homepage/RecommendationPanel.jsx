@@ -34,7 +34,7 @@ export default function RecommendationPanel({
   const [error, setError] = useState(null);
   const [selectedRec, setSelectedRec] = useState(null);  // popup state
   const [collapsed, setCollapsed] = useState(false);
-  const { width: panelWidth, dragProps } = usePanelResize(290, 200, 420, 'left');
+  const { width: panelWidth, dragProps } = usePanelResize(304, 250, 390, 'left');
 
   const fetchedForId = useRef(null);
   const prevStreaming = useRef(false);
@@ -210,11 +210,11 @@ export default function RecommendationPanel({
   // Empty state
   if (isIdle) {
     return (
-      <div className="flex flex-col h-full transition-[width] duration-75 relative" style={{ width: panelWidth }}>
+      <div className="workspace-recommendations flex flex-col h-full transition-[width] duration-75 relative" style={{ width: panelWidth }}>
         {/* Drag handle — left edge */}
         <div {...dragProps} style={{ left: -2 }} />
         {/* Header */}
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+        <div className="workspace-recommendations-header px-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <h3 className="text-[12px] font-semibold text-gray-900 tracking-tight">
               Recommendations
@@ -229,7 +229,7 @@ export default function RecommendationPanel({
           </button>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-          <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
             <Inbox size={20} className="text-gray-300" />
           </div>
           <p className="text-[13px] text-gray-500 font-medium mb-1">No recommendations yet</p>
@@ -242,11 +242,11 @@ export default function RecommendationPanel({
   }
 
   return (
-    <div className="flex flex-col h-full transition-[width] duration-75 relative" style={{ width: panelWidth }}>
+    <div className="workspace-recommendations flex flex-col h-full transition-[width] duration-75 relative" style={{ width: panelWidth }}>
       {/* Drag handle — left edge */}
       <div {...dragProps} style={{ left: -2 }} />
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+      <div className="workspace-recommendations-header px-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <h3 className="text-[12px] font-semibold text-gray-900 tracking-tight">
             Recommendations

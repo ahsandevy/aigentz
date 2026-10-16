@@ -1,10 +1,11 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './context/AuthContext'
 import AuthRoute from './components/AuthRoute'
-import HomePage from './components/HomePage'
 import Dashboard from './components/Dashboard'
 import LoginPage from './components/LoginPage'
+import OnboardingPage from './components/OnboardingPage'
+import AigentxLandingPage from './components/AigentxLandingPage'
 import NotFoundPage from './components/NotFoundPage'
 import { ModalProvider } from './context/ModalContext'
 
@@ -30,9 +31,14 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
 
               {/* Protected — all business routes */}
-              <Route path="/" element={<AuthRoute><HomePage /></AuthRoute>} />
-              <Route path="/chat/:conversationId" element={<AuthRoute><HomePage /></AuthRoute>} />
+              <Route path="/" element={<AuthRoute><Navigate to="/dashboard" replace /></AuthRoute>} />
+              <Route path="/chat/:conversationId" element={<AuthRoute><Navigate to="/dashboard" replace /></AuthRoute>} />
+              <Route path="/onboarding" element={<AuthRoute><OnboardingPage /></AuthRoute>} />
+              <Route path="/aigentx" element={<AuthRoute><AigentxLandingPage /></AuthRoute>} />
               <Route path="/dashboard" element={<AuthRoute><Dashboard /></AuthRoute>} />
+              <Route path="/dashboard/explorer" element={<AuthRoute><Dashboard view="explorer" /></AuthRoute>} />
+              <Route path="/dashboard/recommendations" element={<AuthRoute><Dashboard view="recommendations" /></AuthRoute>} />
+              <Route path="/dashboard/executive-brief" element={<AuthRoute><Dashboard view="brief" /></AuthRoute>} />
 
               {/* Catch-all — 404 */}
               <Route path="*" element={<AuthRoute><NotFoundPage /></AuthRoute>} />

@@ -30,7 +30,7 @@ export default memo(function RecommendationCard({ recommendation, compact = fals
   if (compact) {
     return (
       <div onClick={() => onStatusChange?.('open', recommendation)}
-        className="px-4 py-3 border-b border-slate-100 hover:bg-slate-50/60 transition-colors cursor-pointer group">
+        className="workspace-recommendation-card px-4 py-4 transition-colors cursor-pointer group">
         <div className="flex items-start gap-2.5">
           <div className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-slate-200 transition-colors">
             <Icon size={11} className="text-slate-500" />
@@ -45,7 +45,7 @@ export default memo(function RecommendationCard({ recommendation, compact = fals
             </div>
             <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
               <button disabled={!isActionable}
-                className="flex-1 bg-[#345C86] text-white text-[10px] font-semibold py-1.5 rounded-md hover:bg-[#2a4a6e] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                className="workspace-recommendation-action flex-1 text-white text-[10px] font-semibold py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                 Apply Now
               </button>
               <button className="flex-1 border border-slate-200 text-slate-600 text-[10px] font-semibold py-1.5 rounded-md hover:bg-slate-50 transition-colors">

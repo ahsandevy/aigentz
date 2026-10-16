@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="90" y1="25" x2="1150" y2="1190" gradientUnits="userSpaceOnUse"><stop stop-color="#07152f"/><stop offset=".48" stop-color="#0b4b99"/><stop offset="1" stop-color="#1179d2"/></linearGradient>
+    <linearGradient id="arc1" x1="170" y1="190" x2="1060" y2="1190" gradientUnits="userSpaceOnUse"><stop stop-color="#2766b2" stop-opacity=".67"/><stop offset=".55" stop-color="#1882da" stop-opacity=".58"/><stop offset="1" stop-color="#66bbf5" stop-opacity=".78"/></linearGradient>
+    <linearGradient id="arc2" x1="260" y1="340" x2="980" y2="1200" gradientUnits="userSpaceOnUse"><stop stop-color="#287ac7" stop-opacity=".68"/><stop offset=".65" stop-color="#479ce4" stop-opacity=".44"/><stop offset="1" stop-color="#76c7f8" stop-opacity=".68"/></linearGradient>
+    <linearGradient id="arc3" x1="410" y1="540" x2="850" y2="1200" gradientUnits="userSpaceOnUse"><stop stop-color="#59a1e2" stop-opacity=".65"/><stop offset="1" stop-color="#9cd6ff" stop-opacity=".72"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="38"/></filter>
+    <pattern id="grain" width="160" height="160" patternUnits="userSpaceOnUse"><circle cx="15" cy="28" r="1.1" fill="#fff" opacity=".35"/><circle cx="73" cy="118" r="1.2" fill="#fff" opacity=".28"/><circle cx="140" cy="57" r=".9" fill="#fff" opacity=".28"/></pattern>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <ellipse cx="585" cy="1120" rx="710" ry="620" fill="#73baff" opacity=".37" filter="url(#soft)"/>
+  <circle cx="604" cy="1320" r="1050" fill="url(#arc1)" stroke="#fff" stroke-opacity=".42" stroke-width="3"/>
+  <circle cx="604" cy="1320" r="820" fill="url(#arc2)" stroke="#fff" stroke-opacity=".55" stroke-width="3"/>
+  <circle cx="604" cy="1320" r="590" fill="url(#arc3)" stroke="#fff" stroke-opacity=".61" stroke-width="3"/>
+  <circle cx="604" cy="1320" r="385" fill="#a9dbff" fill-opacity=".48" stroke="#fff" stroke-opacity=".52" stroke-width="3"/>
+  <rect width="1200" height="1200" fill="url(#grain)"/>
+</svg>

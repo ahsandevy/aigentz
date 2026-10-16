@@ -1,0 +1,31 @@
+.workspace-page{min-height:100dvh;background:#f8fafc;color:#0f172a}
+.workspace-shell{display:flex;min-height:100dvh}
+.workspace-sidebar{display:flex;flex-direction:column;flex:none;min-width:220px;max-width:380px;min-height:100dvh;background:#f5f7fb;border-right:1px solid #e2e8f0}
+.workspace-sidebar-collapsed{min-width:64px!important;width:64px!important}
+.workspace-sidebar-header{padding:18px 14px 12px}
+.workspace-brand{display:flex;align-items:center;gap:10px;color:#173e68;text-decoration:none}
+.workspace-brand-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:#1e4a79;color:#fff}
+.workspace-brand-name{font-size:16px;font-weight:800}
+.workspace-new-chat{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:20px;padding:11px;border:0;border-radius:9px;background:#1e4a79;color:#fff;font-weight:700}
+.workspace-search{width:100%;margin-top:12px;padding:9px 11px;border:1px solid #d8e1ec;border-radius:8px;background:#fff}
+.workspace-sidebar-heading{padding:12px 16px;color:#8290a0;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.workspace-conversation-list{flex:1;overflow:auto;padding:0 9px}
+.workspace-conversation-item{border-radius:8px}
+.workspace-conversation-item:hover{background:#e9eef5}
+.workspace-sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid #e2e8f0}
+.workspace-main{flex:1;min-width:0;min-height:100dvh;display:flex;flex-direction:column}
+.workspace-chat{display:flex;flex-direction:column;flex:1;min-height:100dvh}
+.workspace-chat-header{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding:12px 24px;border-bottom:1px solid #e9eef3;background:#fff}
+.workspace-chat-title{font-weight:750;color:#1e4a79}
+.workspace-messages{flex:1;overflow:auto;min-height:0;padding:24px}
+.workspace-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px}
+.workspace-user-message{max-width:min(80%,700px);margin-left:auto}
+.workspace-assistant-message{max-width:min(90%,800px)}
+.workspace-composer-wrap{position:sticky;bottom:0;background:#f8fafc;padding:14px 24px 22px}
+.workspace-composer{display:flex;gap:9px;align-items:end;max-width:920px;margin:auto;padding:10px 12px;border:1px solid #dce5ee;border-radius:15px;background:#fff;box-shadow:0 5px 20px rgba(15,23,42,.05)}
+.workspace-composer textarea{flex:1;min-width:0;resize:none;border:0;outline:0}
+.workspace-send{display:grid;place-items:center;width:34px;height:34px;flex:none;border:0;border-radius:9px;background:#1e4a79;color:#fff}
+.workspace-recommendations-shell,.workspace-recommendations,.workspace-recommendation-card{border-radius:12px}
+.workspace-account-select{max-width:190px}
+.workspace-mobile-backdrop{display:none}
+@media(max-width:760px){.workspace-sidebar{position:fixed;inset:0 auto 0 0;z-index:30;transform:translateX(-100%);transition:transform .2s;width:280px!important}.workspace-sidebar:not(.hidden){transform:translateX(0)}.workspace-mobile-backdrop{display:block;position:fixed;inset:0;z-index:29;border:0;background:rgba(15,23,42,.35)}.workspace-chat-header{padding:12px 14px}.workspace-messages{padding:15px}.workspace-composer-wrap{padding:10px 12px 16px}}

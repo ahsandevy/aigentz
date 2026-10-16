@@ -98,7 +98,7 @@ function AIExecutiveBrief({ days = 7 }) {
         hour: 'numeric',
         minute: '2-digit'
       })
-    } catch (error) {
+    } catch {
       return dateString
     }
   }
@@ -161,9 +161,11 @@ function AIExecutiveBrief({ days = 7 }) {
           <h2 className="text-2xl font-bold text-[#1e4a79]">AI Executive Brief</h2>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-gray-500">
-            Window: Last {days} {days === 1 ? 'day' : 'days'}
-          </span>
+          {brief.days_analyzed != null && (
+            <span className="text-xs text-gray-500">
+              Window: Last {brief.days_analyzed} {brief.days_analyzed === 1 ? 'day' : 'days'}
+            </span>
+          )}
           {brief.generated_at && (
             <div className="flex flex-col items-end">
               <span className="text-xs text-gray-500">
