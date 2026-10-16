@@ -12,11 +12,11 @@ vi.mock('./components/OnboardingPage', () => ({ default: () => <div>Onboarding</
 vi.mock('./components/NotFoundPage', () => ({ default: () => <div>Page not found</div> }))
 
 describe('app routes', () => {
-  it.each(['/', '/chat/old-conversation'])('redirects %s to the dashboard', async (path) => {
+  it.each([['/', '/aigentx'], ['/chat/old-conversation', '/dashboard']])('redirects %s to %s', async (path, destination) => {
     window.history.replaceState({}, '', path)
     render(<App />)
-    await waitFor(() => expect(window.location.pathname).toBe('/dashboard'))
-    expect(screen.getByText('Dashboard: home')).toBeTruthy()
+    await waitFor(() => expect(window.location.pathname).toBe(destination))
+    expect(screen.getByText(destination === '/aigentx' ? 'AIGENTX introduction' : 'Dashboard: home')).toBeTruthy()
   })
 
   it('keeps the AIGENTX introduction and dashboard sections available', () => {

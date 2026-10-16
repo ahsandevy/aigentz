@@ -65,7 +65,7 @@ export default function OnboardingPage() {
 
   const finish = () => {
     saveOnboarding(user, { answerStyle, role, metrics: selectedMetrics, signals: selectedSignals })
-    navigate('/dashboard', { replace: true })
+    navigate('/aigentx', { replace: true })
   }
 
   const next = () => step === 3 ? finish() : setStep(step + 1)
@@ -107,7 +107,7 @@ export default function OnboardingPage() {
         <button type="button" className="onboarding-back" onClick={() => setStep(step - 1)} disabled={step === 0}><ArrowLeft size={16} /> Back</button>
         <div className="onboarding-actions-right">
           <span>{step === 2 ? `${selectedMetrics.length} selected` : step === 3 ? `${selectedSignals.length} selected` : ''}</span>
-          <button type="button" className="onboarding-next" onClick={next} disabled={(step === 2 && selectedMetrics.length === 0) || (step === 3 && selectedSignals.length === 0)}>{step === 3 ? 'Open dashboard' : 'Continue'} <ArrowRight size={16} /></button>
+          <button type="button" className="onboarding-next" onClick={next} disabled={(step === 2 && selectedMetrics.length === 0) || (step === 3 && selectedSignals.length === 0)}>{step === 3 ? 'Open AIGENTZ' : 'Continue'} <ArrowRight size={16} /></button>
         </div>
       </footer>
     </div>

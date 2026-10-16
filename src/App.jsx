@@ -31,7 +31,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
 
               {/* Protected — all business routes */}
-              <Route path="/" element={<AuthRoute><Navigate to="/dashboard" replace /></AuthRoute>} />
+              <Route path="/" element={<AuthRoute><Navigate to="/aigentx" replace /></AuthRoute>} />
               <Route path="/chat/:conversationId" element={<AuthRoute><Navigate to="/dashboard" replace /></AuthRoute>} />
               <Route path="/onboarding" element={<AuthRoute><OnboardingPage /></AuthRoute>} />
               <Route path="/aigentx" element={<AuthRoute><AigentxLandingPage /></AuthRoute>} />
