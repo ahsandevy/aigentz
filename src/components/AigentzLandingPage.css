@@ -2,7 +2,7 @@
 
 .ax-page {
   --ax-blue: var(--brand-blue);
-  --ax-blue-hover: #164f8e;
+  --ax-blue-hover: #1c426a;
   --ax-ink: #101828;
   --ax-muted: #475467;
   --ax-line: #e1e7ef;
@@ -21,10 +21,9 @@
 .ax-header { position: static; background: #fff; border-bottom: 1px solid var(--brand-line); }
 .ax-header-inner { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .ax-header-brand { display: inline-flex; align-items: center; }
-.ax-logo { display: block; width: 148px; height: auto; filter: brightness(0) invert(1); }
-.ax-header .ax-logo { filter: none; }
+.ax-logo { display: block; width: 148px; height: auto; }
 .ax-header nav { display: flex; align-items: center; gap: 12px; }
-.ax-header nav a, .ax-header nav button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: #164f8e; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.ax-header nav a, .ax-header nav button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ax-blue); font-size: 13px; font-weight: 600; white-space: nowrap; }
 .ax-header nav a:hover, .ax-header nav button:hover { background: var(--brand-wash); color: var(--brand-blue); }
 .ax-header nav a svg { color: var(--brand-blue-mid); }
 .ax-header-divider { width: 1px; height: 20px; background: var(--brand-line); }
@@ -46,16 +45,16 @@
 .ax-preview-intro h2 { margin: 5px 0 0; font-size: 27px; line-height: 1.2; font-weight: 600; letter-spacing: -.025em; }
 .ax-preview-intro p { max-width: 370px; margin: 0 0 2px; color: var(--ax-muted); font-size: 14px; line-height: 1.5; }
 .ax-preview { overflow: hidden; border: 1px solid #d9e2ed; border-radius: 14px; background: #fff; }
-.ax-preview-toolbar { min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 18px; border-bottom: 1px solid #29476a; background: #102642; }
+.ax-preview-toolbar { min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 18px; border-bottom: 1px solid var(--ax-line); background: #fff; }
 .ax-preview-identity, .ax-preview-tools { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .ax-preview-identity .ax-logo { width: 94px; }
-.ax-account { color: #dbeaff; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.ax-sync { padding: 4px 8px; border-radius: 5px; background: #ffffff1b; color: #e9f4ff; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.ax-account { color: var(--ax-ink); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.ax-sync { padding: 4px 8px; border-radius: 5px; background: var(--brand-wash); color: var(--brand-blue); font-size: 11px; font-weight: 600; white-space: nowrap; }
 .ax-style-switch { display: flex; gap: 2px; padding: 3px; border-radius: 7px; background: #eef2f7; }
 .ax-style-switch button { min-height: 31px; padding: 0 10px; border: 0; border-radius: 5px; background: transparent; color: #475467; font-size: 11px; }
 .ax-style-switch button[aria-pressed="true"] { background: #fff; color: var(--ax-ink); box-shadow: 0 1px 3px rgba(16,24,40,.13); }
-.ax-expand { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 37px; padding: 0 11px; border: 1px solid #ffffff57; border-radius: 7px; background: transparent; color: #eef5ff; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.ax-expand:hover { background: #ffffff1c; color: #fff; }
+.ax-expand { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 37px; padding: 0 11px; border: 1px solid var(--brand-line); border-radius: 7px; background: #fff; color: var(--brand-blue); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.ax-expand:hover { background: var(--brand-wash); }
 .ax-page .ax-expand { font-size: 12px; font-weight: 600; }
 
 .ax-preview-grid { display: grid; grid-template-columns: 260px minmax(0,1fr) 268px; min-height: 450px; }
@@ -79,7 +78,7 @@
 .ax-answer-icon { display: grid; place-items: center; flex: none; width: 29px; height: 29px; border-radius: 7px; background: var(--brand-blue); color: #fff; }
 .ax-answer p { margin: 0; color: #344054; font-size: 13px; line-height: 1.65; }
 .ax-answer p strong { color: var(--ax-ink); }
-.ax-answer mark { padding: 2px 4px; border-radius: 3px; background: #e7f7ef; color: #076d4c; font-weight: 700; }
+.ax-answer mark { padding: 2px 4px; border-radius: 3px; background: #f3f3dd; color: #245181; font-weight: 700; }
 .ax-answer-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 .ax-answer-actions a { display: inline-flex; align-items: center; gap: 6px; min-height: 35px; font-size: 12px; font-weight: 600; }
 .ax-answer-actions a:first-child { padding: 0 12px; border-radius: 6px; background: var(--ax-blue); color: #fff; }
@@ -100,7 +99,7 @@
 .ax-action-card { margin-top: 11px; padding: 12px; border: 1px solid var(--ax-line); border-radius: 8px; background: #fff; }
 .ax-action-meta { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
 .ax-action-meta span { padding: 3px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; white-space: nowrap; }
-.ax-action-meta .positive { background: #e7f7ef; color: #076d4c; }
+.ax-action-meta .positive { background: var(--brand-wash); color: var(--brand-blue); }
 .ax-action-meta .risk { background: #fff1f2; color: #a9163a; }
 .ax-action-meta .neutral { background: var(--brand-wash); color: var(--brand-blue); }
 .ax-action-meta small { overflow: hidden; color: #667085; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
@@ -132,7 +131,7 @@
 .ax-control p { max-width: 650px; margin: 0 auto; color: #d0d5dd; font-size: 16px; line-height: 1.65; }
 .ax-control-points { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px 28px; margin-top: 28px; }
 .ax-control-points span { display: inline-flex; align-items: center; gap: 8px; color: #f2f4f7; font-size: 13px; }
-.ax-control-points svg { color: var(--brand-lime); }
+.ax-control-points svg { color: var(--brand-yellow); }
 .ax-final { padding: 84px 0 88px; text-align: center; }
 .ax-final h2 { margin: 0 0 13px; font-size: clamp(29px,3vw,39px); line-height: 1.2; font-weight: 600; }
 .ax-final p { max-width: 520px; margin: 0 auto 28px; color: var(--ax-muted); font-size: 15px; line-height: 1.6; }

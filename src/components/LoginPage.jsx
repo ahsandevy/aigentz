@@ -18,7 +18,7 @@ export default function LoginPage() {
   const visualDesign = ['aigentz', 'arcs', 'beam', 'horizon', 'rings', 'sky', 'hello'].includes(requestedDesign) ? requestedDesign : 'aigentz';
 
   if (isAuthenticated) {
-    return <Navigate to={hasCompletedOnboarding(user) ? '/aigentx' : '/onboarding'} replace />;
+    return <Navigate to={hasCompletedOnboarding(user) ? '/aigentz' : '/onboarding'} replace />;
   }
 
   async function handleSubmit(e) {
@@ -32,7 +32,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const signedInUser = await login(email.trim(), password);
-      navigate(hasCompletedOnboarding(signedInUser) ? '/aigentx' : '/onboarding', { replace: true });
+      navigate(hasCompletedOnboarding(signedInUser) ? '/aigentz' : '/onboarding', { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {

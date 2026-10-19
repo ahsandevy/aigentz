@@ -20,14 +20,14 @@ function Shell({ view, children }) {
   const initials = name.split(/\s+/).map((x) => x[0]).join('').slice(0, 2).toUpperCase()
   return <div className="asc-app">
     <aside className="asc-sidebar">
-      <Link to="/dashboard" className="asc-brand" aria-label="AIGENTX Dashboard"><BrandLogo className="asc-logo" /></Link>
+      <Link to="/dashboard" className="asc-brand" aria-label="AIGENTZ Dashboard"><BrandLogo className="asc-logo" /></Link>
       <div className="asc-sidebar-label">WORKSPACE</div>
       <nav className="asc-side-nav" aria-label="Main navigation">
         <Link to="/dashboard" aria-current={view === 'home' ? 'page' : undefined}><BarChart3 size={16} />Home</Link>
         <Link to="/dashboard/recommendations" aria-current={view === 'recommendations' ? 'page' : undefined}><Sparkles size={16} />Recommendations <small>AI</small></Link>
         <Link to="/dashboard/explorer" aria-current={view === 'explorer' ? 'page' : undefined}><TrendingUp size={16} />Performance</Link>
         <Link to="/dashboard/executive-brief" aria-current={view === 'brief' ? 'page' : undefined}><FileText size={16} />Reports</Link>
-        <Link to="/aigentx"><WandSparkles size={16} />About AIGENTX</Link>
+        <Link to="/aigentz"><WandSparkles size={16} />About AIGENTZ</Link>
       </nav>
     </aside>
     <div className="asc-main">

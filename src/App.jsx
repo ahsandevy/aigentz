@@ -5,7 +5,7 @@ import AuthRoute from './components/AuthRoute'
 import Dashboard from './components/Dashboard'
 import LoginPage from './components/LoginPage'
 import OnboardingPage from './components/OnboardingPage'
-import AigentxLandingPage from './components/AigentxLandingPage'
+import AigentzLandingPage from './components/AigentzLandingPage'
 import NotFoundPage from './components/NotFoundPage'
 import { ModalProvider } from './context/ModalContext'
 
@@ -31,10 +31,11 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
 
               {/* Protected — all business routes */}
-              <Route path="/" element={<AuthRoute><Navigate to="/aigentx" replace /></AuthRoute>} />
+              <Route path="/" element={<AuthRoute><Navigate to="/aigentz" replace /></AuthRoute>} />
               <Route path="/chat/:conversationId" element={<AuthRoute><Navigate to="/dashboard" replace /></AuthRoute>} />
               <Route path="/onboarding" element={<AuthRoute><OnboardingPage /></AuthRoute>} />
-              <Route path="/aigentx" element={<AuthRoute><AigentxLandingPage /></AuthRoute>} />
+              <Route path="/aigentx" element={<AuthRoute><Navigate to="/aigentz" replace /></AuthRoute>} />
+              <Route path="/aigentz" element={<AuthRoute><AigentzLandingPage /></AuthRoute>} />
               <Route path="/dashboard" element={<AuthRoute><Dashboard /></AuthRoute>} />
               <Route path="/dashboard/explorer" element={<AuthRoute><Dashboard view="explorer" /></AuthRoute>} />
               <Route path="/dashboard/recommendations" element={<AuthRoute><Dashboard view="recommendations" /></AuthRoute>} />

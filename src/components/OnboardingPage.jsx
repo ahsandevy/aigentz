@@ -65,7 +65,7 @@ export default function OnboardingPage() {
 
   const finish = () => {
     saveOnboarding(user, { answerStyle, role, metrics: selectedMetrics, signals: selectedSignals })
-    navigate('/aigentx', { replace: true })
+    navigate('/aigentz', { replace: true })
   }
 
   const next = () => step === 3 ? finish() : setStep(step + 1)

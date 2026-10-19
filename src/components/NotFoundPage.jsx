@@ -14,7 +14,7 @@ export default function NotFoundPage() {
         </p>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1b63b0] text-white rounded-xl text-[14px] font-semibold hover:bg-[#164f8e] transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#245181] text-white rounded-xl text-[14px] font-semibold hover:bg-[#1c426a] transition-colors shadow-sm"
         >
           <ArrowLeft size={15} />
           Back to Dashboard

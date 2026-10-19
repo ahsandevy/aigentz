@@ -5,13 +5,13 @@
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
-  /* A richer blue ramp based on the AIGENTZ wordmark. */
-  --brand-blue: #1b63b0;
-  --brand-blue-mid: #347dbf;
-  --brand-blue-light: #66a3db;
-  --brand-lime: #d8d892;
-  --brand-wash: #eaf3fc;
-  --brand-line: #d7e6f5;
+  /* Approved AIGENTZ wordmark palette. */
+  --brand-blue: #245181;
+  --brand-blue-mid: #366493;
+  --brand-blue-light: #679cd2;
+  --brand-yellow: #d8d892;
+  --brand-wash: #f0f6fc;
+  --brand-line: #dce9f5;
 
   /* ── Colors ─────────────────────────────────────────────────────────── */
   --color-bg:        #f8fafc;

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import BrandLogo from './BrandLogo'
-import './AigentxLandingPage.css'
+import './AigentzLandingPage.css'
 
 const examples = [
   {
@@ -84,10 +84,10 @@ function AssistantPreview({ fullScreen, setFullScreen }) {
     }
   }, [fullScreen, setFullScreen])
 
-  return <section className="ax-preview-section" aria-label="AIGENTX assistant preview">
+  return <section className="ax-preview-section" aria-label="AIGENTZ assistant preview">
     <div className="ax-container">
-      <div className="ax-preview-intro"><div><span>Product preview</span><h2>See AIGENTX in action</h2></div><p>Explore a sample conversation and the recommendations it creates.</p></div>
-      <div ref={previewRef} className={`ax-preview${fullScreen ? ' is-fullscreen' : ''}`} role={fullScreen ? 'dialog' : undefined} aria-modal={fullScreen ? 'true' : undefined} aria-label={fullScreen ? 'Full-screen AIGENTX chatbot preview' : undefined}>
+      <div className="ax-preview-intro"><div><span>Product preview</span><h2>See AIGENTZ in action</h2></div><p>Explore a sample conversation and the recommendations it creates.</p></div>
+      <div ref={previewRef} className={`ax-preview${fullScreen ? ' is-fullscreen' : ''}`} role={fullScreen ? 'dialog' : undefined} aria-modal={fullScreen ? 'true' : undefined} aria-label={fullScreen ? 'Full-screen AIGENTZ chatbot preview' : undefined}>
         <div className="ax-preview-toolbar">
           <div className="ax-preview-identity"><BrandLogo className="ax-logo" /><span className="ax-account">Acme Brands Ltd. · AED</span><span className="ax-sync">Illustrative example</span></div>
           <div className="ax-preview-tools"><div className="ax-style-switch" role="group" aria-label="Preview answer style"><button type="button" aria-pressed={style === 'simple'} onClick={() => setStyle('simple')}>Simple</button><button type="button" aria-pressed={style === 'detailed'} onClick={() => setStyle('detailed')}>Detailed</button></div><button ref={fullScreenButtonRef} className="ax-expand" type="button" aria-label={fullScreen ? 'Exit full-screen chatbot' : 'Open full-screen chatbot'} onClick={() => setFullScreen(!fullScreen)}>{fullScreen ? <Minimize2 size={15} /> : <Expand size={15} />}<span>{fullScreen ? 'Exit full screen' : 'Full-screen chat'}</span></button></div>
@@ -115,7 +115,7 @@ function AssistantPreview({ fullScreen, setFullScreen }) {
   </section>
 }
 
-export default function AigentxLandingPage() {
+export default function AigentzLandingPage() {
   const { logout } = useAuth()
   const navigate = useNavigate()
   const [fullScreen, setFullScreen] = useState(false)
@@ -123,10 +123,10 @@ export default function AigentxLandingPage() {
   const handleLogout = async () => { await logout(); navigate('/login') }
 
   return <div className="ax-page">
-    <header className="ax-header"><div className="ax-container ax-header-inner"><Link to="/aigentx" className="ax-header-brand"><BrandLogo className="ax-logo" /></Link><nav aria-label="AIGENTX navigation"><Link to="/dashboard"><LayoutDashboard size={16} /> Dashboard</Link><span className="ax-header-divider" /><button type="button" onClick={handleLogout}><LogOut size={16} /> Log out</button></nav></div></header>
+    <header className="ax-header"><div className="ax-container ax-header-inner"><Link to="/aigentz" className="ax-header-brand"><BrandLogo className="ax-logo" /></Link><nav aria-label="AIGENTZ navigation"><Link to="/dashboard"><LayoutDashboard size={16} /> Dashboard</Link><span className="ax-header-divider" /><button type="button" onClick={handleLogout}><LogOut size={16} /> Log out</button></nav></div></header>
 
     <main>
-      <section className="ax-hero"><div className="ax-container"><span className="ax-eyebrow">Meet AIGENTX</span><h1>Marketing Expertise, on Demand.<span>Always available. Always Executing.</span></h1><p>An AI-powered growth strategist that detects wasted spend, reallocates budgets, refreshes creatives, and optimizes performance — no expertise required.</p><div className="ax-hero-actions"><button className="ax-primary" type="button" onClick={() => setFullScreen(true)}>Open full-screen chat <Expand size={18} /></button></div></div></section>
+      <section className="ax-hero"><div className="ax-container"><span className="ax-eyebrow">Meet AIGENTZ</span><h1>Marketing Expertise, on Demand.<span>Always available. Always Executing.</span></h1><p>An AI-powered growth strategist that detects wasted spend, reallocates budgets, refreshes creatives, and optimizes performance — no expertise required.</p><div className="ax-hero-actions"><button className="ax-primary" type="button" onClick={() => setFullScreen(true)}>Open full-screen chat <Expand size={18} /></button></div></div></section>
 
       <AssistantPreview fullScreen={fullScreen} setFullScreen={setFullScreen} />
 
@@ -136,8 +136,8 @@ export default function AigentxLandingPage() {
 
       <section className="ax-control"><div className="ax-container"><h2>You stay in control.</h2><p>Review each proposed budget shift or creative pause before it goes live. Approval and rollback safeguards keep every action in your hands.</p><div className="ax-control-points"><span><CircleCheck size={17} /> Your approval</span><span><RotateCcw size={17} /> Rollback safeguards</span><span><LockKeyhole size={17} /> Scoped access</span></div></div></section>
 
-      <section className="ax-final"><div className="ax-container"><h2>Ready to see what AIGENTX finds?</h2><p>Explore a sample conversation and see the next steps AIGENTX recommends.</p><button className="ax-primary" type="button" onClick={() => setFullScreen(true)}>Open full-screen chat <Expand size={18} /></button></div></section>
+      <section className="ax-final"><div className="ax-container"><h2>Ready to see what AIGENTZ finds?</h2><p>Explore a sample conversation and see the next steps AIGENTZ recommends.</p><button className="ax-primary" type="button" onClick={() => setFullScreen(true)}>Open full-screen chat <Expand size={18} /></button></div></section>
     </main>
-    <footer className="ax-footer"><div className="ax-container"><div><strong>AIGENTX</strong><span>AI marketing assistant</span></div><div><Link to="/dashboard">Dashboard</Link><Link to="/dashboard/explorer">Performance</Link></div></div></footer>
+    <footer className="ax-footer"><div className="ax-container"><div><strong>AIGENTZ</strong><span>AI marketing assistant</span></div><div><Link to="/dashboard">Dashboard</Link><Link to="/dashboard/explorer">Performance</Link></div></div></footer>
   </div>
 }
