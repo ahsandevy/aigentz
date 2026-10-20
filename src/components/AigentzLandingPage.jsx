@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  ArrowRight, ArrowUp, BarChart3, CircleCheck,
-  Expand, LayoutDashboard, LockKeyhole, LogOut, Minimize2,
-  RotateCcw, ShieldCheck, Sparkles,
+  ArrowRight, ArrowUp, BarChart3, LayoutDashboard,
+  LockKeyhole, LogOut, ShieldCheck, Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import BrandLogo from './BrandLogo'
@@ -39,58 +38,17 @@ const actions = [
   { type: 'Fresh Creative', meta: 'Asset #410-B', title: 'Activate B-Roll Variant', body: 'Deploy a pre-cleared 9:16 variant to prevent frequency creep.', tone: 'neutral' },
 ]
 
-function AssistantPreview({ fullScreen, setFullScreen }) {
+function AssistantWorkspace() {
   const [thread, setThread] = useState(0)
   const [style, setStyle] = useState('simple')
   const [tab, setTab] = useState('chat')
-  const previewRef = useRef(null)
-  const fullScreenButtonRef = useRef(null)
   const active = examples[thread]
 
-  useEffect(() => {
-    if (!fullScreen) return undefined
-
-    const previouslyFocused = document.activeElement
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    fullScreenButtonRef.current?.focus()
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        setFullScreen(false)
-      }
-      if (event.key !== 'Tab') return
-
-      const focusable = [...previewRef.current.querySelectorAll('a[href], button:not([disabled])')]
-        .filter((element) => element.getClientRects().length)
-      if (!focusable.length) return
-      const first = focusable[0]
-      const last = focusable.at(-1)
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = previousOverflow
-      previouslyFocused?.focus?.()
-    }
-  }, [fullScreen, setFullScreen])
-
-  return <section className="ax-preview-section" aria-label="AIGENTZ assistant preview">
-    <div className="ax-container">
-      <div className="ax-preview-intro"><div><span>Product preview</span><h2>See AIGENTZ in action</h2></div><p>Explore a sample conversation and the recommendations it creates.</p></div>
-      <div ref={previewRef} className={`ax-preview${fullScreen ? ' is-fullscreen' : ''}`} role={fullScreen ? 'dialog' : undefined} aria-modal={fullScreen ? 'true' : undefined} aria-label={fullScreen ? 'Full-screen AIGENTZ chatbot preview' : undefined}>
+  return <section className="ax-workspace" aria-label="AIGENTZ assistant">
+      <div className="ax-preview">
         <div className="ax-preview-toolbar">
-          <div className="ax-preview-identity"><BrandLogo className="ax-logo" /><span className="ax-account">Acme Brands Ltd. · AED</span><span className="ax-sync">Illustrative example</span></div>
-          <div className="ax-preview-tools"><div className="ax-style-switch" role="group" aria-label="Preview answer style"><button type="button" aria-pressed={style === 'simple'} onClick={() => setStyle('simple')}>Simple</button><button type="button" aria-pressed={style === 'detailed'} onClick={() => setStyle('detailed')}>Detailed</button></div><button ref={fullScreenButtonRef} className="ax-expand" type="button" aria-label={fullScreen ? 'Exit full-screen chatbot' : 'Open full-screen chatbot'} onClick={() => setFullScreen(!fullScreen)}>{fullScreen ? <Minimize2 size={15} /> : <Expand size={15} />}<span>{fullScreen ? 'Exit full screen' : 'Full-screen chat'}</span></button></div>
+          <div className="ax-preview-identity"><strong>Analytics Assistant</strong><span className="ax-account">Acme Brands Ltd. · AED</span><span className="ax-sync">Illustrative example</span></div>
+          <div className="ax-preview-tools"><span className="ax-style-label">Answer style</span><div className="ax-style-switch" role="group" aria-label="Answer style"><button type="button" aria-pressed={style === 'simple'} onClick={() => setStyle('simple')}>Simple</button><button type="button" aria-pressed={style === 'detailed'} onClick={() => setStyle('detailed')}>Detailed</button></div></div>
         </div>
         <div className="ax-mobile-tabs" role="tablist" aria-label="Preview panels">{[['chat', 'Chat'], ['history', 'History'], ['actions', 'Actions (3)']].map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
         <div className="ax-preview-grid">
@@ -111,33 +69,16 @@ function AssistantPreview({ fullScreen, setFullScreen }) {
           </aside>
         </div>
       </div>
-    </div>
   </section>
 }
 
 export default function AigentzLandingPage() {
   const { logout } = useAuth()
   const navigate = useNavigate()
-  const [fullScreen, setFullScreen] = useState(false)
-
   const handleLogout = async () => { await logout(); navigate('/login') }
 
   return <div className="ax-page">
-    <header className="ax-header"><div className="ax-container ax-header-inner"><Link to="/aigentz" className="ax-header-brand"><BrandLogo className="ax-logo" /></Link><nav aria-label="AIGENTZ navigation"><Link to="/dashboard"><LayoutDashboard size={16} /> Dashboard</Link><span className="ax-header-divider" /><button type="button" onClick={handleLogout}><LogOut size={16} /> Log out</button></nav></div></header>
-
-    <main>
-      <section className="ax-hero"><div className="ax-container"><span className="ax-eyebrow">Meet AIGENTZ</span><h1>Marketing Expertise, on Demand.<span>Always available. Always Executing.</span></h1><p>An AI-powered growth strategist that detects wasted spend, reallocates budgets, refreshes creatives, and optimizes performance — no expertise required.</p><div className="ax-hero-actions"><button className="ax-primary" type="button" onClick={() => setFullScreen(true)}>Open full-screen chat <Expand size={18} /></button></div></div></section>
-
-      <AssistantPreview fullScreen={fullScreen} setFullScreen={setFullScreen} />
-
-      <section className="ax-awareness"><div className="ax-container ax-awareness-grid"><div><h2>See what needs attention.</h2></div><div><p>Bring audience fatigue, budget pacing, and campaign performance into one clear view, so you can focus on the decisions that matter.</p><small>Meta &nbsp;·&nbsp; Google Ads &nbsp;·&nbsp; Campaign diagnostics</small></div></div></section>
-
-      <section className="ax-process"><div className="ax-container"><h2>From question to action.</h2><div className="ax-process-grid"><article><span>01 / Ask</span><h3>Ask in plain language</h3><p>Ask what changed in a campaign or where your budget could work harder.</p></article><article><span>02 / Understand</span><h3>Get a clear answer</h3><p>See the reason, the supporting data, and a recommended next step together.</p></article><article><span>03 / Approve</span><h3>Review the next step</h3><p>Check a proposed budget shift or creative change before anything is applied.</p></article></div></div></section>
-
-      <section className="ax-control"><div className="ax-container"><h2>You stay in control.</h2><p>Review each proposed budget shift or creative pause before it goes live. Approval and rollback safeguards keep every action in your hands.</p><div className="ax-control-points"><span><CircleCheck size={17} /> Your approval</span><span><RotateCcw size={17} /> Rollback safeguards</span><span><LockKeyhole size={17} /> Scoped access</span></div></div></section>
-
-      <section className="ax-final"><div className="ax-container"><h2>Ready to see what AIGENTZ finds?</h2><p>Explore a sample conversation and see the next steps AIGENTZ recommends.</p><button className="ax-primary" type="button" onClick={() => setFullScreen(true)}>Open full-screen chat <Expand size={18} /></button></div></section>
-    </main>
-    <footer className="ax-footer"><div className="ax-container"><div><strong>AIGENTZ</strong><span>AI marketing assistant</span></div><div><Link to="/dashboard">Dashboard</Link><Link to="/dashboard/explorer">Performance</Link></div></div></footer>
+    <header className="ax-header"><div className="ax-header-inner"><Link to="/aigentz" className="ax-header-brand" aria-label="AIGENTZ home"><BrandLogo className="ax-logo" /></Link><nav aria-label="AIGENTZ navigation"><Link className="ax-dashboard-link" to="/dashboard"><LayoutDashboard size={18} /> Dashboard</Link><button type="button" onClick={handleLogout}><LogOut size={18} /> Log out</button></nav></div></header>
+    <main className="ax-main"><AssistantWorkspace /></main>
   </div>
 }

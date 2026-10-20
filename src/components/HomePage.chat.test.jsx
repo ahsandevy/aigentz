@@ -157,7 +157,7 @@ describe('chat URL and message isolation', () => {
     expect(screen.getByTestId('url').textContent).toBe('/');
     await send('Retry question');
     await screen.findByText('Fresh reply');
-    expect(screen.getByTestId('url').textContent).toBe('/chat/created');
+    await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('/chat/created'));
   });
 
   it('ignores creation finishing after the user starts another chat', async () => {

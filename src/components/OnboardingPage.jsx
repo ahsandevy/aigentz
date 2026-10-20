@@ -111,6 +111,5 @@ export default function OnboardingPage() {
         </div>
       </footer>
     </div>
-    <p className="onboarding-legal">Your choices are saved in this browser when you finish.</p>
   </main>
 }

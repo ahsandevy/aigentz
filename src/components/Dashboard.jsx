@@ -27,7 +27,7 @@ function Shell({ view, children }) {
         <Link to="/dashboard/recommendations" aria-current={view === 'recommendations' ? 'page' : undefined}><Sparkles size={16} />Recommendations <small>AI</small></Link>
         <Link to="/dashboard/explorer" aria-current={view === 'explorer' ? 'page' : undefined}><TrendingUp size={16} />Performance</Link>
         <Link to="/dashboard/executive-brief" aria-current={view === 'brief' ? 'page' : undefined}><FileText size={16} />Reports</Link>
-        <Link to="/aigentz"><WandSparkles size={16} />About AIGENTZ</Link>
+        <Link to="/aigentz"><WandSparkles size={16} />AI Assistant</Link>
       </nav>
     </aside>
     <div className="asc-main">
