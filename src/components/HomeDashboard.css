@@ -35,4 +35,12 @@
 @media(max-width:1150px){.home-hero{align-items:flex-start;flex-direction:column}.home-hero-actions{width:100%}.home-insights-row{grid-template-columns:repeat(2,minmax(0,1fr))}.home-weekly{grid-column:1/-1}}
 @media(max-width:820px){.home-chart-row{grid-template-columns:1fr}.home-channel{display:grid;grid-template-columns:1fr 1fr;align-items:center}.home-channel .home-panel-head{grid-column:1/-1}.home-donut{margin:5px auto}.home-brief-grid{grid-template-columns:1fr}}
 @media(max-width:640px){.asc-home{gap:15px}.home-greeting{align-items:flex-start;flex-direction:column}.home-greeting h1{font-size:23px}.home-hero{padding:20px}.home-hero h2{font-size:17px}.home-hero-actions{flex-wrap:wrap}.home-hero-actions button,.home-hero-actions a{flex:1}.home-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.home-metric{min-height:118px;padding:12px}.home-metric-value{font-size:19px}.home-chart{height:230px}.home-chart-dates span:nth-child(even){display:none}.home-insights-row{grid-template-columns:1fr}.home-weekly{grid-column:auto}.home-channel{display:block}.home-priority .home-section-head{flex-wrap:wrap}.home-priority .home-section-head>a{margin-left:39px}.home-campaign-footer{flex-direction:column}}
+
+/* The logo green marks AI guidance and positive outcomes. */
+.home-priority .home-heading-icon,.home-executive .home-heading-icon{background:var(--brand-yellow);color:var(--brand-blue)}
+.home-impact,.home-synthesis{background:#f4f5db}
+.home-impact,.home-synthesis>span{color:#354424}
+.home-weekly{border-color:var(--brand-yellow);background:#fcfdf4}
+.home-weekly .home-card-title h2 svg{box-sizing:content-box;padding:5px;border-radius:7px;background:var(--brand-yellow);color:var(--brand-blue)}
+.home-weekly .home-card-title>span,.home-weekly li svg{background:var(--brand-yellow);color:var(--brand-blue)}
 @media(max-width:360px){.home-hero-actions{display:grid;grid-template-columns:1fr}.home-hero-actions button,.home-hero-actions a{white-space:normal;min-height:42px}.home-metrics{grid-template-columns:1fr}.home-metric{min-height:112px}.home-metric-value{font-size:21px}}
