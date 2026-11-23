@@ -8,7 +8,7 @@ const styles = [
 ];
 const labelFor = (style) => styles.find((option) => option.value === style)?.label || 'Technical';
 
-export default function ExplanationStyleControl({ preferences, disabled = false }) {
+export default function ExplanationStyleControl({ preferences, disabled = false, menuPlacement = 'top' }) {
   const id = useId();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
@@ -45,14 +45,14 @@ export default function ExplanationStyleControl({ preferences, disabled = false 
         onClick={() => setOpen((value) => !value)}
         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#345C86]/40 disabled:opacity-50 ${visible ? 'bg-[#345C86]/10 text-[#345C86]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}>
         <MessageSquareText size={14} aria-hidden="true" />
-        <span className="hidden sm:inline font-normal text-slate-400">Reply style</span>
+        <span className="hidden sm:inline font-normal text-slate-400">Answer style</span>
         <span>{labelFor(preferences.style)}</span>
         <ChevronDown size={12} aria-hidden="true" className={`transition-transform ${visible ? 'rotate-180' : ''}`} />
       </button>
       {visible && (
         <div id={id} role="dialog" aria-labelledby={`${id}-title`}
           onBlur={(event) => { if (event.relatedTarget && !rootRef.current?.contains(event.relatedTarget)) setOpen(false); }}
-          className="absolute bottom-full left-0 z-40 mb-3 max-h-[min(65vh,380px)] w-[min(320px,calc(100vw-72px))] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_40px_-8px_rgba(15,23,42,0.20)]">
+          className={`absolute left-0 z-40 max-h-[min(65vh,380px)] w-[min(320px,calc(100vw-72px))] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_40px_-8px_rgba(15,23,42,0.20)] ${menuPlacement === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-3'}`}>
           <div className="px-3 pb-3 pt-2">
             <h3 id={`${id}-title`} className="text-[13px] font-semibold text-slate-900">How should I explain things?</h3>
             <p className="mt-1 text-[11px] leading-relaxed text-slate-500">Changes the wording of new replies.</p>
