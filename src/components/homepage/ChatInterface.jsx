@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import {
   Send, ChevronDown, ChevronRight, AlertCircle, Loader2,
   CheckCircle2, Terminal, Sparkles,
-  Brain, Wrench, BarChart3, Maximize2, Minimize2, Menu,
+  Brain, Wrench, BarChart3, Cpu, Maximize2, Minimize2, Menu,
 } from 'lucide-react';
 import { getActiveAccountId, setActiveAccountId } from '../../services/session.js';
 import { conversationAPI } from '../../services/api.js';
@@ -196,28 +196,17 @@ function BlockRenderer({ block }) {
 const MessageBubble = memo(function MessageBubble({ msg }) {
   if (msg.role === 'user') {
     return (
-<<<<<<< Updated upstream
       <div className="flex w-full mb-6 justify-end">
         <div className="max-w-[70%] px-5 py-3 bg-[#345C86] text-white rounded-2xl rounded-br-md text-[14px] leading-relaxed shadow-sm">
-=======
-      <div className="flex w-full mb-10 justify-end">
-        <div className="workspace-user-message max-w-[68%] px-4 py-2.5 text-white rounded-2xl rounded-br-md text-[13px] leading-[1.6]">
->>>>>>> Stashed changes
           {msg.content}
         </div>
       </div>
     );
   }
   return (
-<<<<<<< Updated upstream
     <div className="flex w-full mb-8 justify-start">
       <div className="flex gap-3.5 w-full max-w-[90%]">
         <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-slate-200 shadow-sm mt-0.5">
-=======
-    <div className="flex w-full mb-12 justify-start">
-      <div className="flex gap-3.5 w-full max-w-[78ch]">
-        <div className="workspace-assistant-avatar w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
->>>>>>> Stashed changes
           <Sparkles size={12} className="text-slate-500" />
         </div>
         <div className="flex-1 min-w-0 border-l-2 border-amber-400/30 pl-4">
@@ -608,14 +597,10 @@ export default function ChatInterface({ activeConversationId = null, onConversat
                 <Menu size={18} />
               </button>
             )}
-<<<<<<< Updated upstream
             <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#345C86] shadow-sm">
               <Cpu size={13} className="text-white" />
             </div>
             <h2 className="text-[14px] font-semibold text-slate-900 tracking-tight">Analytics Assistant</h2>
-=======
-            <div className="workspace-chat-title"><h1>Analytics Assistant</h1></div>
->>>>>>> Stashed changes
           </div>
           <div className="flex items-center gap-2">
             <ExplanationStyleControl
@@ -652,11 +637,7 @@ export default function ChatInterface({ activeConversationId = null, onConversat
           {/* Chat column: messages + input stacked vertically */}
           <div className="flex-1 flex flex-col min-w-0">
             <div ref={scrollRef} onScroll={handleScroll}
-<<<<<<< Updated upstream
               className="flex-1 overflow-y-auto px-5 md:px-8 py-5 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent relative">
-=======
-              className="workspace-messages flex-1 overflow-y-auto px-5 md:px-10 py-8 relative">
->>>>>>> Stashed changes
 
               {messagesLoading && (
                 <div className={`z-30 flex flex-col items-center justify-center bg-slate-50/80 backdrop-blur-sm ${
@@ -672,13 +653,8 @@ export default function ChatInterface({ activeConversationId = null, onConversat
                   <div className="w-12 h-12 rounded-2xl bg-[#345C86] flex items-center justify-center shadow-md">
                     <Sparkles size={20} className="text-white" />
                   </div>
-<<<<<<< Updated upstream
                   <h3 className="text-xl font-semibold text-slate-900 tracking-tight">How can I help?</h3>
                   <p className="text-slate-500 text-[14px] leading-relaxed">
-=======
-                  <h2 className="text-lg font-semibold text-slate-900 tracking-tight">What would you like to explore?</h2>
-                  <p className="text-slate-500 text-[13px] leading-relaxed">
->>>>>>> Stashed changes
                     Query your campaigns, run diagnostics, and get AI-powered recommendations.
                   </p>
                 </div>
@@ -711,15 +687,9 @@ export default function ChatInterface({ activeConversationId = null, onConversat
             </div>
 
             {/* Input — under chat area only */}
-<<<<<<< Updated upstream
             <div className="px-5 md:px-8 py-3.5 bg-gradient-to-t from-slate-50 via-white to-white border-t border-slate-100">
               <div className="max-w-3xl mx-auto">
                 <div className="relative bg-white border border-slate-200 rounded-2xl p-2 shadow-sm transition-all duration-200 focus-within:shadow-md focus-within:border-slate-300 focus-within:ring-1 focus-within:ring-slate-200">
-=======
-            <div className="workspace-composer-wrap px-5 md:px-8 py-3.5">
-              <div className="max-w-2xl mx-auto">
-                <div className="workspace-composer relative rounded-2xl p-2 transition-all duration-200">
->>>>>>> Stashed changes
                   {commandMenuOpen && commandCandidatesFor(query).length > 0 && (
                     <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-30">
                       <div className="px-3.5 py-1.5 bg-slate-50 border-b border-slate-100 text-[9px] font-semibold text-slate-400 uppercase tracking-widest">Commands</div>

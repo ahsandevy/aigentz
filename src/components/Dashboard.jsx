@@ -30,7 +30,6 @@ import {
   getEfficiencyDriversLatestDataUpdatedAt,
 } from '../hooks/efficiencyDriversQueryUtils'
 
-<<<<<<< Updated upstream
 function RefreshableSection({ title, onRefresh, extraControls = null, children }) {
   return (
     <section className="mb-8">
@@ -75,34 +74,6 @@ function FreshnessBanner({ ago }) {
           Still within the 24-hour freshness window — no reload needed.
         </p>
       </div>
-=======
-function Shell({ view, children }) {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const name = user?.name || user?.full_name || user?.email?.split('@')[0] || 'Zeeshan'
-  const initials = name.split(/\s+/).map((x) => x[0]).join('').slice(0, 2).toUpperCase()
-  return <div className="asc-app">
-    <header className="asc-topbar">
-      <div className="asc-topbar-left"><Link to="/dashboard" className="asc-topbar-brand" aria-label="AIGENTZ Dashboard"><BrandLogo className="asc-topbar-logo" /></Link><div className="asc-breadcrumb"><span>Analytics</span><ChevronRight size={13} /><strong>{view === 'home' ? 'Overview' : view === 'explorer' ? 'Performance Explorer' : view === 'recommendations' ? 'Recommendations' : 'AI Summary'}</strong></div></div>
-      <div className="asc-topbar-tools"><Link className="asc-assistant" to="/aigentz"><WandSparkles size={16} />AI Assistant</Link><span className="asc-date"><CalendarDays size={15} />Sample data · Sep 15 – Oct 14, 2025</span><div className="asc-avatar" title={name}><span>{initials}</span><strong>{name}</strong></div><button className="asc-icon-button" aria-label="Log out" title="Log out" onClick={async () => { await logout(); navigate('/login') }}><LogOut size={17} /></button></div>
-    </header>
-    <aside className="asc-sidebar">
-      <div className="asc-sidebar-label">WORKSPACE</div>
-      <nav className="asc-side-nav" aria-label="Main navigation">
-        <Link className={view === 'home' ? 'is-active' : undefined} to="/dashboard" aria-current={view === 'home' ? 'page' : undefined}><BarChart3 size={16} />Home</Link>
-        <Link className={view === 'recommendations' ? 'is-active' : undefined} to="/dashboard/recommendations" aria-current={view === 'recommendations' ? 'page' : undefined}><Sparkles size={16} />Recommendations</Link>
-        <Link className={view === 'explorer' ? 'is-active' : undefined} to="/dashboard/explorer" aria-current={view === 'explorer' ? 'page' : undefined}><TrendingUp size={16} />Performance</Link>
-        <Link className={view === 'brief' ? 'is-active' : undefined} to="/dashboard/executive-brief" aria-current={view === 'brief' ? 'page' : undefined}><FileText size={16} />AI Summary</Link>
-      </nav>
-      <Link to="/aigentz" className="asc-sidebar-chat">
-        <span className="asc-sidebar-chat-icon"><Sparkles size={14} /></span>
-        <span><strong>Ask AIGENTZ</strong><small>Explore your campaigns</small></span>
-        <ChevronRight size={14} />
-      </Link>
-    </aside>
-    <div className="asc-main">
-      <main className="asc-content">{children}</main>
->>>>>>> Stashed changes
     </div>
   )
 }
